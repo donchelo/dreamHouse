@@ -3,8 +3,42 @@ import { GoogleGenAI } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 
 // Initialize Gemini Client
-// We use process.env directly here. Ensure GEMINI_API_KEY is set.
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Helper to map project types to English for better AI understanding
+const PROJECT_TYPE_MAP: Record<string, string> = {
+  "Casa unifamiliar": "single-family house",
+  "Villa de lujo": "luxury villa",
+  "Apartamento/Penthouse": "penthouse apartment",
+  "Edificio residencial": "residential building",
+  "Oficinas corporativas": "corporate office building",
+  "Retail/Tienda": "retail store",
+  "Restaurante/Bar": "restaurant",
+  "Hotel boutique": "boutique hotel",
+  "Hotel resort": "resort hotel",
+  "Museo/Galería": "museum",
+  "Centro cultural": "cultural center",
+  "Biblioteca": "library",
+  "Teatro/Auditorio": "theater",
+  "Edificio educativo": "educational building",
+  "Clínica/Hospital": "medical clinic",
+  "Spa/Wellness": "wellness spa",
+  "Mixed-use": "mixed-use building"
+};
+
+// Helper to map mood to English descriptors
+const MOOD_MAP: Record<string, string> = {
+  "Elegante y sofisticado": "elegant and sophisticated atmosphere",
+  "Acogedor y cálido": "cozy and warm atmosphere",
+  "Dramático e impactante": "dramatic and striking atmosphere",
+  "Sereno y zen": "serene and zen atmosphere",
+  "Futurista y vanguardista": "futuristic and avant-garde atmosphere",
+  "Rústico y orgánico": "rustic and organic atmosphere",
+  "Lujoso y opulento": "luxurious and opulent atmosphere",
+  "Industrial y raw": "industrial and raw atmosphere",
+  "Minimalista y puro": "minimalist and pure atmosphere",
+  "Romántico y nostálgico": "romantic and nostalgic atmosphere"
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,58 +78,114 @@ export async function POST(req: NextRequest) {
         analysisResult = analysisResponse.text || "";
       } catch (error) {
         console.error("Error analyzing images:", error);
-        // Continue without analysis if it fails, but log it.
       }
     }
 
-    // --- Step 2: Construct Prompt ---
+    // --- Step 2: Construct Enhanced Prompt ---
     
-    // Base components
-    const basePrompt = "Architectural exterior photography of a residential house";
-    const context = params.city ? `located in ${params.city}` : "";
+    // Project type
+    const projectType = PROJECT_TYPE_MAP[params.projectType] || "architectural building";
     
+    // Location context
+    const location = params.city ? `located in ${params.city}` : "";
+    
+    // Architect influence
     const validArchitects = Array.isArray(params.architect) 
       ? params.architect.filter(a => a !== "Sin arquitecto específico")
-      : (params.architect && params.architect !== "Sin arquitecto específico" ? [params.architect] : []);
-      
-    const architect = validArchitects.length > 0 ? `designed in the style of ${validArchitects.join(' and ')}` : "";
+      : [];
+    const architectInfluence = validArchitects.length > 0 
+      ? `designed in the style of ${validArchitects.join(' and ')}` 
+      : "";
     
-    const styles = params.architecturalStyles.length > 0 ? `Style: ${params.architecturalStyles.join(', ')}` : "";
-    const materials = params.materials.length > 0 ? `Materials: ${params.materials.join(', ')}` : "";
+    // Mood/Atmosphere
+    const mood = MOOD_MAP[params.mood] || "";
     
-    const uniqueParams = [
+    // Styles
+    const styles = params.architecturalStyles.length > 0 
+      ? `Architectural style: ${params.architecturalStyles.join(', ')}` 
+      : "";
+    
+    // Materials
+    const materials = params.materials.length > 0 
+      ? `Primary materials: ${params.materials.join(', ')}` 
+      : "";
+    
+    // Physical specifications
+    const physicalSpecs = [
+      `${params.size}`,
+      `${params.levels} level${params.levels > 1 ? 's' : ''}`,
+      `${params.roofType} roof`,
+      params.finishLevel !== "Estándar/Medio" ? `${params.finishLevel} finish level` : ""
+    ].filter(Boolean).join(", ");
+    
+    // Context & Environment
+    const environmentContext = [
       `Climate: ${params.climate}`,
       `Environment: ${params.environment}`,
-      `Size: ${params.size}`,
-      `${params.levels} levels`,
-      `Roof: ${params.roofType}`,
-      `Time: ${params.timeOfDay}`,
-      `Season: ${params.season}`,
-      `Angle: ${params.cameraAngle}`
-    ].join(", ");
-
-    const multiParams = [
-      params.exteriorElements.length > 0 ? `Elements: ${params.exteriorElements.join(', ')}` : "",
-      params.vegetation.length > 0 ? `Vegetation: ${params.vegetation.join(', ')}` : "",
-      params.colorPalette.length > 0 ? `Colors: ${params.colorPalette.join(', ')}` : ""
+      params.waterBody !== "Sin agua cercana" ? `Water feature: ${params.waterBody}` : "",
+      params.weatherCondition !== "Despejado/Soleado" ? `Weather: ${params.weatherCondition}` : ""
     ].filter(Boolean).join(". ");
-
-    const additionalInfo = params.additionalNotes ? `\nAdditional Context/Notes: ${params.additionalNotes}` : "";
-
-    const refAnalysis = analysisResult ? `\nReference Analysis Influence: ${analysisResult}` : "";
     
-    const qualitySuffix = "8K, ultra detailed, photorealistic, professional architectural photography, award-winning design, cinematic lighting, high resolution";
-
-    // Combine everything
-    const fullPrompt = `
-      ${basePrompt} ${context} ${architect}.
-      ${styles}. ${materials}.
-      Parameters: ${uniqueParams}.
-      Details: ${multiParams}.
-      ${additionalInfo}
-      ${refAnalysis}
-      ${qualitySuffix}
+    // Aesthetics
+    const aesthetics = [
+      params.colorPalette.length > 0 ? `Color palette: ${params.colorPalette.join(', ')}` : "",
+      params.exteriorElements.length > 0 ? `Exterior elements: ${params.exteriorElements.join(', ')}` : "",
+      params.vegetation.length > 0 ? `Landscaping: ${params.vegetation.join(', ')}` : ""
+    ].filter(Boolean).join(". ");
+    
+    // Camera & Photography
+    const cameraSettings = [
+      `Camera angle: ${params.cameraAngle}`,
+      `Composition: ${params.composition}`,
+      `Time of day: ${params.timeOfDay}`,
+      `Season: ${params.season}`,
+      `Lighting: ${params.lighting}`,
+      params.humanContext !== "Sin personas" ? `Human presence: ${params.humanContext}` : ""
+    ].filter(Boolean).join(". ");
+    
+    // Additional notes
+    const additionalInfo = params.additionalNotes 
+      ? `Special instructions: ${params.additionalNotes}` 
+      : "";
+    
+    // Reference analysis
+    const refAnalysis = analysisResult 
+      ? `Reference analysis influence: ${analysisResult}` 
+      : "";
+    
+    // Quality suffix - Enhanced for professional photography
+    const qualitySuffix = `
+      Ultra high resolution 8K, photorealistic architectural photography, 
+      professional DSLR quality, award-winning architectural visualization,
+      cinematic lighting, sharp details, depth of field, 
+      magazine-quality render, ArchDaily featured quality
     `.trim();
+
+    // Combine everything into a structured prompt
+    const fullPrompt = `
+Professional architectural exterior photography of a ${projectType} ${location} ${architectInfluence}.
+
+MOOD & ATMOSPHERE: ${mood}
+
+ARCHITECTURAL DETAILS:
+${styles}
+${materials}
+Physical specifications: ${physicalSpecs}
+
+ENVIRONMENT & CONTEXT:
+${environmentContext}
+
+AESTHETICS & DETAILS:
+${aesthetics}
+
+PHOTOGRAPHY SETTINGS:
+${cameraSettings}
+
+${additionalInfo}
+${refAnalysis}
+
+RENDER QUALITY: ${qualitySuffix}
+    `.trim().replace(/\n{3,}/g, '\n\n');
 
     console.log("Generated Prompt:", fullPrompt);
 
@@ -104,25 +194,24 @@ export async function POST(req: NextRequest) {
       model: "gemini-3-pro-image-preview",
       contents: [{ parts: [{ text: fullPrompt }] }],
       config: {
-        tools: [{ googleSearch: {} }], // Grounding
+        tools: [{ googleSearch: {} }],
         imageConfig: {
           aspectRatio: "16:9",
-          imageSize: "4K" // As per PRD
+          imageSize: "4K"
         }
       }
     });
 
     // Extract image data
-    // The response structure for image generation usually contains inlineData in parts
     const candidates = generationResponse.candidates;
     if (!candidates || candidates.length === 0) {
-        throw new Error("No image candidates returned");
+      throw new Error("No image candidates returned");
     }
 
     const imagePart = candidates[0].content.parts.find(part => part.inlineData);
     
     if (!imagePart || !imagePart.inlineData) {
-        throw new Error("No image data found in response");
+      throw new Error("No image data found in response");
     }
 
     const imageBase64 = imagePart.inlineData.data;
@@ -140,4 +229,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

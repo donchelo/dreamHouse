@@ -50,39 +50,57 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
   }, [files, onFilesChange]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-gray-500" />
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2.5">
+            <div className="p-1.5 bg-primary/10 rounded-lg">
+              <ImageIcon className="w-4 h-4 text-primary" />
+            </div>
             Referentes Visuales
           </h3>
-          <p className="text-sm text-gray-500 mt-1">Sube imágenes para guiar el estilo (Max 5)</p>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Sube imágenes para guiar el estilo arquitectónico
+          </p>
         </div>
-        <span className="text-xs font-medium px-2.5 py-1 bg-gray-100 rounded-full text-gray-600">
+        <span className="text-xs font-mono font-medium px-3 py-1.5 bg-card-elevated rounded-lg text-muted-foreground border border-border">
           {files.length}/5
         </span>
       </div>
       
+      {/* Upload Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        {/* Uploaded Files */}
         {files.map((file, index) => (
-          <div key={index} className="relative group aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-white">
+          <div 
+            key={index} 
+            className="relative group aspect-square rounded-xl overflow-hidden border border-border bg-card hover:border-border-hover transition-all duration-300"
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
             <img
               src={URL.createObjectURL(file)}
-              alt={`Ref ${index}`}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              alt={`Referencia ${index + 1}`}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
               <button
                 onClick={() => removeFile(index)}
-                className="bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-2 rounded-full transition-colors transform hover:scale-110 hover:rotate-90 duration-300"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-full hover:bg-white/20 transition-all"
               >
-                <X className="w-5 h-5" />
+                <X className="w-3.5 h-3.5" />
+                Eliminar
               </button>
+            </div>
+            {/* Index Badge */}
+            <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-[10px] font-bold text-white border border-white/10">
+              {index + 1}
             </div>
           </div>
         ))}
         
+        {/* Upload Zone */}
         {files.length < 5 && (
           <div
             onDragOver={handleDragOver}
@@ -92,7 +110,7 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               "relative aspect-square rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden group",
               isDragging 
                 ? "border-primary bg-primary/5 scale-[1.02]" 
-                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                : "border-border hover:border-border-hover hover:bg-card-elevated"
             )}
           >
             <input
@@ -102,19 +120,40 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               onChange={handleFileInput}
             />
-            <div className="bg-white p-3 rounded-full shadow-sm mb-3 group-hover:shadow-md transition-shadow">
+            
+            {/* Icon */}
+            <div className={clsx(
+              "p-3 rounded-xl mb-3 transition-all duration-300",
+              isDragging 
+                ? "bg-primary/20" 
+                : "bg-card group-hover:bg-card-elevated"
+            )}>
               {isDragging ? (
-                <Plus className="w-6 h-6 text-primary animate-pulse" />
+                <Plus className="w-5 h-5 text-primary" />
               ) : (
-                <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600" />
+                <Upload className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
               )}
             </div>
-            <span className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
-              {isDragging ? 'Suelta aquí' : 'Añadir imagen'}
+            
+            {/* Text */}
+            <span className={clsx(
+              "text-xs font-medium transition-colors",
+              isDragging 
+                ? "text-primary" 
+                : "text-muted-foreground group-hover:text-foreground"
+            )}>
+              {isDragging ? 'Suelta aquí' : 'Añadir'}
             </span>
           </div>
         )}
       </div>
+      
+      {/* Tip */}
+      {files.length === 0 && (
+        <p className="text-xs text-muted text-center py-2">
+          Arrastra imágenes o haz clic para subir referencias de estilo
+        </p>
+      )}
     </div>
   );
 }
