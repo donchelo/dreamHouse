@@ -3,26 +3,26 @@ import { Download, RefreshCw, Sparkles, Maximize2, X, ZoomIn, ZoomOut } from 'lu
 
 // Mensajes divertidos para el estado de carga
 const LOADING_MESSAGES = [
-  { main: "Analizando tu visión...", sub: "Interpretando cada detalle arquitectónico" },
-  { main: "Dibujando los primeros trazos...", sub: "Como Le Corbusier con su lápiz" },
-  { main: "Calculando proporciones áureas...", sub: "La matemática de la belleza" },
-  { main: "Eligiendo los mejores materiales...", sub: "Concreto, vidrio, madera... ¡perfecto!" },
-  { main: "Jugando con la luz y las sombras...", sub: "Tadao Ando estaría orgulloso" },
-  { main: "Colocando cada ventana estratégicamente...", sub: "Las vistas importan" },
-  { main: "Diseñando espacios que respiran...", sub: "El aire también necesita su lugar" },
-  { main: "Integrando arquitectura y naturaleza...", sub: "Frank Lloyd Wright lo aprobaría" },
-  { main: "Perfeccionando las líneas del techo...", sub: "Cada ángulo cuenta" },
-  { main: "Añadiendo ese toque de magia...", sub: "Lo que hace único tu diseño" },
-  { main: "Renderizando sombras cinematográficas...", sub: "Digno de una portada de ArchDaily" },
-  { main: "Plantando el jardín virtual...", sub: "Verde que te quiero verde" },
-  { main: "Ajustando la paleta de colores...", sub: "Armonía cromática en proceso" },
-  { main: "Capturando el golden hour perfecto...", sub: "La luz dorada lo cambia todo" },
-  { main: "Refinando cada pixel...", sub: "Los detalles hacen la diferencia" },
-  { main: "Consultando con la IA arquitecta...", sub: "Ella sabe lo que hace" },
-  { main: "Imaginando quién vivirá aquí...", sub: "Cada casa cuenta una historia" },
-  { main: "Verificando que Zaha estaría impresionada...", sub: "El listón está alto" },
-  { main: "Casi listo...", sub: "Tu sueño arquitectónico está tomando forma" },
-  { main: "Últimos retoques maestros...", sub: "La perfección está en los detalles" },
+  { emoji: "👁️", main: "Analizando tu visión...", sub: "Interpretando cada detalle arquitectónico" },
+  { emoji: "✏️", main: "Dibujando los primeros trazos...", sub: "Como Le Corbusier con su lápiz" },
+  { emoji: "📐", main: "Calculando proporciones áureas...", sub: "La matemática de la belleza" },
+  { emoji: "🧱", main: "Eligiendo los mejores materiales...", sub: "Concreto, vidrio, madera... ¡perfecto!" },
+  { emoji: "💡", main: "Jugando con la luz y las sombras...", sub: "Tadao Ando estaría orgulloso" },
+  { emoji: "🪟", main: "Colocando cada ventana estratégicamente...", sub: "Las vistas importan" },
+  { emoji: "🌬️", main: "Diseñando espacios que respiran...", sub: "El aire también necesita su lugar" },
+  { emoji: "🌿", main: "Integrando arquitectura y naturaleza...", sub: "Frank Lloyd Wright lo aprobaría" },
+  { emoji: "🏠", main: "Perfeccionando las líneas del techo...", sub: "Cada ángulo cuenta" },
+  { emoji: "✨", main: "Añadiendo ese toque de magia...", sub: "Lo que hace único tu diseño" },
+  { emoji: "🎬", main: "Renderizando sombras cinematográficas...", sub: "Digno de una portada de ArchDaily" },
+  { emoji: "🌱", main: "Plantando el jardín virtual...", sub: "Verde que te quiero verde" },
+  { emoji: "🎨", main: "Ajustando la paleta de colores...", sub: "Armonía cromática en proceso" },
+  { emoji: "🌅", main: "Capturando el golden hour perfecto...", sub: "La luz dorada lo cambia todo" },
+  { emoji: "🔍", main: "Refinando cada pixel...", sub: "Los detalles hacen la diferencia" },
+  { emoji: "🤖", main: "Consultando con la IA arquitecta...", sub: "Ella sabe lo que hace" },
+  { emoji: "👨‍👩‍👧", main: "Imaginando quién vivirá aquí...", sub: "Cada casa cuenta una historia" },
+  { emoji: "🏆", main: "Verificando que Zaha estaría impresionada...", sub: "El listón está alto" },
+  { emoji: "🏁", main: "Casi listo...", sub: "Tu sueño arquitectónico está tomando forma" },
+  { emoji: "🖌️", main: "Últimos retoques maestros...", sub: "La perfección está en los detalles" },
 ];
 
 interface ResultDisplayProps {
@@ -190,10 +190,10 @@ export default function ResultDisplay({ imageUrl, isLoading, onRegenerate }: Res
                   <div className="w-20 h-20 rounded-full border-2 border-border" />
                   {/* Spinning gradient ring */}
                   <div className="absolute inset-0 w-20 h-20 rounded-full border-2 border-transparent border-t-primary border-r-primary/50 animate-spin" />
-                  {/* Center icon */}
+                  {/* Center icon - emoji dinámico según el mensaje */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span key={messageIndex} className="text-2xl animate-fade-in-up">{currentMessage.emoji}</span>
                     </div>
                   </div>
                 </div>
