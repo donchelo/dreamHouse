@@ -32,40 +32,115 @@ export const PROJECT_TYPES = [
 ];
 
 export const STYLES = [
-  // Contemporáneo
+  // ═══════════════════════════════════════════
+  // CONTEMPORÁNEO & VANGUARDIA
+  // ═══════════════════════════════════════════
   "Minimalista", "Moderno", "Contemporáneo", "High-Tech", "Deconstructivista",
-  "Paramétrico", "Sustentable/Eco", "Brutalista", "Orgánico", "Industrial",
-  "Futurista",
-  // Clásico/Tradicional
+  "Paramétrico", "Sustentable/Eco", "Brutalista", "Neo-brutalista", "Orgánico",
+  "Industrial", "Futurista", "Postmoderno", "Metabolista", "Biofílico",
+  "Net-Zero/Passivhaus", "Blob Architecture",
+  
+  // ═══════════════════════════════════════════
+  // CLÁSICO & HISTÓRICO
+  // ═══════════════════════════════════════════
   "Colonial", "Victoriano", "Georgian", "Tudor", "Art Deco", "Art Nouveau",
-  "Neoclásico", "Gótico Revival",
-  // Regional
-  "Mediterráneo", "Toscano", "Español Colonial", "Pueblo/Adobe", 
-  "Japonés tradicional", "Escandinavo", "Tropical", "Balinés",
-  // Americano
+  "Neoclásico", "Gótico Revival", "Bauhaus", "De Stijl", "Beaux-Arts",
+  "Palladiano", "Greek Revival", "Antebellum", "Barroco",
+  
+  // ═══════════════════════════════════════════
+  // REGIONAL - EUROPA
+  // ═══════════════════════════════════════════
+  "Mediterráneo", "Toscano", "Español Colonial", "Andaluz", "Griego isleño",
+  "Provenzal", "Alpino/Chalet", "Escandinavo",
+  
+  // ═══════════════════════════════════════════
+  // REGIONAL - ASIA & MEDIO ORIENTE
+  // ═══════════════════════════════════════════
+  "Japonés tradicional", "Tropical", "Balinés", "Hanok (Coreano)",
+  "Árabe contemporáneo", "Marroquí/Morisco", "Persa",
+  
+  // ═══════════════════════════════════════════
+  // REGIONAL - AMÉRICAS
+  // ═══════════════════════════════════════════
   "Ranch", "Craftsman/Bungalow", "Cape Cod", "Prairie", "Mid-Century Modern",
-  "Farmhouse moderno", "Brownstone",
-  // Especial
-  "Floating/Sobre agua", "Underground/Tierra", "Container", "Tiny House", "Loft"
+  "Farmhouse moderno", "Brownstone", "Pueblo/Adobe", "Pueblo Revival",
+  "Shingle Style", "Florida/Miami Deco", "Pacific Northwest",
+  "Mexicano contemporáneo", "Hacienda moderna", "Brasileño moderno", "Caribeño",
+  
+  // ═══════════════════════════════════════════
+  // REGIONAL - ÁFRICA & OCEANÍA
+  // ═══════════════════════════════════════════
+  "Africano vernáculo", "Australiano contemporáneo",
+  
+  // ═══════════════════════════════════════════
+  // TENDENCIAS LIFESTYLE
+  // ═══════════════════════════════════════════
+  "Japandi", "Wabi-sabi", "California Modern", "Desert Modern",
+  "Coastal Modern", "Mountain Modern", "Resort Modern", "Wine Country",
+  "Bohemio de lujo",
+  
+  // ═══════════════════════════════════════════
+  // ESPECIAL & EXPERIMENTAL
+  // ═══════════════════════════════════════════
+  "Floating/Sobre agua", "Underground/Tierra", "Container", "Tiny House", "Loft",
+  "Earthship", "Treehouse/Árbol"
 ];
 
 export const ARCHITECTS = [
-  // Modernistas
+  // ═══════════════════════════════════════════
+  // MODERNISTAS CLÁSICOS
+  // ═══════════════════════════════════════════
   "Frank Lloyd Wright", "Le Corbusier", "Ludwig Mies van der Rohe", "Louis Kahn",
-  // Contemporáneos Icónicos
+  "Carlo Scarpa",
+  
+  // ═══════════════════════════════════════════
+  // MAESTROS CONTEMPORÁNEOS (Pritzker Winners)
+  // ═══════════════════════════════════════════
   "Zaha Hadid", "Frank Gehry", "Tadao Ando", "Norman Foster", "Renzo Piano",
-  "Peter Zumthor", "Rem Koolhaas", "Jean Nouvel",
-  // Maestros Globales
+  "Peter Zumthor", "Rem Koolhaas", "Jean Nouvel", "Richard Meier",
+  "Rafael Moneo", "Fumihiko Maki", "Glenn Murcutt", "Arata Isozaki",
+  
+  // ═══════════════════════════════════════════
+  // MAESTROS GLOBALES ICÓNICOS
+  // ═══════════════════════════════════════════
   "Oscar Niemeyer", "Antoni Gaudí", "I.M. Pei", "Santiago Calatrava",
-  "Álvaro Siza", "Richard Meier",
-  // Japoneses
+  "Álvaro Siza", "Eduardo Souto de Moura",
+  
+  // ═══════════════════════════════════════════
+  // ESCUELA JAPONESA
+  // ═══════════════════════════════════════════
   "Kengo Kuma", "SANAA (Sejima + Nishizawa)", "Shigeru Ban", "Toyo Ito",
-  // Nueva Generación
+  "Sou Fujimoto", "Junya Ishigami",
+  
+  // ═══════════════════════════════════════════
+  // NUEVA GENERACIÓN GLOBAL
+  // ═══════════════════════════════════════════
   "Bjarke Ingels (BIG)", "Daniel Libeskind", "Herzog & de Meuron",
-  // Comercial/Cultural (nuevos)
+  "David Adjaye", "Diébédo Francis Kéré", "Wang Shu",
+  
+  // ═══════════════════════════════════════════
+  // AMÉRICAS (Norte, Centro, Sur)
+  // ═══════════════════════════════════════════
+  "Steven Holl", "Thom Mayne (Morphosis)", "Peter Eisenman",
+  "Diller Scofidio + Renfro", "Olson Kundig",
+  "Alejandro Aravena", "Paulo Mendes da Rocha", "Tatiana Bilbao",
+  "Frida Escobedo", "Alberto Campo Baeza",
+  
+  // ═══════════════════════════════════════════
+  // MINIMALISTAS Y FENOMENOLÓGICOS
+  // ═══════════════════════════════════════════
+  "John Pawson", "Balkrishna Doshi", "Lacaton & Vassal", "Grafton Architects",
+  
+  // ═══════════════════════════════════════════
+  // ESTUDIOS INNOVADORES
+  // ═══════════════════════════════════════════
   "Moshe Safdie", "David Chipperfield", "Studio Gang", "MAD Architects",
-  "MVRDV", "Snøhetta", "Heatherwick Studio",
-  // Sin preferencia
+  "MVRDV", "Snøhetta", "Heatherwick Studio", "OMA", "WOHA",
+  "UNStudio", "Coop Himmelb(l)au",
+  
+  // ═══════════════════════════════════════════
+  // SIN PREFERENCIA
+  // ═══════════════════════════════════════════
   "Sin arquitecto específico"
 ];
 
