@@ -53,7 +53,12 @@ export async function POST(req: NextRequest) {
     // Base components
     const basePrompt = "Architectural exterior photography of a residential house";
     const context = params.city ? `located in ${params.city}` : "";
-    const architect = params.architect !== "Sin arquitecto específico" ? `designed in the style of ${params.architect}` : "";
+    
+    const validArchitects = Array.isArray(params.architect) 
+      ? params.architect.filter(a => a !== "Sin arquitecto específico")
+      : (params.architect && params.architect !== "Sin arquitecto específico" ? [params.architect] : []);
+      
+    const architect = validArchitects.length > 0 ? `designed in the style of ${validArchitects.join(' and ')}` : "";
     
     const styles = params.architecturalStyles.length > 0 ? `Style: ${params.architecturalStyles.join(', ')}` : "";
     const materials = params.materials.length > 0 ? `Materials: ${params.materials.join(', ')}` : "";
@@ -75,6 +80,8 @@ export async function POST(req: NextRequest) {
       params.colorPalette.length > 0 ? `Colors: ${params.colorPalette.join(', ')}` : ""
     ].filter(Boolean).join(". ");
 
+    const additionalInfo = params.additionalNotes ? `\nAdditional Context/Notes: ${params.additionalNotes}` : "";
+
     const refAnalysis = analysisResult ? `\nReference Analysis Influence: ${analysisResult}` : "";
     
     const qualitySuffix = "8K, ultra detailed, photorealistic, professional architectural photography, award-winning design, cinematic lighting, high resolution";
@@ -85,6 +92,7 @@ export async function POST(req: NextRequest) {
       ${styles}. ${materials}.
       Parameters: ${uniqueParams}.
       Details: ${multiParams}.
+      ${additionalInfo}
       ${refAnalysis}
       ${qualitySuffix}
     `.trim();

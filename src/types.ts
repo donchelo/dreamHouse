@@ -1,5 +1,5 @@
 export interface DreamHouseParams {
-  architect: string;
+  architect: string[];
   city: string;
   climate: string;
   environment: string;
@@ -14,10 +14,11 @@ export interface DreamHouseParams {
   exteriorElements: string[];
   vegetation: string[];
   colorPalette: string[];
+  additionalNotes: string;
 }
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
-  architect: "Sin arquitecto específico",
+  architect: [],
   city: "",
   climate: "Mediterráneo",
   environment: "Suburbana",
@@ -31,6 +32,6 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   architecturalStyles: [],
   exteriorElements: [],
   vegetation: [],
-  colorPalette: []
+  colorPalette: [],
+  additionalNotes: ""
 };
-

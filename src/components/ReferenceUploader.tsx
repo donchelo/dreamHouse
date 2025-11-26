@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Plus } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ReferenceUploaderProps {
@@ -51,53 +51,70 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-700">Referentes (Opcional)</h3>
-      <p className="text-sm text-gray-500">Sube hasta 5 imágenes para inspirar el diseño (materiales, estilo, ambiente).</p>
-      
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={clsx(
-          "border-2 border-dashed rounded-lg p-8 transition-colors flex flex-col items-center justify-center text-center cursor-pointer",
-          isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
-        )}
-      >
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          className="hidden"
-          id="file-upload"
-          onChange={handleFileInput}
-        />
-        <label htmlFor="file-upload" className="cursor-pointer w-full h-full flex flex-col items-center">
-          <Upload className="w-8 h-8 text-gray-400 mb-2" />
-          <span className="text-gray-600 font-medium">Arrastra imágenes o haz clic para subir</span>
-          <span className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP (Max 10MB)</span>
-        </label>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-gray-500" />
+            Referentes Visuales
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">Sube imágenes para guiar el estilo (Max 5)</p>
+        </div>
+        <span className="text-xs font-medium px-2.5 py-1 bg-gray-100 rounded-full text-gray-600">
+          {files.length}/5
+        </span>
       </div>
-
-      {files.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
-          {files.map((file, index) => (
-            <div key={index} className="relative group aspect-square rounded-md overflow-hidden bg-gray-100 border border-gray-200">
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`Preview ${index}`}
-                className="w-full h-full object-cover"
-              />
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        {files.map((file, index) => (
+          <div key={index} className="relative group aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-white">
+            <img
+              src={URL.createObjectURL(file)}
+              alt={`Ref ${index}`}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <button
                 onClick={() => removeFile(index)}
-                className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                className="bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-2 rounded-full transition-colors transform hover:scale-110 hover:rotate-90 duration-300"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+        
+        {files.length < 5 && (
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={clsx(
+              "relative aspect-square rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden group",
+              isDragging 
+                ? "border-primary bg-primary/5 scale-[1.02]" 
+                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+            )}
+          >
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              onChange={handleFileInput}
+            />
+            <div className="bg-white p-3 rounded-full shadow-sm mb-3 group-hover:shadow-md transition-shadow">
+              {isDragging ? (
+                <Plus className="w-6 h-6 text-primary animate-pulse" />
+              ) : (
+                <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600" />
+              )}
+            </div>
+            <span className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
+              {isDragging ? 'Suelta aquí' : 'Añadir imagen'}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-

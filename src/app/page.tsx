@@ -6,7 +6,7 @@ import ReferenceUploader from '@/components/ReferenceUploader';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2 } from 'lucide-react';
+import { Wand2, AlertCircle } from 'lucide-react';
 
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
@@ -21,7 +21,6 @@ export default function Home() {
     setImageUrl(null);
 
     try {
-      // Create FormData to send files and params
       const formData = new FormData();
       files.forEach((file) => {
         formData.append('files', file);
@@ -40,6 +39,12 @@ export default function Home() {
 
       const data = await response.json();
       setImageUrl(data.imageUrl);
+      
+      // Scroll to result
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 100);
+      
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -53,45 +58,65 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      <div className="max-w-4xl mx-auto px-4">
-        <Header />
+    <div className="min-h-screen pb-32">
+      <Header />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <main className="space-y-8 bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-100">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
-          <ReferenceUploader files={files} onFilesChange={setFiles} />
-          
-          <ParameterForm 
-            params={params} 
-            onChange={setParams} 
-            disabled={isLoading}
-          />
-
-          {error && (
-            <div className="p-4 bg-red-50 text-red-600 rounded-md text-sm border border-red-200">
-              {error}
+          {/* Main Form Area */}
+          <div className="lg:col-span-12 space-y-10">
+            
+            <div className="space-y-2 text-center max-w-2xl mx-auto mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+                Diseña tu casa ideal con IA
+              </h2>
+              <p className="text-lg text-gray-500">
+                Define los parámetros, sube referencias y deja que nuestro arquitecto virtual cree visualizaciones impresionantes.
+              </p>
             </div>
-          )}
 
-          <div className="flex justify-center pt-4">
-            <button
-              onClick={handleGenerate}
-              disabled={isLoading}
-              className="group flex items-center gap-2 px-8 py-3 bg-black text-white rounded-full text-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg"
-            >
-              <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              {isLoading ? 'Generando...' : 'Generar DreamHouse'}
-            </button>
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10 space-y-10">
+              <ReferenceUploader files={files} onFilesChange={setFiles} />
+              
+              <div className="border-t border-gray-100 pt-10">
+                 <ParameterForm 
+                  params={params} 
+                  onChange={setParams} 
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <div className="flex justify-center pt-8 pb-12">
+              <button
+                onClick={handleGenerate}
+                disabled={isLoading}
+                className="group relative flex items-center gap-3 px-10 py-4 bg-primary text-primary-foreground rounded-full text-lg font-semibold hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none active:scale-95"
+              >
+                <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                {isLoading ? 'Generando Diseño...' : 'Generar Render'}
+              </button>
+            </div>
+
+            <ResultDisplay 
+              imageUrl={imageUrl} 
+              isLoading={isLoading} 
+              onRegenerate={handleGenerate} 
+            />
+            
           </div>
-
-          <ResultDisplay 
-            imageUrl={imageUrl} 
-            isLoading={isLoading} 
-            onRegenerate={handleGenerate} 
-          />
-          
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
