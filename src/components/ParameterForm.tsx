@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { 
   ChevronDown, Check, Dices, RotateCcw,
   Sparkles, MapPin, Building2, Palette, Camera, PenLine,
-  ChevronRight
+  ChevronRight, ImageIcon
 } from 'lucide-react';
 
 interface ParameterFormProps {
@@ -111,6 +111,8 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       season: pick(C.SEASONS),
       lighting: pick(C.LIGHTING_TYPES),
       humanContext: pick(C.HUMAN_CONTEXT),
+      outputResolution: pick(C.OUTPUT_RESOLUTIONS),
+      aspectRatio: pick(C.ASPECT_RATIOS),
       city: params.city,
       additionalNotes: params.additionalNotes
     };
@@ -322,7 +324,28 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         </div>
       </Section>
 
-      {/* SECTION 6: PERSONALIZATION */}
+      {/* SECTION 6: OUTPUT CONFIGURATION */}
+      <Section 
+        title="Configuración de Salida" 
+        icon={<ImageIcon className="w-5 h-5" />}
+        badge="CALIDAD"
+        defaultOpen={false}
+      >
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            {renderSelect("Resolución", "outputResolution", C.OUTPUT_RESOLUTIONS)}
+            {renderSelect("Relación de Aspecto", "aspectRatio", C.ASPECT_RATIOS)}
+          </div>
+          <div className="p-3 bg-card-elevated rounded-lg border border-border">
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">💡 Nota:</strong> Mayor resolución = más tiempo de generación y mayor detalle.
+              4K es ideal para impresiones y presentaciones profesionales.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* SECTION 7: PERSONALIZATION */}
       <Section 
         title="Personalización" 
         icon={<PenLine className="w-5 h-5" />}

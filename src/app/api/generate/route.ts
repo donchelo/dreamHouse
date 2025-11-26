@@ -196,8 +196,8 @@ RENDER QUALITY: ${qualitySuffix}
       config: {
         tools: [{ googleSearch: {} }],
         imageConfig: {
-          aspectRatio: "16:9",
-          imageSize: "4K"
+          aspectRatio: params.aspectRatio || "16:9",
+          imageSize: params.outputResolution || "4K"
         }
       }
     });

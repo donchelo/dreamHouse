@@ -282,3 +282,21 @@ export const HUMAN_CONTEXT = [
   "Grupo social",
   "Actividad (caminando, sentados)"
 ];
+
+// ------------------------------------------
+// SECTION 6: OUTPUT CONFIGURATION
+// ------------------------------------------
+
+export const OUTPUT_RESOLUTIONS = [
+  "1K",   // ~1024px
+  "2K",   // ~2048px 
+  "4K"    // ~4096px (máxima calidad)
+];
+
+export const ASPECT_RATIOS = [
+  "16:9",   // Panorámico (ideal para arquitectura)
+  "4:3",    // Tradicional
+  "1:1",    // Cuadrado
+  "9:16",   // Vertical/Portrait
+  "3:4"     // Vertical tradicional
+];

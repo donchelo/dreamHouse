@@ -36,7 +36,11 @@ export interface DreamHouseParams {
   lighting: string;
   humanContext: string;
   
-  // Section 6: Personalization
+  // Section 6: Output Configuration
+  outputResolution: string;
+  aspectRatio: string;
+  
+  // Section 7: Personalization
   additionalNotes: string;
 }
 
@@ -74,6 +78,10 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   lighting: "Golden hour cálida",
   humanContext: "Sin personas",
   
-  // Section 6: Personalization
+  // Section 6: Output Configuration
+  outputResolution: "4K",
+  aspectRatio: "16:9",
+  
+  // Section 7: Personalization
   additionalNotes: ""
 };
