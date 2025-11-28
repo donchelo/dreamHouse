@@ -3,7 +3,7 @@ import { DreamHouseParams, DEFAULT_PARAMS } from '../types';
 import * as C from '../app/constants';
 import clsx from 'clsx';
 import { 
-  Dices, RotateCcw, HelpCircle, Info,
+  Dices, RotateCcw, Info,
   Sparkles, MapPin, Building2, Palette, Camera, PenLine, ImageIcon
 } from 'lucide-react';
 import { Section } from './ui/Section';
@@ -16,25 +16,12 @@ interface ParameterFormProps {
   disabled?: boolean;
 }
 
-// Componente de tooltip/ayuda para accesibilidad
-function HelpTooltip({ text }: { text: string }) {
-  return (
-    <div className="group relative inline-flex items-center ml-2">
-      <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-primary cursor-help transition-colors" />
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-card-elevated border border-border rounded-lg text-xs text-muted-foreground max-w-[200px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
-        {text}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-card-elevated" />
-      </div>
-    </div>
-  );
-}
 
 // Componente de descripción de sección
 function SectionDescription({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2 p-3 bg-secondary/30 rounded-lg border border-border/50 mb-4">
-      <Info className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-      <p className="text-xs text-muted-foreground leading-relaxed">{children}</p>
+    <div className="relative pl-3 py-1 mb-4 border-l-2 border-primary/30">
+      <p className="text-xs text-muted-foreground leading-relaxed italic">{children}</p>
     </div>
   );
 }
@@ -109,23 +96,23 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
     const count = current.length;
     
     return (
-      <fieldset className="flex flex-col gap-3" role="group" aria-labelledby={`${key}-label`}>
-        <div className="flex justify-between items-center px-1">
-          <div className="flex items-center">
+      <fieldset className="flex flex-col gap-2" role="group" aria-labelledby={`${key}-label`}>
+        <div className="flex flex-col gap-1 px-1">
+          <div className="flex justify-between items-center">
             <label 
               id={`${key}-label`}
               className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
             >
               {label}
             </label>
-            <HelpTooltip text={helpText} />
+            <span 
+              className="text-[10px] font-mono px-2 py-0.5 rounded-full border transition-colors bg-card-elevated text-muted-foreground border-border"
+              aria-label={`${count} opciones seleccionadas`}
+            >
+              {count} seleccionados
+            </span>
           </div>
-          <span 
-            className="text-[10px] font-mono px-2 py-0.5 rounded-full border transition-colors bg-card-elevated text-muted-foreground border-border"
-            aria-label={`${count} opciones seleccionadas`}
-          >
-            {count} seleccionados
-          </span>
+          <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">{helpText}</p>
         </div>
         <div 
           className={clsx(
@@ -192,6 +179,75 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         </div>
       </div>
 
+      {/* SECTION 2: CONTEXT & LOCATION */}
+      <Section 
+        title="Contexto y Ubicación" 
+        icon={<MapPin className="w-5 h-5" aria-hidden="true" />}
+        badge="UBICACIÓN"
+        defaultOpen={true}
+      >
+        <SectionDescription>
+          Establece el entorno donde se ubicará tu proyecto. El clima, el paisaje circundante y las condiciones ambientales influyen directamente en el diseño arquitectónico resultante.
+        </SectionDescription>
+        <div className="space-y-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1 pl-1">
+              <label 
+                htmlFor="city-input"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
+              >
+                Ciudad / Localización
+              </label>
+              <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
+                Escribe una ciudad o región para adaptar el estilo al contexto cultural
+              </p>
+            </div>
+            <input
+              id="city-input"
+              type="text"
+              value={params.city}
+              onChange={(e) => handleChange("city", e.target.value)}
+              placeholder="Ej: Tokyo, Barcelona, Dubai..."
+              disabled={disabled}
+              className="w-full bg-card/50 backdrop-blur-sm border border-border rounded-xl py-3 px-4 text-foreground text-sm font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 placeholder:text-muted hover:border-border-hover hover:bg-card-elevated"
+              aria-describedby="city-help"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Select 
+              label="Clima"
+              value={params.climate}
+              onChange={(e) => handleChange("climate", e.target.value)}
+              options={C.CLIMATES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Entorno"
+              value={params.environment}
+              onChange={(e) => handleChange("environment", e.target.value)}
+              options={C.ENVIRONMENTS}
+              disabled={disabled}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Select 
+              label="Cuerpo de Agua"
+              value={params.waterBody}
+              onChange={(e) => handleChange("waterBody", e.target.value)}
+              options={C.WATER_BODIES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Condición Climática"
+              value={params.weatherCondition}
+              onChange={(e) => handleChange("weatherCondition", e.target.value)}
+              options={C.WEATHER_CONDITIONS}
+              disabled={disabled}
+            />
+          </div>
+        </div>
+      </Section>
+
       {/* SECTION 1: PROJECT ESSENCE */}
       <Section 
         title="Esencia del Proyecto" 
@@ -238,75 +294,6 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
             aria-describedby="mood-help"
           />
           <p id="mood-help" className="sr-only">Define la sensación emocional que transmitirá el diseño</p>
-        </div>
-      </Section>
-
-      {/* SECTION 2: CONTEXT & LOCATION */}
-      <Section 
-        title="Contexto y Ubicación" 
-        icon={<MapPin className="w-5 h-5" aria-hidden="true" />}
-        defaultOpen={true}
-      >
-        <SectionDescription>
-          Establece el entorno donde se ubicará tu proyecto. El clima, el paisaje circundante y las condiciones ambientales influyen directamente en el diseño arquitectónico resultante.
-        </SectionDescription>
-        <div className="space-y-6">
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center">
-              <label 
-                htmlFor="city-input"
-                className="text-xs font-semibold text-muted-foreground uppercase tracking-widest pl-1"
-              >
-                Ciudad / Localización
-              </label>
-              <HelpTooltip text="Escribe el nombre de una ciudad o región. Esto ayuda a la IA a adaptar el estilo arquitectónico al contexto cultural y geográfico." />
-            </div>
-            <input
-              id="city-input"
-              type="text"
-              value={params.city}
-              onChange={(e) => handleChange("city", e.target.value)}
-              placeholder="Ej: Tokyo, Barcelona, Dubai..."
-              disabled={disabled}
-              className="w-full bg-card/50 backdrop-blur-sm border border-border rounded-xl py-3 px-4 text-foreground text-sm font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 placeholder:text-muted hover:border-border-hover hover:bg-card-elevated"
-              aria-describedby="city-help"
-            />
-            <p id="city-help" className="text-[10px] text-muted px-1">
-              Opcional: La ubicación influye en el estilo arquitectónico regional
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Select 
-              label="Clima"
-              value={params.climate}
-              onChange={(e) => handleChange("climate", e.target.value)}
-              options={C.CLIMATES}
-              disabled={disabled}
-            />
-            <Select 
-              label="Entorno"
-              value={params.environment}
-              onChange={(e) => handleChange("environment", e.target.value)}
-              options={C.ENVIRONMENTS}
-              disabled={disabled}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Select 
-              label="Cuerpo de Agua"
-              value={params.waterBody}
-              onChange={(e) => handleChange("waterBody", e.target.value)}
-              options={C.WATER_BODIES}
-              disabled={disabled}
-            />
-            <Select 
-              label="Condición Climática"
-              value={params.weatherCondition}
-              onChange={(e) => handleChange("weatherCondition", e.target.value)}
-              options={C.WEATHER_CONDITIONS}
-              disabled={disabled}
-            />
-          </div>
         </div>
       </Section>
 
@@ -506,15 +493,17 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         <SectionDescription>
           Añade instrucciones específicas en texto libre. Aquí puedes describir detalles únicos, emociones, referencias culturales o cualquier aspecto que no esté cubierto por las opciones anteriores.
         </SectionDescription>
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1 pl-1">
             <label 
               htmlFor="notes-textarea"
-              className="text-xs font-semibold text-muted-foreground uppercase tracking-widest pl-1"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
             >
               Notas Adicionales
             </label>
-            <HelpTooltip text="Escribe en lenguaje natural cualquier detalle específico que quieras incluir en el diseño. La IA interpretará tus instrucciones." />
+            <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
+              Escribe cualquier detalle específico que quieras incluir. La IA interpretará tus instrucciones.
+            </p>
           </div>
           <textarea
             id="notes-textarea"
@@ -526,9 +515,6 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
             className="w-full bg-card/50 backdrop-blur-sm border border-border rounded-xl py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 placeholder:text-muted hover:border-border-hover resize-y"
             aria-describedby="notes-help"
           />
-          <p id="notes-help" className="text-[10px] text-muted px-1">
-            Tip: Sé descriptivo. Menciona emociones, referencias visuales o detalles específicos que imaginas.
-          </p>
         </div>
       </Section>
     </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
+import LotUploader from '@/components/LotUploader';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
@@ -18,6 +19,7 @@ const FEATURES = [
 
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
+  const [lotFile, setLotFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +52,9 @@ export default function Home() {
       files.forEach((file) => {
         formData.append('files', file);
       });
+      if (lotFile) {
+        formData.append('lotImage', lotFile);
+      }
       formData.append('params', JSON.stringify(params));
 
       const response = await fetch('/api/generate', {
@@ -132,8 +137,7 @@ export default function Home() {
           
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Transforma tus ideas en visualizaciones fotorrealistas. Define parámetros arquitectónicos, 
-            sube referencias y obtén renders de nivel profesional en segundos.
+            Transforma tus ideas en visualizaciones fotorrealistas. <strong className="text-foreground/80">Paso 1:</strong> Sube imágenes de referencia. <strong className="text-foreground/80">Paso 2:</strong> Configura los parámetros. <strong className="text-foreground/80">Paso 3:</strong> Genera tu render con IA.
           </p>
 
           {/* Feature Pills */}
@@ -186,9 +190,16 @@ export default function Home() {
           
           {/* Reference Uploader Card */}
           <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            <div className="border-gradient hover-lift">
-              <div className="relative z-10 bg-card rounded-2xl overflow-hidden">
-                <ReferenceUploader files={files} onFilesChange={setFiles} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border-gradient hover-lift">
+                <div className="relative z-10 bg-card rounded-2xl overflow-hidden h-full">
+                  <ReferenceUploader files={files} onFilesChange={setFiles} />
+                </div>
+              </div>
+              <div className="border-gradient hover-lift">
+                <div className="relative z-10 bg-card rounded-2xl overflow-hidden h-full">
+                  <LotUploader file={lotFile} onFileChange={setLotFile} />
+                </div>
               </div>
             </div>
           </section>
@@ -197,16 +208,21 @@ export default function Home() {
           <section className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             {/* Section Header */}
             <div className="flex items-center gap-6 mb-10">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-border" />
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-border" aria-hidden="true" />
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
+                <div className="p-2 bg-primary/10 rounded-lg border border-primary/20" aria-hidden="true">
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-2xl font-bold text-foreground tracking-tight">
-                  Parámetros de Diseño
-                </h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground tracking-tight">
+                    Parámetros de Diseño
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Configura cada aspecto de tu casa ideal. Expande las secciones para ver más opciones.
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 h-px bg-gradient-to-l from-transparent via-border to-border" />
+              <div className="flex-1 h-px bg-gradient-to-l from-transparent via-border to-border" aria-hidden="true" />
             </div>
 
             <ParameterForm 
@@ -218,8 +234,12 @@ export default function Home() {
 
           {/* Error Message */}
           {error && (
-            <div className="p-5 bg-destructive/10 text-destructive rounded-2xl text-sm border border-destructive/20 flex items-center gap-4 animate-scale-up">
-              <div className="p-2 bg-destructive/20 rounded-lg">
+            <div 
+              className="p-5 bg-destructive/10 text-destructive rounded-2xl text-sm border border-destructive/20 flex items-center gap-4 animate-scale-up"
+              role="alert"
+              aria-live="assertive"
+            >
+              <div className="p-2 bg-destructive/20 rounded-lg" aria-hidden="true">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <div>
@@ -240,6 +260,7 @@ export default function Home() {
                 isLoading={isLoading}
                 size="lg"
                 className="relative px-14 py-8 rounded-full text-xl font-bold shadow-2xl transition-all duration-300 hover:scale-105 active:scale-100 border border-white/10 bg-gradient-to-r from-primary via-primary-glow to-primary bg-[length:200%_100%] hover:bg-[position:100%_0] group"
+                aria-label={isLoading ? 'Generando render, por favor espera...' : 'Generar render arquitectónico con los parámetros configurados'}
               >
                 {/* Inner glow */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-white/10 pointer-events-none" />

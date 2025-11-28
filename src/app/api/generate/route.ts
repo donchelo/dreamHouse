@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const paramsJson = formData.get('params') as string;
     const files = formData.getAll('files') as File[];
+    const lotImage = formData.get('lotImage') as File | null;
 
     if (!paramsJson) {
       return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
@@ -52,23 +53,40 @@ export async function POST(req: NextRequest) {
 
     const params: DreamHouseParams = JSON.parse(paramsJson);
 
-    // --- Step 1: Analyze References (if any) ---
+    // --- Step 1: Analyze References & Lot (if any) ---
     let analysisResult = "";
     
-    if (files.length > 0) {
+    if (files.length > 0 || lotImage) {
       const parts = [];
-      parts.push({ text: "Analiza estas imágenes de referencia arquitectónica. Identifica y lista brevemente: 1. Estilo visual dominante. 2. Materiales principales. 3. Paleta de colores. 4. Elementos arquitectónicos distintivos. 5. 'Mood' o atmósfera." });
+      parts.push({ text: "Analiza las siguientes imágenes para preparar un prompt de generación arquitectónica." });
 
-      for (const file of files) {
-        const buffer = await file.arrayBuffer();
+      if (lotImage) {
+        const buffer = await lotImage.arrayBuffer();
         const base64Data = Buffer.from(buffer).toString('base64');
+        parts.push({ text: "IMAGEN DEL LOTE (Terreno donde construir):" });
         parts.push({
           inlineData: {
-            mimeType: file.type,
+            mimeType: lotImage.type,
             data: base64Data
           }
         });
       }
+
+      if (files.length > 0) {
+        parts.push({ text: "IMÁGENES DE REFERENCIA (Estilo deseado):" });
+        for (const file of files) {
+          const buffer = await file.arrayBuffer();
+          const base64Data = Buffer.from(buffer).toString('base64');
+          parts.push({
+            inlineData: {
+              mimeType: file.type,
+              data: base64Data
+            }
+          });
+        }
+      }
+
+      parts.push({ text: "INSTRUCCIONES: 1. Si hay imagen del lote, describe detalladamente su topografía, vegetación y entorno para integrar el diseño en él. 2. Si hay referencias, extrae el estilo visual, materiales, colores y atmósfera. 3. Proporciona un resumen conciso combinando ambos aspectos (estilo sobre lote)." });
 
       try {
         const analysisResponse = await ai.models.generateContent({
@@ -150,7 +168,12 @@ export async function POST(req: NextRequest) {
     
     // Reference analysis
     const refAnalysis = analysisResult 
-      ? `Reference analysis influence: ${analysisResult}` 
+      ? `Visual Context & Reference Analysis: ${analysisResult}` 
+      : "";
+
+    // Lot specific instruction if present
+    const lotInstruction = lotImage 
+      ? "CRITICAL: The building MUST be situated in the environment described in the 'Visual Context Analysis' corresponding to the LOT IMAGE. Match the terrain, vegetation, and lighting of the lot."
       : "";
     
     // Quality suffix - Enhanced for professional photography
@@ -183,6 +206,7 @@ ${cameraSettings}
 
 ${additionalInfo}
 ${refAnalysis}
+${lotInstruction}
 
 RENDER QUALITY: ${qualitySuffix}
     `.trim().replace(/\n{3,}/g, '\n\n');
