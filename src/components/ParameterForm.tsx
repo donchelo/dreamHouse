@@ -3,7 +3,6 @@ import { DreamHouseParams, DEFAULT_PARAMS } from '../types';
 import * as C from '../app/constants';
 import clsx from 'clsx';
 import { 
-  Dices, RotateCcw, Info,
   Sparkles, MapPin, Building2, Palette, Camera, PenLine, ImageIcon
 } from 'lucide-react';
 import { Section } from './ui/Section';
@@ -14,8 +13,9 @@ interface ParameterFormProps {
   params: DreamHouseParams;
   onChange: (params: DreamHouseParams) => void;
   disabled?: boolean;
+  activeSection: string | null;
+  onSectionChange: (id: string) => void;
 }
-
 
 // Componente de descripción de sección
 function SectionDescription({ children }: { children: React.ReactNode }) {
@@ -26,7 +26,13 @@ function SectionDescription({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function ParameterForm({ params, onChange, disabled }: ParameterFormProps) {
+export default function ParameterForm({ 
+  params, 
+  onChange, 
+  disabled,
+  activeSection,
+  onSectionChange
+}: ParameterFormProps) {
   
   const handleChange = (key: keyof DreamHouseParams, value: string | number | string[]) => {
     onChange({ ...params, [key]: value });
@@ -42,47 +48,6 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       newValues = [...current, value];
     }
     handleChange(key, newValues);
-  };
-
-  const handleRandomize = () => {
-    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-    const pickMulti = (arr: string[], maxRandom: number = 3): string[] => {
-      const count = Math.floor(Math.random() * maxRandom) + 1;
-      const shuffled = [...arr].sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, count);
-    };
-
-    const randomParams: DreamHouseParams = {
-      ...params,
-      projectType: pick(C.PROJECT_TYPES),
-      architecturalStyles: pickMulti(C.STYLES, 3),
-      architect: pickMulti(C.ARCHITECTS, 2),
-      mood: pick(C.MOODS),
-      climate: pick(C.CLIMATES),
-      environment: pick(C.ENVIRONMENTS),
-      waterBody: pick(C.WATER_BODIES),
-      weatherCondition: pick(C.WEATHER_CONDITIONS),
-      size: pick(C.SIZES),
-      levels: Math.floor(Math.random() * 3) + 1,
-      roofType: pick(C.ROOF_TYPES),
-      materials: pickMulti(C.MATERIALS, 4),
-      finishLevel: pick(C.FINISH_LEVELS),
-      colorPalette: pickMulti(C.COLORS, 3),
-      exteriorElements: pickMulti(C.EXTERIOR_ELEMENTS, 5),
-      vegetation: pickMulti(C.VEGETATION, 3),
-      cameraAngle: pick(C.ANGLES),
-      composition: pick(C.COMPOSITIONS),
-      timeOfDay: pick(C.TIMES_OF_DAY),
-      season: pick(C.SEASONS),
-      lighting: pick(C.LIGHTING_TYPES),
-      humanContext: pick(C.HUMAN_CONTEXT),
-      outputResolution: pick(C.OUTPUT_RESOLUTIONS),
-      aspectRatio: pick(C.ASPECT_RATIOS),
-      city: params.city,
-      additionalNotes: params.additionalNotes
-    };
-
-    onChange(randomParams);
   };
 
   const renderChipsGroup = (
@@ -144,47 +109,17 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
     );
   };
 
-  const handleReset = () => {
-    onChange({ ...DEFAULT_PARAMS, city: "", additionalNotes: "" });
-  };
-
   return (
-    <div className="space-y-8" role="form" aria-label="Formulario de parámetros de diseño arquitectónico">
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-3 sticky top-4 z-20 pointer-events-none">
-        <div className="pointer-events-auto flex gap-0 border border-border bg-background">
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={disabled}
-              className="group flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors"
-              aria-label="Restablecer todos los parámetros a sus valores predeterminados"
-              title="Restablecer formulario"
-            >
-              <RotateCcw className="w-4 h-4 group-hover:-rotate-180 transition-transform duration-500" aria-hidden="true" />
-              <span className="hidden sm:inline">Reset</span>
-            </button>
-            <div className="w-px bg-border" aria-hidden="true" />
-            <button
-              type="button"
-              onClick={handleRandomize}
-              disabled={disabled}
-              className="group flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-              aria-label="Generar una combinación aleatoria de parámetros para inspiración"
-              title="Generar diseño aleatorio"
-            >
-              <Dices className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" aria-hidden="true" />
-              <span>Surprise Me</span>
-            </button>
-        </div>
-      </div>
-
+    <div className="space-y-0" role="form" aria-label="Formulario de parámetros de diseño arquitectónico">
+      
       {/* SECTION 2: CONTEXT & LOCATION */}
       <Section 
         title="Contexto y Ubicación" 
+        number="02"
         icon={<MapPin className="w-5 h-5" aria-hidden="true" />}
         badge="UBICACIÓN"
-        defaultOpen={true}
+        isOpen={activeSection === 'location'}
+        onToggle={() => onSectionChange('location')}
       >
         <SectionDescription>
           Establece el entorno donde se ubicará tu proyecto. El clima, el paisaje circundante y las condiciones ambientales influyen directamente en el diseño arquitectónico resultante.
@@ -251,9 +186,11 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       {/* SECTION 1: PROJECT ESSENCE */}
       <Section 
         title="Esencia del Proyecto" 
+        number="03"
         icon={<Sparkles className="w-5 h-5" aria-hidden="true" />}
         badge="PRINCIPAL"
-        defaultOpen={true}
+        isOpen={activeSection === 'essence'}
+        onToggle={() => onSectionChange('essence')}
       >
         <SectionDescription>
           Define la identidad fundamental de tu proyecto. El tipo de construcción, los estilos arquitectónicos que te inspiran y la atmósfera general que deseas transmitir.
@@ -300,8 +237,10 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       {/* SECTION 3: PHYSICAL SPECIFICATIONS */}
       <Section 
         title="Especificaciones Físicas" 
+        number="04"
         icon={<Building2 className="w-5 h-5" aria-hidden="true" />}
-        defaultOpen={true}
+        isOpen={activeSection === 'specs'}
+        onToggle={() => onSectionChange('specs')}
       >
         <SectionDescription>
           Configura las características estructurales de la edificación: dimensiones, número de pisos, tipo de cubierta y materiales de construcción principales.
@@ -351,8 +290,10 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       {/* SECTION 4: AESTHETICS & DETAILS */}
       <Section 
         title="Estética y Detalles" 
+        number="05"
         icon={<Palette className="w-5 h-5" aria-hidden="true" />}
-        defaultOpen={false}
+        isOpen={activeSection === 'aesthetics'}
+        onToggle={() => onSectionChange('aesthetics')}
       >
         <SectionDescription>
           Personaliza los aspectos visuales del diseño: colores predominantes, elementos decorativos exteriores y tipo de vegetación que rodeará la construcción.
@@ -383,8 +324,10 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       {/* SECTION 5: CAMERA CONFIGURATION */}
       <Section 
         title="Configuración de Cámara" 
+        number="06"
         icon={<Camera className="w-5 h-5" aria-hidden="true" />}
-        defaultOpen={false}
+        isOpen={activeSection === 'camera'}
+        onToggle={() => onSectionChange('camera')}
       >
         <SectionDescription>
           Controla cómo se visualizará el render final: ángulo de la cámara, composición fotográfica, iluminación y momento del día. Estos ajustes son clave para lograr imágenes profesionales.
@@ -444,9 +387,11 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       {/* SECTION 6: OUTPUT CONFIGURATION */}
       <Section 
         title="Configuración de Salida" 
+        number="07"
         icon={<ImageIcon className="w-5 h-5" aria-hidden="true" />}
         badge="CALIDAD"
-        defaultOpen={false}
+        isOpen={activeSection === 'output'}
+        onToggle={() => onSectionChange('output')}
       >
         <SectionDescription>
           Define la calidad técnica de la imagen generada. Mayor resolución produce más detalle pero requiere más tiempo de procesamiento.
@@ -486,8 +431,10 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
       {/* SECTION 7: PERSONALIZATION */}
       <Section 
         title="Personalización Avanzada" 
+        number="08"
         icon={<PenLine className="w-5 h-5" aria-hidden="true" />}
-        defaultOpen={false}
+        isOpen={activeSection === 'custom'}
+        onToggle={() => onSectionChange('custom')}
       >
         <SectionDescription>
           Añade instrucciones específicas en texto libre. Aquí puedes describir detalles únicos, emociones, referencias culturales o cualquier aspecto que no esté cubierto por las opciones anteriores.

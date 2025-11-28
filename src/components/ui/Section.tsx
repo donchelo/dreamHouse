@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 interface SectionProps {
   title: string;
+  number?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  isOpen?: boolean;
+  onToggle?: () => void;
   badge?: string;
   className?: string;
   accentColor?: 'primary' | 'secondary';
@@ -16,13 +19,27 @@ interface SectionProps {
 
 export function Section({
   title,
+  number,
   icon,
   children,
-  defaultOpen = true,
+  defaultOpen = false, // Changed default to false based on user requirement
+  isOpen: controlledIsOpen,
+  onToggle: controlledOnToggle,
   badge,
   className,
 }: SectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (isControlled && controlledOnToggle) {
+      controlledOnToggle();
+    } else {
+      setInternalIsOpen(!isOpen);
+    }
+  };
 
   return (
     <div
@@ -35,26 +52,37 @@ export function Section({
       {/* Header */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full py-6 flex items-center justify-between text-left hover:opacity-70 transition-opacity"
+        onClick={handleToggle}
+        className="w-full py-8 flex items-start sm:items-center justify-between text-left hover:opacity-70 transition-opacity gap-4"
       >
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-3">
-               {badge && (
-                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-foreground text-background">
-                  {badge}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 w-full">
+            {/* Number */}
+            {number && (
+                <span className={twMerge(
+                  "text-5xl sm:text-6xl font-black transition-colors font-mono leading-none tracking-tighter",
+                  isOpen ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary"
+                )}>
+                    {number}
                 </span>
-              )}
-              <h3 className="text-xl font-bold uppercase tracking-tight">
-                {title}
-              </h3>
+            )}
+
+            <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                   {badge && (
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-foreground text-background">
+                      {badge}
+                    </span>
+                  )}
+                  <h3 className="text-xl sm:text-2xl font-bold uppercase tracking-tight flex items-center gap-3">
+                    {icon && <span className="text-primary">{icon}</span>}
+                    {title}
+                  </h3>
+                </div>
             </div>
-          </div>
         </div>
 
         {/* Toggle button */}
-        <div className="w-8 h-8 flex items-center justify-center border border-foreground rounded-full">
+        <div className="w-8 h-8 flex items-center justify-center border border-foreground rounded-full shrink-0 mt-2 sm:mt-0">
             {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
         </div>
       </button>
