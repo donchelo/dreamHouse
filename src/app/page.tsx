@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
+import PromptPreview from '@/components/PromptPreview';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2, AlertCircle, ArrowRight, Zap, Layers, Palette, RotateCcw, Dices } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Zap, Layers, Palette, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import * as C from '@/app/constants';
@@ -20,6 +21,11 @@ const FEATURES = [
   { icon: Palette, label: 'Custom', desc: '100+ Options' },
 ];
 
+const HERO_IMAGES = [
+  "/images/dreamhouse-render.png",
+  "/images/dreamhouse-render (1).png"
+];
+
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
@@ -27,9 +33,23 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   // Accordion state - null means all closed by default
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const toggleSection = (id: string) => {
     setActiveSection(prev => prev === id ? null : id);
@@ -37,6 +57,7 @@ export default function Home() {
 
   const handleReset = () => {
     setParams({ ...DEFAULT_PARAMS, city: "", additionalNotes: "" });
+    showToast("Parameters reset to default");
   };
 
   const handleRandomize = () => {
@@ -78,6 +99,7 @@ export default function Home() {
     };
 
     setParams(randomParams);
+    showToast("Random design generated!");
   };
 
   const handleGenerate = async () => {
@@ -132,13 +154,18 @@ export default function Home() {
       <section className="relative h-[70svh] md:h-[85vh] w-full overflow-hidden flex items-center justify-center bg-black">
          {/* Full Background Image */}
          <div className="absolute inset-0 z-0">
-             <Image
-               src="/images/dreamhouse-render.png"
-               alt="Architectural Render of a Modern Home"
-               fill
-               className="object-cover object-center opacity-60"
-               priority
-             />
+             {HERO_IMAGES.map((src, index) => (
+               <Image
+                 key={src}
+                 src={src}
+                 alt={`Architectural Render ${index + 1}`}
+                 fill
+                 className={`object-cover object-center transition-opacity duration-1000 ${
+                   index === currentImageIndex ? 'opacity-60' : 'opacity-0'
+                 }`}
+                 priority={index === 0}
+               />
+             ))}
              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
          </div>
 
@@ -212,6 +239,16 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div className="fixed top-24 right-6 z-50 animate-fade-in-up">
+              <div className="bg-foreground text-background px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+                <span className="text-sm font-bold uppercase tracking-wide">{toastMessage}</span>
+              </div>
+            </div>
+          )}
+          
           {/* Reference Uploader Section */}
           <Section 
             title="References" 
@@ -245,26 +282,39 @@ export default function Home() {
             </div>
           )}
 
-          {/* Generate Button */}
-          <div className="flex justify-center py-10 border-t border-border">
+          {/* Floating Generate Button (FAB Style) */}
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
             <Button
               onClick={handleGenerate}
               isLoading={isLoading}
               size="lg"
-              className="w-full md:w-auto px-20 py-8 text-xl uppercase tracking-widest hover:scale-105 transition-transform"
+              className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
+              aria-label="Generate architectural render"
             >
-              {isLoading ? 'Processing...' : 'Generate Render'}
-              {!isLoading && <Wand2 className="ml-3 w-6 h-6" />}
+              {isLoading ? 'Processing...' : 'Dream'}
+              {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
             </Button>
           </div>
 
-          {/* Result Display */}
+          {/* Result Section with Prompt Preview */}
           <div id="result" className="scroll-mt-24 pb-20">
-            <ResultDisplay 
-              imageUrl={imageUrl} 
-              isLoading={isLoading} 
-              onRegenerate={handleGenerate} 
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Left Column: Prompt DNA (Tags) */}
+              <div className="lg:col-span-3 lg:order-1 order-2">
+                <div className="bg-card border border-border rounded-xl p-4 h-full max-h-[600px] overflow-hidden sticky top-24">
+                  <PromptPreview params={params} />
+                </div>
+              </div>
+
+              {/* Right Column: Result Image */}
+              <div className="lg:col-span-9 lg:order-2 order-1">
+                <ResultDisplay 
+                  imageUrl={imageUrl} 
+                  isLoading={isLoading} 
+                  onRegenerate={handleGenerate} 
+                />
+              </div>
+            </div>
           </div>
           
         </div>

@@ -230,7 +230,7 @@ export default function ResultDisplay({ imageUrl, isLoading, onRegenerate }: Res
                 <img 
                   src={imageUrl} 
                   alt="DreamHouse Render" 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02] cursor-pointer" 
+                  className="w-full h-full object-contain bg-black/40 transition-transform duration-700 group-hover:scale-[1.01] cursor-pointer" 
                   onClick={openLightbox}
                 />
                 

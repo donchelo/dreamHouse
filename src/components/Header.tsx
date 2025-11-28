@@ -40,9 +40,6 @@ export default function Header() {
         
         {/* Desktop Navigation */}
         <nav className="hidden sm:flex items-center gap-8">
-          <NavLink href="#">Gallery</NavLink>
-          <NavLink href="#">Projects</NavLink>
-          <NavLink href="#">Pricing</NavLink>
           
           {/* Theme Toggle */}
           <button
@@ -83,15 +80,6 @@ export default function Header() {
         isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
       )}>
         <nav className="flex flex-col p-8 gap-6">
-          <MobileNavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-            Gallery
-          </MobileNavLink>
-          <MobileNavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-            Projects
-          </MobileNavLink>
-          <MobileNavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>
-            Pricing
-          </MobileNavLink>
           
           <div className="pt-8 mt-4 border-t border-border">
             <button 
@@ -107,27 +95,3 @@ export default function Header() {
   );
 }
 
-// Desktop Nav Link Component
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a 
-      href={href} 
-      className="text-sm font-medium uppercase tracking-wide hover:text-primary transition-colors"
-    >
-      {children}
-    </a>
-  );
-}
-
-// Mobile Nav Link Component
-function MobileNavLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) {
-  return (
-    <a 
-      href={href} 
-      className="text-2xl font-bold uppercase tracking-tight hover:text-primary transition-colors"
-      onClick={onClick}
-    >
-      {children}
-    </a>
-  );
-}

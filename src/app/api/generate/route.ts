@@ -101,115 +101,91 @@ export async function POST(req: NextRequest) {
 
     // --- Step 2: Construct Enhanced Prompt ---
     
-    // Project type
-    const projectType = PROJECT_TYPE_MAP[params.projectType] || "architectural building";
-    
-    // Location context
-    const location = params.city ? `located in ${params.city}` : "";
-    
-    // Architect influence
+    // 1. Core Subject Definition
+    const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
+    const locationStr = params.city ? `in ${params.city}` : "";
     const validArchitects = Array.isArray(params.architect) 
       ? params.architect.filter(a => a !== "Sin arquitecto específico")
       : [];
-    const architectInfluence = validArchitects.length > 0 
-      ? `designed in the style of ${validArchitects.join(' and ')}` 
-      : "";
+    const architects = validArchitects.join(" and ");
+    const archStyle = params.architecturalStyles.join(", ");
     
-    // Mood/Atmosphere
-    const mood = MOOD_MAP[params.mood] || "";
-    
-    // Styles
-    const styles = params.architecturalStyles.length > 0 
-      ? `Architectural style: ${params.architecturalStyles.join(', ')}` 
-      : "";
-    
-    // Materials
-    const materials = params.materials.length > 0 
-      ? `Primary materials: ${params.materials.join(', ')}` 
-      : "";
-    
-    // Physical specifications
-    const physicalSpecs = [
+    // 2. Technical Specifications
+    const techSpecs = [
       `${params.size}`,
-      `${params.levels} level${params.levels > 1 ? 's' : ''}`,
-      `${params.roofType} roof`,
-      params.finishLevel !== "Estándar/Medio" ? `${params.finishLevel} finish level` : ""
+      `${params.levels} levels`,
+      `${params.roofType} roof`
     ].filter(Boolean).join(", ");
+
+    // 3. Materials & Finishes
+    const materialsList = params.materials.join(", ");
+    const colors = params.colorPalette.join(", ");
+    const finish = params.finishLevel;
+
+    // 4. Environment & Context
+    const environment = [
+        params.environment,
+        params.climate,
+        params.waterBody !== "Sin agua cercana" ? params.waterBody : null,
+        params.weatherCondition
+    ].filter(Boolean).join(", ");
+
+    // 5. Landscaping
+    const landscaping = [
+        ...params.vegetation,
+        ...params.exteriorElements
+    ].join(", ");
+
+    // 6. Atmosphere & Mood
+    const moodDesc = MOOD_MAP[params.mood] || params.mood;
     
-    // Context & Environment
-    const environmentContext = [
-      `Climate: ${params.climate}`,
-      `Environment: ${params.environment}`,
-      params.waterBody !== "Sin agua cercana" ? `Water feature: ${params.waterBody}` : "",
-      params.weatherCondition !== "Despejado/Soleado" ? `Weather: ${params.weatherCondition}` : ""
-    ].filter(Boolean).join(". ");
-    
-    // Aesthetics
-    const aesthetics = [
-      params.colorPalette.length > 0 ? `Color palette: ${params.colorPalette.join(', ')}` : "",
-      params.exteriorElements.length > 0 ? `Exterior elements: ${params.exteriorElements.join(', ')}` : "",
-      params.vegetation.length > 0 ? `Landscaping: ${params.vegetation.join(', ')}` : ""
-    ].filter(Boolean).join(". ");
-    
-    // Camera & Photography
-    const cameraSettings = [
-      `Camera angle: ${params.cameraAngle}`,
-      `Composition: ${params.composition}`,
-      `Time of day: ${params.timeOfDay}`,
-      `Season: ${params.season}`,
-      `Lighting: ${params.lighting}`,
-      params.humanContext !== "Sin personas" ? `Human presence: ${params.humanContext}` : ""
-    ].filter(Boolean).join(". ");
-    
-    // Additional notes
-    const additionalInfo = params.additionalNotes 
-      ? `Special instructions: ${params.additionalNotes}` 
-      : "";
-    
-    // Reference analysis
-    const refAnalysis = analysisResult 
-      ? `Visual Context & Reference Analysis: ${analysisResult}` 
-      : "";
+    // 7. Photography Settings
+    const camera = [
+        `Angle: ${params.cameraAngle}`,
+        `Composition: ${params.composition}`,
+        `Time: ${params.timeOfDay}`,
+        `Season: ${params.season}`,
+        `Lighting: ${params.lighting}`
+    ].join(" | ");
 
     // Lot specific instruction if present
     const lotInstruction = lotImage 
-      ? "CRITICAL: The building MUST be situated in the environment described in the 'Visual Context Analysis' corresponding to the LOT IMAGE. Match the terrain, vegetation, and lighting of the lot."
+      ? "CRITICAL: The building MUST be situated in the environment described in the 'Visual Context Analysis' corresponding to the LOT IMAGE. Match the terrain, vegetation, and lighting of the lot exactly."
       : "";
-    
-    // Quality suffix - Enhanced for professional photography
-    const qualitySuffix = `
-      Ultra high resolution 8K, photorealistic architectural photography, 
-      professional DSLR quality, award-winning architectural visualization,
-      cinematic lighting, sharp details, depth of field, 
-      magazine-quality render, ArchDaily featured quality
-    `.trim();
 
-    // Combine everything into a structured prompt
+    // Construct the Professional Prompt
     const fullPrompt = `
-Professional architectural exterior photography of a ${projectType} ${location} ${architectInfluence}.
+**ROLE & OBJECTIVE**
+Act as a world-renowned architectural photographer (e.g., Iwan Baan, Julius Shulman). 
+Generate an AWARD-WINNING EXTERIOR PHOTOGRAPH of a residential project.
+**VIEW:** EXTERIOR ONLY. Never generate interior views.
 
-MOOD & ATMOSPHERE: ${mood}
+**PROJECT SPECIFICATIONS**
+- **Type:** ${projectType} ${locationStr}
+- **Architectural Style:** ${archStyle} ${architects ? `(inspired by ${architects})` : ''}
+- **Scale/Layout:** ${techSpecs}
+- **Materials:** ${materialsList}
+- **Palette:** ${colors}
+- **Finish Level:** ${finish}
 
-ARCHITECTURAL DETAILS:
-${styles}
-${materials}
-Physical specifications: ${physicalSpecs}
+**SITE & ENVIRONMENT**
+- **Setting:** ${environment}
+- **Landscaping:** ${landscaping}
+- **Atmosphere:** ${moodDesc}
 
-ENVIRONMENT & CONTEXT:
-${environmentContext}
+**PHOTOGRAPHY CONFIGURATION**
+- **Settings:** ${camera}
+- **Human Scale:** ${params.humanContext !== "Sin personas" ? params.humanContext : "None, focus on architecture"}
+- **Quality:** 8K resolution, photorealistic, highly detailed, cinematic lighting, architectural visualization masterpiece, sharp focus.
 
-AESTHETICS & DETAILS:
-${aesthetics}
+**SPECIFIC INSTRUCTIONS**
+${params.additionalNotes ? `- User Notes: ${params.additionalNotes}` : ''}
+${lotInstruction ? `- LOT INTEGRATION: ${lotInstruction}` : ''}
+${analysisResult ? `- REFERENCE STYLE: Incorporate these visual elements: ${analysisResult}` : ''}
 
-PHOTOGRAPHY SETTINGS:
-${cameraSettings}
-
-${additionalInfo}
-${refAnalysis}
-${lotInstruction}
-
-RENDER QUALITY: ${qualitySuffix}
-    `.trim().replace(/\n{3,}/g, '\n\n');
+**FINAL DIRECTIVE**
+Ensure the image is a cohesive, photorealistic exterior shot with perfect perspective correction and lighting. The entire building should be visible within the frame.
+    `.trim();
 
     console.log("Generated Prompt:", fullPrompt);
 
