@@ -127,8 +127,9 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               <button
                 onClick={() => removeFile(index)}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-destructive/80 backdrop-blur-sm rounded-full hover:bg-destructive transition-all transform hover:scale-105 active:scale-95"
+                aria-label={`Eliminar imagen de referencia ${index + 1}`}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
                 Eliminar
               </button>
             </div>
@@ -170,6 +171,8 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               accept="image/*"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               onChange={handleFileInput}
+              aria-label="Subir imágenes de referencia (máximo 5 archivos)"
+              title="Arrastra imágenes o haz clic para seleccionar"
             />
             
             {/* Animated background pattern */}
@@ -219,12 +222,12 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
       
       {/* Empty State Tip */}
       {files.length === 0 && (
-        <div className="flex items-center justify-center gap-3 py-4 px-6 bg-card-elevated/50 rounded-xl border border-border">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <div className="flex items-center justify-center gap-3 py-4 px-6 bg-card-elevated/50 rounded-xl border border-border" role="note">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">
             <Sparkles className="w-4 h-4 text-primary" />
           </div>
           <p className="text-sm text-muted-foreground">
-            <span className="text-foreground font-medium">Pro tip:</span> Sube fotos de casas que te inspiren para mejores resultados
+            <span className="text-foreground font-medium">Pro tip:</span> Sube fotos de casas, fachadas o interiores que te inspiren. La IA analizará colores, formas y estilos para crear algo similar.
           </p>
         </div>
       )}
