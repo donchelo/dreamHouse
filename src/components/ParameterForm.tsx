@@ -1,64 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DreamHouseParams, DEFAULT_PARAMS } from '../types';
 import * as C from '../app/constants';
 import clsx from 'clsx';
 import { 
-  ChevronDown, Check, Dices, RotateCcw,
-  Sparkles, MapPin, Building2, Palette, Camera, PenLine,
-  ChevronRight, ImageIcon
+  Dices, RotateCcw,
+  Sparkles, MapPin, Building2, Palette, Camera, PenLine, ImageIcon
 } from 'lucide-react';
+import { Section } from './ui/Section';
+import { Select } from './ui/Select';
+import { Chip } from './ui/Chip';
 
 interface ParameterFormProps {
   params: DreamHouseParams;
   onChange: (params: DreamHouseParams) => void;
   disabled?: boolean;
-}
-
-// Collapsible Section Component
-interface SectionProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-  badge?: string;
-}
-
-function Section({ title, icon, children, defaultOpen = true, badge }: SectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  
-  return (
-    <section className="card-dark overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-5 flex items-center justify-between hover:bg-card-elevated transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="text-primary">{icon}</div>
-          <h3 className="text-base font-semibold text-foreground">{title}</h3>
-          {badge && (
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-              {badge}
-            </span>
-          )}
-        </div>
-        <ChevronRight 
-          className={clsx(
-            "w-5 h-5 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-90"
-          )} 
-        />
-      </button>
-      <div className={clsx(
-        "overflow-hidden transition-all duration-300",
-        isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-      )}>
-        <div className="p-5 pt-0 space-y-5 border-t border-border">
-          {children}
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export default function ParameterForm({ params, onChange, disabled }: ParameterFormProps) {
@@ -120,33 +75,7 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
     onChange(randomParams);
   };
 
-  // Render helpers
-  const renderSelect = (label: string, key: keyof DreamHouseParams, options: string[] | number[]) => (
-    <div className="flex flex-col gap-2 group">
-      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-        {label}
-      </label>
-      <div className="relative">
-        <select
-          value={params[key] as string | number}
-          onChange={(e) => handleChange(key, e.target.value)}
-          disabled={disabled}
-          className="w-full appearance-none bg-card border border-border rounded-lg py-2.5 px-3 text-foreground text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all disabled:opacity-50 hover:border-border-hover cursor-pointer"
-        >
-          {options.map(opt => (
-            <option key={opt} value={opt} className="bg-card text-foreground">
-              {opt}
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground group-focus-within:text-primary">
-          <ChevronDown className="h-4 w-4" />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderChips = (
+  const renderChipsGroup = (
     label: string, 
     key: keyof DreamHouseParams, 
     options: string[], 
@@ -175,21 +104,14 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
           const isSelected = current.includes(opt);
           const isMaxReached = current.length >= max;
           return (
-            <button
+            <Chip
               key={opt}
-              type="button"
+              selected={isSelected}
               disabled={disabled || (!isSelected && isMaxReached)}
-              onClick={() => toggleMultiSelect(key, opt, max)}
-              className={clsx(
-                "px-3 py-1.5 text-xs rounded-md border transition-all duration-200 flex items-center gap-1.5 font-medium",
-                isSelected
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
-                  : "bg-card text-card-foreground border-border hover:border-border-hover hover:bg-card-elevated disabled:opacity-40 disabled:cursor-not-allowed"
-              )}
+              onToggle={() => toggleMultiSelect(key, opt, max)}
             >
-              {isSelected && <Check className="w-3 h-3" strokeWidth={3} />}
-              <span>{opt}</span>
-            </button>
+              {opt}
+            </Chip>
           );
         })}
       </div>
@@ -232,10 +154,22 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         defaultOpen={true}
       >
         <div className="space-y-5">
-          {renderSelect("Tipo de Proyecto", "projectType", C.PROJECT_TYPES)}
-          {renderChips("Estilo Arquitectónico", "architecturalStyles", C.STYLES, 3, true)}
-          {renderChips("Arquitecto de Referencia", "architect", C.ARCHITECTS, 2, true)}
-          {renderSelect("Mood / Atmósfera", "mood", C.MOODS)}
+          <Select 
+            label="Tipo de Proyecto" 
+            value={params.projectType}
+            onChange={(e) => handleChange("projectType", e.target.value)}
+            options={C.PROJECT_TYPES}
+            disabled={disabled}
+          />
+          {renderChipsGroup("Estilo Arquitectónico", "architecturalStyles", C.STYLES, 3, true)}
+          {renderChipsGroup("Arquitecto de Referencia", "architect", C.ARCHITECTS, 2, true)}
+          <Select 
+            label="Mood / Atmósfera"
+            value={params.mood}
+            onChange={(e) => handleChange("mood", e.target.value)}
+            options={C.MOODS}
+            disabled={disabled}
+          />
         </div>
       </Section>
 
@@ -259,13 +193,37 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
               className="w-full bg-card border border-border rounded-lg py-2.5 px-3 text-foreground text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all disabled:opacity-50 placeholder:text-muted hover:border-border-hover"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Clima", "climate", C.CLIMATES)}
-            {renderSelect("Entorno", "environment", C.ENVIRONMENTS)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Clima"
+              value={params.climate}
+              onChange={(e) => handleChange("climate", e.target.value)}
+              options={C.CLIMATES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Entorno"
+              value={params.environment}
+              onChange={(e) => handleChange("environment", e.target.value)}
+              options={C.ENVIRONMENTS}
+              disabled={disabled}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Cuerpo de Agua", "waterBody", C.WATER_BODIES)}
-            {renderSelect("Condición Climática", "weatherCondition", C.WEATHER_CONDITIONS)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Cuerpo de Agua"
+              value={params.waterBody}
+              onChange={(e) => handleChange("waterBody", e.target.value)}
+              options={C.WATER_BODIES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Condición Climática"
+              value={params.weatherCondition}
+              onChange={(e) => handleChange("weatherCondition", e.target.value)}
+              options={C.WEATHER_CONDITIONS}
+              disabled={disabled}
+            />
           </div>
         </div>
       </Section>
@@ -277,15 +235,39 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         defaultOpen={true}
       >
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Tamaño", "size", C.SIZES)}
-            {renderSelect("Niveles", "levels", [1, 2, 3, 4, 5])}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Tamaño"
+              value={params.size}
+              onChange={(e) => handleChange("size", e.target.value)}
+              options={C.SIZES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Niveles"
+              value={params.levels}
+              onChange={(e) => handleChange("levels", e.target.value)}
+              options={[1, 2, 3, 4, 5]}
+              disabled={disabled}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Tipo de Techo", "roofType", C.ROOF_TYPES)}
-            {renderSelect("Nivel de Acabados", "finishLevel", C.FINISH_LEVELS)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Tipo de Techo"
+              value={params.roofType}
+              onChange={(e) => handleChange("roofType", e.target.value)}
+              options={C.ROOF_TYPES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Nivel de Acabados"
+              value={params.finishLevel}
+              onChange={(e) => handleChange("finishLevel", e.target.value)}
+              options={C.FINISH_LEVELS}
+              disabled={disabled}
+            />
           </div>
-          {renderChips("Materiales Principales", "materials", C.MATERIALS, 4)}
+          {renderChipsGroup("Materiales Principales", "materials", C.MATERIALS, 4)}
         </div>
       </Section>
 
@@ -296,9 +278,9 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         defaultOpen={false}
       >
         <div className="space-y-5">
-          {renderChips("Paleta de Color", "colorPalette", C.COLORS, 3)}
-          {renderChips("Elementos Exteriores", "exteriorElements", C.EXTERIOR_ELEMENTS, 5, true)}
-          {renderChips("Vegetación", "vegetation", C.VEGETATION, 3)}
+          {renderChipsGroup("Paleta de Color", "colorPalette", C.COLORS, 3)}
+          {renderChipsGroup("Elementos Exteriores", "exteriorElements", C.EXTERIOR_ELEMENTS, 5, true)}
+          {renderChipsGroup("Vegetación", "vegetation", C.VEGETATION, 3)}
         </div>
       </Section>
 
@@ -309,17 +291,53 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         defaultOpen={false}
       >
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Ángulo de Cámara", "cameraAngle", C.ANGLES)}
-            {renderSelect("Composición", "composition", C.COMPOSITIONS)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Ángulo de Cámara"
+              value={params.cameraAngle}
+              onChange={(e) => handleChange("cameraAngle", e.target.value)}
+              options={C.ANGLES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Composición"
+              value={params.composition}
+              onChange={(e) => handleChange("composition", e.target.value)}
+              options={C.COMPOSITIONS}
+              disabled={disabled}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Hora del Día", "timeOfDay", C.TIMES_OF_DAY)}
-            {renderSelect("Estación", "season", C.SEASONS)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Hora del Día"
+              value={params.timeOfDay}
+              onChange={(e) => handleChange("timeOfDay", e.target.value)}
+              options={C.TIMES_OF_DAY}
+              disabled={disabled}
+            />
+            <Select 
+              label="Estación"
+              value={params.season}
+              onChange={(e) => handleChange("season", e.target.value)}
+              options={C.SEASONS}
+              disabled={disabled}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Iluminación", "lighting", C.LIGHTING_TYPES)}
-            {renderSelect("Contexto Humano", "humanContext", C.HUMAN_CONTEXT)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Iluminación"
+              value={params.lighting}
+              onChange={(e) => handleChange("lighting", e.target.value)}
+              options={C.LIGHTING_TYPES}
+              disabled={disabled}
+            />
+            <Select 
+              label="Contexto Humano"
+              value={params.humanContext}
+              onChange={(e) => handleChange("humanContext", e.target.value)}
+              options={C.HUMAN_CONTEXT}
+              disabled={disabled}
+            />
           </div>
         </div>
       </Section>
@@ -332,9 +350,21 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
         defaultOpen={false}
       >
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            {renderSelect("Resolución", "outputResolution", C.OUTPUT_RESOLUTIONS)}
-            {renderSelect("Relación de Aspecto", "aspectRatio", C.ASPECT_RATIOS)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select 
+              label="Resolución"
+              value={params.outputResolution}
+              onChange={(e) => handleChange("outputResolution", e.target.value)}
+              options={C.OUTPUT_RESOLUTIONS}
+              disabled={disabled}
+            />
+            <Select 
+              label="Relación de Aspecto"
+              value={params.aspectRatio}
+              onChange={(e) => handleChange("aspectRatio", e.target.value)}
+              options={C.ASPECT_RATIOS}
+              disabled={disabled}
+            />
           </div>
           <div className="p-3 bg-card-elevated rounded-lg border border-border">
             <p className="text-xs text-muted-foreground">

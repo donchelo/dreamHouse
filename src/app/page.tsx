@@ -7,6 +7,7 @@ import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
 import { Wand2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
@@ -66,7 +67,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="text-center max-w-3xl mx-auto pt-12 pb-16 space-y-6">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-card rounded-full border border-border text-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-card rounded-full border border-border text-xs sm:text-sm">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-muted-foreground">Potenciado por IA Generativa</span>
           </div>
@@ -79,7 +80,7 @@ export default function Home() {
           </h1>
           
           {/* Subtitle */}
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2">
             Define los parámetros arquitectónicos, sube referencias visuales y deja que nuestro 
             arquitecto virtual cree visualizaciones impresionantes de tu proyecto.
           </p>
@@ -97,10 +98,10 @@ export default function Home() {
         </section>
 
         {/* Main Form Area */}
-        <div id="form" className="space-y-10 scroll-mt-8">
+        <div id="form" className="space-y-8 sm:space-y-10 scroll-mt-20">
           
           {/* Reference Uploader Card */}
-          <section className="card-dark p-6 md:p-8">
+          <section className="card-dark p-4 sm:p-6 md:p-8">
             <ReferenceUploader files={files} onFilesChange={setFiles} />
           </section>
           
@@ -123,10 +124,11 @@ export default function Home() {
 
           {/* Generate Button */}
           <div className="flex justify-center py-8">
-            <button
+            <Button
               onClick={handleGenerate}
-              disabled={isLoading}
-              className="group relative flex items-center gap-3 px-10 py-4 bg-primary text-primary-foreground rounded-full text-lg font-semibold transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 active:translate-y-0 active:shadow-lg"
+              isLoading={isLoading}
+              size="lg"
+              className="group relative px-10 py-6 rounded-full text-lg shadow-xl"
             >
               {/* Glow effect */}
               <div className="absolute inset-0 rounded-full bg-primary blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
@@ -136,11 +138,11 @@ export default function Home() {
                 <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
                 {isLoading ? 'Generando Diseño...' : 'Generar Render'}
               </span>
-            </button>
+            </Button>
           </div>
 
           {/* Result Display */}
-          <div id="result" className="scroll-mt-8">
+          <div id="result" className="scroll-mt-20">
             <ResultDisplay 
               imageUrl={imageUrl} 
               isLoading={isLoading} 

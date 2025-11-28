@@ -1,4 +1,7 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import { clsx } from 'clsx';
 
 // Custom DreamHouse Logo - Casa arquitectónica estilizada
 function DreamHouseLogo({ className = "w-6 h-6" }: { className?: string }) {
@@ -63,47 +66,12 @@ function DreamHouseLogo({ className = "w-6 h-6" }: { className?: string }) {
   );
 }
 
-// Logo alternativo más minimalista - solo líneas
-function DreamHouseLogoMinimal({ className = "w-6 h-6" }: { className?: string }) {
-  return (
-    <svg 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Techo angular moderno */}
-      <path 
-        d="M2 12L12 4L22 12" 
-        stroke="currentColor" 
-        strokeWidth="2.5" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-      {/* Paredes */}
-      <path 
-        d="M5 10V20H19V10" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-      {/* Puerta/entrada moderna */}
-      <path 
-        d="M10 20V15C10 14.4477 10.4477 14 11 14H13C13.5523 14 14 14.4477 14 15V20" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function Header() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 w-full glass">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3 group cursor-default">
           <div className="relative">
@@ -124,7 +92,7 @@ export default function Header() {
           </div>
         </div>
         
-        {/* Navigation */}
+        {/* Desktop Navigation */}
         <nav className="hidden sm:flex items-center gap-8">
           <a 
             href="#" 
@@ -145,7 +113,43 @@ export default function Header() {
             <div className="absolute inset-0 bg-gradient-to-r from-primary-glow to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
         </nav>
+
+        {/* Mobile Menu Button */}
+        <button 
+          className="sm:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden absolute top-16 left-0 right-0 bg-card border-b border-border animate-fade-in-up">
+          <nav className="flex flex-col p-4 gap-4">
+             <a 
+              href="#" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors p-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Galería
+            </a>
+            <a 
+              href="#" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors p-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Proyectos
+            </a>
+            <button 
+              className="w-full bg-primary text-primary-foreground px-5 py-3 rounded-xl text-sm font-semibold shadow-lg shadow-primary/25 active:scale-95 transition-all"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Nuevo Proyecto
+            </button>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
