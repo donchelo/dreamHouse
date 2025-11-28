@@ -1,5 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { Upload, X, Image as ImageIcon, Plus } from 'lucide-react';
+'use client';
+
+import React, { useCallback, useState, useRef } from 'react';
+import { Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ReferenceUploaderProps {
@@ -9,6 +11,8 @@ interface ReferenceUploaderProps {
 
 export default function ReferenceUploader({ files, onFilesChange }: ReferenceUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -50,23 +54,45 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
   }, [files, onFilesChange]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 p-5 sm:p-6" role="region" aria-labelledby="uploader-title">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2.5">
-            <div className="p-1.5 bg-primary/10 rounded-lg">
-              <ImageIcon className="w-4 h-4 text-primary" />
+        <div className="flex items-center gap-4">
+          <div className="relative" aria-hidden="true">
+            <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border border-primary/20">
+              <ImageIcon className="w-5 h-5 text-primary" />
             </div>
-            Referentes Visuales
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            Sube imágenes para guiar el estilo arquitectónico
-          </p>
+            {/* Pulse ring */}
+            {files.length === 0 && (
+              <div className="absolute inset-0 rounded-xl border-2 border-primary/30 animate-[pulse-ring_2s_ease-out_infinite]" />
+            )}
+          </div>
+          <div>
+            <h3 id="uploader-title" className="text-lg font-semibold text-foreground flex items-center gap-2">
+              Referentes Visuales
+              {files.length > 0 && (
+                <Sparkles className="w-4 h-4 text-primary animate-pulse" aria-hidden="true" />
+              )}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Sube imágenes de casas o estilos que te inspiren. La IA las usará como referencia visual para tu diseño.
+            </p>
+          </div>
         </div>
-        <span className="text-xs font-mono font-medium px-3 py-1.5 bg-card-elevated rounded-lg text-muted-foreground border border-border">
-          {files.length}/5
-        </span>
+        
+        {/* Counter */}
+        <div className={clsx(
+          "relative px-4 py-2 rounded-full border text-sm font-mono font-medium transition-all duration-300",
+          files.length === 5 
+            ? "bg-primary/10 border-primary/30 text-primary" 
+            : "bg-card-elevated border-border text-muted-foreground"
+        )}>
+          <span className="text-foreground font-bold">{files.length}</span>
+          <span className="text-muted-foreground">/5</span>
+          {files.length === 5 && (
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-md -z-10" />
+          )}
+        </div>
       </div>
       
       {/* Upload Grid */}
@@ -75,42 +101,67 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
         {files.map((file, index) => (
           <div 
             key={index} 
-            className="relative group aspect-square rounded-xl overflow-hidden border border-border bg-card hover:border-border-hover transition-all duration-300"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className={clsx(
+              "relative group aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-500 cursor-pointer",
+              "bg-card hover:border-primary/50",
+              hoveredIndex === index ? "border-primary scale-[1.02] shadow-lg shadow-primary/10" : "border-border"
+            )}
+            onMouseEnter={() => setHoveredIndex(index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            style={{ 
+              animationDelay: `${index * 80}ms`,
+              animation: 'fade-in-up 0.5s ease-out forwards'
+            }}
           >
             <img
               src={URL.createObjectURL(file)}
               alt={`Referencia ${index + 1}`}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
             />
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+            
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
+            
+            {/* Actions */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
               <button
                 onClick={() => removeFile(index)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-full hover:bg-white/20 transition-all"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-destructive/80 backdrop-blur-sm rounded-full hover:bg-destructive transition-all transform hover:scale-105 active:scale-95"
               >
-                <X className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
                 Eliminar
               </button>
             </div>
+            
             {/* Index Badge */}
-            <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-[10px] font-bold text-white border border-white/10">
+            <div className={clsx(
+              "absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300",
+              hoveredIndex === index 
+                ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30" 
+                : "bg-black/70 backdrop-blur-sm text-white border-white/20"
+            )}>
               {index + 1}
             </div>
+
+            {/* Corner glow */}
+            {hoveredIndex === index && (
+              <div className="absolute -top-10 -right-10 w-20 h-20 bg-primary/30 rounded-full blur-2xl" />
+            )}
           </div>
         ))}
         
         {/* Upload Zone */}
         {files.length < 5 && (
           <div
+            ref={dropZoneRef}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={clsx(
-              "relative aspect-square rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden group",
+              "relative aspect-square rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center overflow-hidden group cursor-pointer",
               isDragging 
-                ? "border-primary bg-primary/5 scale-[1.02]" 
-                : "border-border hover:border-border-hover hover:bg-card-elevated"
+                ? "border-primary bg-primary/10 scale-[1.02] shadow-lg shadow-primary/20" 
+                : "border-border hover:border-primary/50 hover:bg-card-elevated"
             )}
           >
             <input
@@ -121,38 +172,61 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               onChange={handleFileInput}
             />
             
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `radial-gradient(circle at 2px 2px, var(--border) 1px, transparent 0)`,
+                backgroundSize: '20px 20px',
+              }} />
+            </div>
+            
             {/* Icon */}
             <div className={clsx(
-              "p-3 rounded-xl mb-3 transition-all duration-300",
+              "relative p-4 rounded-2xl mb-3 transition-all duration-300",
               isDragging 
-                ? "bg-primary/20" 
-                : "bg-card group-hover:bg-card-elevated"
+                ? "bg-primary/20 scale-110" 
+                : "bg-card group-hover:bg-primary/10 group-hover:scale-105"
             )}>
               {isDragging ? (
-                <Plus className="w-5 h-5 text-primary" />
+                <Plus className="w-6 h-6 text-primary animate-pulse" />
               ) : (
-                <Upload className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+              )}
+              
+              {/* Glow */}
+              {isDragging && (
+                <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-xl -z-10" />
               )}
             </div>
             
             {/* Text */}
             <span className={clsx(
-              "text-xs font-medium transition-colors",
+              "relative text-sm font-medium transition-colors",
               isDragging 
                 ? "text-primary" 
                 : "text-muted-foreground group-hover:text-foreground"
             )}>
-              {isDragging ? 'Suelta aquí' : 'Añadir'}
+              {isDragging ? 'Suelta aquí' : 'Añadir imagen'}
+            </span>
+            
+            {/* Subtle hint */}
+            <span className="text-[10px] text-muted mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              JPG, PNG, WebP
             </span>
           </div>
         )}
       </div>
       
-      {/* Tip */}
+      {/* Empty State Tip */}
       {files.length === 0 && (
-        <p className="text-xs text-muted text-center py-2">
-          Arrastra imágenes o haz clic para subir referencias de estilo
-        </p>
+        <div className="flex items-center justify-center gap-3 py-4 px-6 bg-card-elevated/50 rounded-xl border border-border">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            <span className="text-foreground font-medium">Pro tip:</span> Sube fotos de casas que te inspiren para mejores resultados
+          </p>
+        </div>
       )}
     </div>
   );
