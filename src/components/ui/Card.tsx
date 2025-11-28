@@ -6,39 +6,25 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ className, variant = 'default', children, ...props }: CardProps) {
-  const variants = {
-    default: 'bg-card border border-border shadow-sm',
-    elevated: 'bg-card-elevated border border-border shadow-md',
-    glass: 'glass shadow-lg',
-    gradient: 'relative bg-card border border-transparent', // Handled via utility or before element
-  };
-
-  const content = (
+  // Simplified variants for Architectural Theme
+  const baseStyles = 'bg-card border border-border rounded-none';
+  
+  return (
     <div
       className={twMerge(
-        'rounded-2xl overflow-hidden',
-        variants[variant],
-        variant === 'gradient' ? 'p-[1px] bg-gradient-to-br from-border via-border to-primary/20' : '',
+        baseStyles,
         className
       )}
       {...props}
     >
-      {variant === 'gradient' ? (
-        <div className="bg-card rounded-[inherit] h-full w-full overflow-hidden">
-             {children}
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </div>
   );
-
-  return content;
 }
 
 export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={twMerge('px-6 py-5 border-b border-border/50', className)} {...props}>
+    <div className={twMerge('px-6 py-5 border-b border-border', className)} {...props}>
       {children}
     </div>
   );

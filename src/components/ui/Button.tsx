@@ -17,19 +17,19 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-wider transition-all focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-none';
   
   const variants = {
-    primary: 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 active:translate-y-0',
-    outline: 'border border-border bg-transparent text-foreground hover:bg-card-elevated hover:text-foreground',
-    ghost: 'text-muted-foreground hover:text-foreground hover:bg-primary/10',
+    primary: 'bg-primary text-primary-foreground hover:bg-foreground hover:text-background border border-transparent',
+    outline: 'border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background',
+    ghost: 'text-muted-foreground hover:text-foreground hover:bg-muted',
   };
 
   const sizes = {
-    sm: 'text-xs px-3 py-1.5 rounded-md gap-1.5',
-    md: 'text-sm px-4 py-2 rounded-lg gap-2',
-    lg: 'text-base px-6 py-3 rounded-xl gap-2.5',
-    icon: 'p-2 rounded-lg',
+    sm: 'text-xs px-4 py-2 gap-1.5',
+    md: 'text-sm px-6 py-3 gap-2',
+    lg: 'text-base px-8 py-4 gap-2.5',
+    icon: 'p-2',
   };
 
   return (
@@ -69,4 +69,3 @@ export function Button({
     </button>
   );
 }
-

@@ -20,8 +20,8 @@ interface ParameterFormProps {
 // Componente de descripción de sección
 function SectionDescription({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative pl-3 py-1 mb-4 border-l-2 border-primary/30">
-      <p className="text-xs text-muted-foreground leading-relaxed italic">{children}</p>
+    <div className="relative pl-4 py-2 mb-6 border-l-2 border-primary">
+      <p className="text-sm text-muted-foreground leading-relaxed font-medium">{children}</p>
     </div>
   );
 }
@@ -106,7 +106,7 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
               {label}
             </label>
             <span 
-              className="text-[10px] font-mono px-2 py-0.5 rounded-full border transition-colors bg-card-elevated text-muted-foreground border-border"
+              className="text-[10px] font-mono px-2 py-0.5 rounded-none border transition-colors bg-transparent text-muted-foreground border-border"
               aria-label={`${count} opciones seleccionadas`}
             >
               {count} seleccionados
@@ -149,32 +149,32 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
   };
 
   return (
-    <div className="space-y-6" role="form" aria-label="Formulario de parámetros de diseño arquitectónico">
+    <div className="space-y-8" role="form" aria-label="Formulario de parámetros de diseño arquitectónico">
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 sticky top-4 z-20 pointer-events-none">
-        <div className="pointer-events-auto flex gap-2 p-1.5 bg-card/80 backdrop-blur-md border border-border/50 rounded-full shadow-lg">
+        <div className="pointer-events-auto flex gap-0 border border-border bg-background">
             <button
               type="button"
               onClick={handleReset}
               disabled={disabled}
-              className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground bg-transparent hover:text-foreground rounded-full transition-all hover:bg-card-elevated cursor-pointer"
+              className="group flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors"
               aria-label="Restablecer todos los parámetros a sus valores predeterminados"
               title="Restablecer formulario"
             >
               <RotateCcw className="w-4 h-4 group-hover:-rotate-180 transition-transform duration-500" aria-hidden="true" />
-              <span className="hidden sm:inline">Restablecer</span>
+              <span className="hidden sm:inline">Reset</span>
             </button>
-            <div className="w-px bg-border my-1" aria-hidden="true" />
+            <div className="w-px bg-border" aria-hidden="true" />
             <button
               type="button"
               onClick={handleRandomize}
               disabled={disabled}
-              className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-primary/10 hover:bg-primary hover:text-white rounded-full transition-all cursor-pointer"
+              className="group flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               aria-label="Generar una combinación aleatoria de parámetros para inspiración"
               title="Generar diseño aleatorio"
             >
               <Dices className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" aria-hidden="true" />
-              <span>Sorpréndeme</span>
+              <span>Surprise Me</span>
             </button>
         </div>
       </div>
@@ -209,7 +209,7 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
               onChange={(e) => handleChange("city", e.target.value)}
               placeholder="Ej: Tokyo, Barcelona, Dubai..."
               disabled={disabled}
-              className="w-full bg-card/50 backdrop-blur-sm border border-border rounded-xl py-3 px-4 text-foreground text-sm font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 placeholder:text-muted hover:border-border-hover hover:bg-card-elevated"
+              className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm font-medium focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground"
               aria-describedby="city-help"
             />
           </div>
@@ -468,16 +468,15 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
               disabled={disabled}
             />
           </div>
-          <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex gap-3 items-start" role="note">
-             <div className="p-1.5 bg-primary/10 rounded-full text-primary shrink-0" aria-hidden="true">
+          <div className="p-4 bg-primary/5 border border-primary flex gap-3 items-start rounded-none" role="note">
+             <div className="p-1.5 bg-primary text-primary-foreground shrink-0" aria-hidden="true">
                <Sparkles className="w-4 h-4" />
              </div>
              <div className="text-xs text-muted-foreground space-y-1">
-                <p className="font-semibold text-foreground">Recomendación Pro</p>
+                <p className="font-bold uppercase tracking-wider text-foreground">Pro Tip</p>
                 <p>
-                  Mayor resolución = más tiempo de generación y mayor detalle.
-                  <span className="text-primary font-medium"> 4K </span> es ideal para impresiones y presentaciones profesionales.
-                  <span className="text-primary font-medium"> HD </span> es suficiente para previsualizaciones rápidas.
+                  Mayor resolución = más tiempo de generación.
+                  <span className="text-primary font-bold"> 4K </span> ideal para impresión.
                 </p>
             </div>
           </div>
@@ -512,7 +511,7 @@ export default function ParameterForm({ params, onChange, disabled }: ParameterF
             disabled={disabled}
             placeholder="Ej: Quiero que la casa tenga una atmósfera melancólica, con mucha niebla y que parezca abandonada pero elegante. Incluir un árbol de cerezo japonés en el jardín frontal..."
             rows={5}
-            className="w-full bg-card/50 backdrop-blur-sm border border-border rounded-xl py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 placeholder:text-muted hover:border-border-hover resize-y"
+            className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
             aria-describedby="notes-help"
           />
         </div>
