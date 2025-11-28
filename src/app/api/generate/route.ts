@@ -208,7 +208,9 @@ RENDER QUALITY: ${qualitySuffix}
       throw new Error("No image candidates returned");
     }
 
-    const imagePart = candidates[0].content.parts.find(part => part.inlineData);
+    const firstCandidate = candidates[0];
+    const parts = firstCandidate?.content?.parts;
+    const imagePart = parts?.find(part => part.inlineData);
     
     if (!imagePart || !imagePart.inlineData) {
       throw new Error("No image data found in response");
