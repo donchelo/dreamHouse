@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
 import FloorPlanUploader from '@/components/FloorPlanUploader';
+import InspirationCanvas from '@/components/InspirationCanvas';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
@@ -32,6 +33,7 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
   const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
+  const [inspirationFile, setInspirationFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
@@ -138,6 +140,9 @@ export default function Home() {
       });
       if (lotFile) {
         formData.append('lotImage', lotFile);
+      }
+      if (inspirationFile) {
+        formData.append('inspirationImage', inspirationFile);
       }
       formData.append('params', JSON.stringify(params));
       formData.append('mode', 'floor-plan');
@@ -365,11 +370,23 @@ export default function Home() {
             </p>
           </div>
           
+          {/* Inspiration Canvas Section - Only in Basics */}
+          {currentTab === 'basics' && (
+            <Section 
+              title="Inspiración de Forma" 
+              number="01" 
+              isOpen={activeSection === 'inspiration'}
+              onToggle={() => toggleSection('inspiration')}
+            >
+              <InspirationCanvas file={inspirationFile} onFileChange={setInspirationFile} />
+            </Section>
+          )}
+
           {/* Lot Uploader Section - Only in Basics */}
           {currentTab === 'basics' && (
             <Section 
               title="Lote" 
-              number="01" 
+              number="02" 
               isOpen={activeSection === 'lot'}
               onToggle={() => toggleSection('lot')}
             >

@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     const files = formData.getAll('files') as File[];
     const lotImage = formData.get('lotImage') as File | null;
     const floorPlanImage = formData.get('floorPlanImage') as File | null;
+    const inspirationImage = formData.get('inspirationImage') as File | null;
     const mode = (formData.get('mode') as string) || 'render'; // 'floor-plan' | 'render'
     const floorPlanDataJson = formData.get('floorPlanData') as string | null;
 
@@ -67,90 +68,71 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- Step 1: Analyze References, Lot & Floor Plan (if any) ---
-    let analysisResult = "";
-    let floorPlanAnalysis = "";
-    
-    if (files.length > 0 || lotImage || floorPlanImage) {
-      const parts = [];
-      parts.push({ text: "Analiza las siguientes imágenes para preparar un prompt de generación arquitectónica." });
+    // Process all images to base64 for multimodal generation
+    let lotImageBase64 = "";
+    let lotImageMimeType = "";
+    let floorPlanImageBase64 = "";
+    let floorPlanImageMimeType = "";
+    const referenceImagesBase64: Array<{ mimeType: string; data: string }> = [];
+    const imagePartsForFloorPlan: any[] = [];
 
-      if (lotImage) {
-        const buffer = await lotImage.arrayBuffer();
+    // Process inspiration image (highest priority for floor plan structure)
+    if (inspirationImage) {
+      const buffer = await inspirationImage.arrayBuffer();
+      const inspirationBase64 = Buffer.from(buffer).toString('base64');
+      imagePartsForFloorPlan.push({
+        inlineData: {
+          mimeType: inspirationImage.type,
+          data: inspirationBase64
+        }
+      });
+    }
+
+    // Process lot image
+    if (lotImage) {
+      const buffer = await lotImage.arrayBuffer();
+      lotImageBase64 = Buffer.from(buffer).toString('base64');
+      lotImageMimeType = lotImage.type;
+      imagePartsForFloorPlan.push({
+        inlineData: {
+          mimeType: lotImageMimeType,
+          data: lotImageBase64
+        }
+      });
+    }
+
+    // Process reference images
+    if (files.length > 0) {
+      for (const file of files) {
+        const buffer = await file.arrayBuffer();
         const base64Data = Buffer.from(buffer).toString('base64');
-        parts.push({ text: "IMAGEN DEL LOTE (Terreno donde construir):" });
-        parts.push({
+        referenceImagesBase64.push({
+          mimeType: file.type,
+          data: base64Data
+        });
+        imagePartsForFloorPlan.push({
           inlineData: {
-            mimeType: lotImage.type,
+            mimeType: file.type,
             data: base64Data
           }
         });
       }
+    }
 
-      if (floorPlanImage) {
-        const buffer = await floorPlanImage.arrayBuffer();
-        const base64Data = Buffer.from(buffer).toString('base64');
-        parts.push({ text: "IMAGEN DEL PLANO DE PLANTA (Distribución espacial):" });
-        parts.push({
-          inlineData: {
-            mimeType: floorPlanImage.type,
-            data: base64Data
-          }
-        });
-      }
-
-      if (files.length > 0) {
-        parts.push({ text: "IMÁGENES DE REFERENCIA (Estilo deseado):" });
-        for (const file of files) {
-          const buffer = await file.arrayBuffer();
-          const base64Data = Buffer.from(buffer).toString('base64');
-          parts.push({
-            inlineData: {
-              mimeType: file.type,
-              data: base64Data
-            }
-          });
-        }
-      }
-
-      parts.push({ text: "INSTRUCCIONES: 1. Si hay imagen del lote, describe detalladamente su topografía, vegetación y entorno para integrar el diseño en él. 2. Si hay imagen del plano de planta, describe detalladamente la distribución, forma de la casa, zonas y flujo. 3. Si hay referencias, extrae el estilo visual, materiales, colores y atmósfera. 4. Proporciona un resumen conciso combinando estos aspectos (estilo sobre lote siguiendo el plano)." });
-
-      try {
-        const analysisResponse = await ai.models.generateContent({
-          model: "gemini-3-pro-preview",
-          contents: [{ parts }]
-        });
-        analysisResult = analysisResponse.text || "";
-        
-        // If floor plan image was provided, extract a specific technical description for the prompt
-        if (floorPlanImage) {
-            const fpParts = [
-                { text: "Eres un experto arquitecto analizando un plano de planta para un renderista 3D. Describe con PRECISIÓN MATEMÁTICA Y ESPACIAL: 1. La huella exacta del edificio (forma geométrica precisa, retranqueos, patios internos, extensiones). 2. La volumetría sugerida (dónde hay dobles alturas según el plano, niveles). 3. La relación de llenos y vacíos (ventanales vs muros ciegos, ubicación exacta de aberturas). 4. Ejes estructurales y muros de carga visibles. 5. Puntos de entrada y circulación principal. Este análisis será el COMANDO PRINCIPAL Y OBLIGATORIO para el motor de render. Sé extremadamente técnico, detallado y específico. La geometría que describes es un LÍMITE ABSOLUTO que no puede ser violado." },
-                {
-                    inlineData: {
-                        mimeType: floorPlanImage.type,
-                        data: Buffer.from(await floorPlanImage.arrayBuffer()).toString('base64')
-                    }
-                }
-            ];
-            const fpResponse = await ai.models.generateContent({
-                model: "gemini-3-pro-preview",
-                contents: [{ parts: fpParts }]
-            });
-            floorPlanAnalysis = fpResponse.text || "";
-        }
-      } catch (error) {
-        console.error("Error analyzing images:", error);
-      }
+    // Process floor plan image (only for render mode, not for floor plan generation)
+    if (floorPlanImage) {
+      const buffer = await floorPlanImage.arrayBuffer();
+      floorPlanImageBase64 = Buffer.from(buffer).toString('base64');
+      floorPlanImageMimeType = floorPlanImage.type;
     }
 
     // --- Step 2: Generate Floor Plan (if not provided) ---
     let floorPlan: FloorPlan;
     
     if (mode === 'floor-plan') {
-      // Generate floor plan data
+      // Generate floor plan data with images as context
       console.log("Generating floor plan...");
-      floorPlan = await generateFloorPlan(params, analysisResult || undefined);
+      floorPlan = await generateFloorPlan(params, imagePartsForFloorPlan);
       console.log("Floor plan generated:", {
         shape: floorPlan.shape,
         zones: Object.keys(floorPlan.zones).length,
@@ -170,13 +152,13 @@ export async function POST(req: NextRequest) {
       if (floorPlanData) {
         floorPlan = floorPlanData;
         console.log("Using provided floor plan data");
-      } else if (floorPlanImage && floorPlanAnalysis) {
+      } else if (floorPlanImage) {
           // If we have an image but no structured data, we create a basic structure
           // so the rest of the prompt construction doesn't fail
           floorPlan = {
               shape: "Custom (from uploaded image)",
               dimensions: { footprint: "Varies", approximateWidth: "0", approximateDepth: "0" },
-              description: floorPlanAnalysis,
+              description: "The floor plan structure is defined by the uploaded floor plan image. The building's footprint, shape, and spatial organization must match the attached image exactly.",
               zones: { public: [], private: [], services: [], exterior: [] },
               circulation: { mainAxis: "Defined by plan", entryPoint: "Defined by plan", flowDescription: "As per uploaded plan" },
               interiorExterior: { connectionType: "Direct", glazingStrategy: "Optimized", mainConnections: [] },
@@ -187,10 +169,10 @@ export async function POST(req: NextRequest) {
                   facadeComposition: "Composition follows the spatial organization of the uploaded plan"
               }
           };
-          console.log("Using uploaded floor plan image analysis");
+          console.log("Using uploaded floor plan image");
       } else {
         console.log("Generating floor plan for render...");
-        floorPlan = await generateFloorPlan(params, analysisResult || undefined);
+        floorPlan = await generateFloorPlan(params, imagePartsForFloorPlan);
         console.log("Floor plan generated for render");
       }
     }
@@ -244,118 +226,90 @@ export async function POST(req: NextRequest) {
         `Lighting: ${params.lighting}`
     ].join(" | ");
 
-    // Lot specific instruction if present
-    const lotInstruction = lotImage 
-      ? "CRITICAL: The building MUST be situated in the environment described in the 'Visual Context Analysis' corresponding to the LOT IMAGE. Match the terrain, vegetation, and lighting of the lot exactly."
-      : "";
-
-    // Construct the Professional Prompt with Floor Plan as FIRST TRUTH
-    // Priority: 1) Geometry 2) Volumetrics 3) Style Layer 4) Context
+    // Construct the Professional Prompt
+    // When images are provided (multimodal), we prioritize them as the structural truth
     const fullPrompt = `
-**PRIMARY FOUNDATION: FLOOR PLAN GEOMETRY IS THE ABSOLUTE STRUCTURAL TRUTH**
+**OBJECTIVE: GENERATE AN AWARD-WINNING EXTERIOR PHOTOGRAPH**
+Act as a world-renowned architectural photographer. Your goal is to create a photorealistic render of a residential project based on the following parameters and attached visual context.
 
-${floorPlanImage ? `
-**MANDATORY: UPLOADED FLOOR PLAN IMAGE IS THE ABSOLUTE LIMIT**
-The building you generate MUST be constructed EXACTLY according to the spatial geometry described below. This is NOT a suggestion - it is a structural requirement that cannot be violated.
-
-**FLOOR PLAN GEOMETRY (FROM UPLOADED IMAGE):**
-${floorPlanAnalysis}
-
-**STRICT GEOMETRIC REQUIREMENTS:**
-1. The building's footprint MUST match the exact shape and dimensions described in the floor plan analysis.
-2. Window and door placements MUST correspond to the openings shown in the plan.
-3. The volumetric massing (where walls are, where spaces extend) MUST follow the plan's spatial organization.
-4. Any deviations from this geometry are FORBIDDEN. The architectural style is secondary to this geometric constraint.
+${floorPlanImageBase64 ? `
+**STRUCTURAL TRUTH (ATTACHED IMAGE):**
+- Use the attached FLOOR PLAN IMAGE as the ABSOLUTE structural foundation.
+- The building's footprint, shape, and spatial organization MUST match the image exactly.
+- Analyze the floor plan image to understand the spatial distribution, zones, and circulation patterns.
 ` : `
-**MANDATORY: GENERATED FLOOR PLAN IS THE ABSOLUTE STRUCTURAL FOUNDATION**
-The building you generate MUST be constructed EXACTLY according to the spatial geometry described below. This is NOT a suggestion - it is a structural requirement that cannot be violated.
-
-**FLOOR PLAN GEOMETRY (STRUCTURAL FOUNDATION):**
-- **Shape:** ${floorPlan.shape} - This exact shape MUST be visible in the exterior view
+**STRUCTURAL FOUNDATION (GENERATED PLAN):**
+- **Shape:** ${floorPlan.shape}
 - **Footprint:** ${floorPlan.dimensions.footprint} (${floorPlan.dimensions.approximateWidth} × ${floorPlan.dimensions.approximateDepth})
-- **Spatial Organization:** ${floorPlan.description}
-- **Zones Distribution:** 
-  * Public: ${floorPlan.zones.public.join(", ")}
-  * Private: ${floorPlan.zones.private.join(", ")}
-  * Exterior: ${floorPlan.zones.exterior.join(", ")}
-- **Circulation Pattern:** ${floorPlan.circulation.mainAxis} flow with entry at ${floorPlan.circulation.entryPoint}
-- **Interior-Exterior Connection:** ${floorPlan.interiorExterior.connectionType} - ${floorPlan.interiorExterior.glazingStrategy}
-- **Key Architectural Features:** ${floorPlan.layoutFeatures.join(", ")}
-
-**STRICT GEOMETRIC REQUIREMENTS:**
-1. The building's exterior form MUST reflect the ${floorPlan.shape.toLowerCase()} shape described above.
-2. Window and opening placements MUST align with the ${floorPlan.interiorExterior.glazingStrategy.toLowerCase()} strategy.
-3. The volumetric massing MUST correspond to the zones and circulation described.
-4. The entry point MUST be at ${floorPlan.circulation.entryPoint} as specified.
-5. Any deviations from this geometry are FORBIDDEN. The architectural style is secondary to this geometric constraint.
+- **Organization:** ${floorPlan.description}
+- **Zones:** Public (${floorPlan.zones.public.join(", ")}), Private (${floorPlan.zones.private.join(", ")})
 `}
 
-**SECONDARY: EXTERIOR VOLUMETRICS (DERIVED FROM FLOOR PLAN)**
-${floorPlan.exteriorVolumetrics ? `
-The 3D massing and volumetrics of the building MUST follow these specifications derived from the floor plan:
-
-- **Massing Description:** ${floorPlan.exteriorVolumetrics.massingDescription}
-- **Height Variations:** ${floorPlan.exteriorVolumetrics.heightVariations.join(" | ")}
-- **Facade Composition:** ${floorPlan.exteriorVolumetrics.facadeComposition}
-
-**VOLUMETRIC REQUIREMENTS:**
-1. The building's height variations MUST match the massing description above.
-2. The facade composition (glass vs. solid walls) MUST follow the specified distribution.
-3. The relationship between public zones (more transparent) and private zones (more solid) MUST be clearly visible in the exterior.
-4. The volumetric expression MUST accurately represent the interior spatial organization described in the floor plan.
-` : `
-The building's volumetrics must reflect the spatial organization: public zones with ${floorPlan.interiorExterior.glazingStrategy.toLowerCase()}, private zones with more controlled openings. The ${floorPlan.shape.toLowerCase()} shape creates a clear volumetric expression that must be visible in the exterior render.
-`}
-
-**TERTIARY: ARCHITECTURAL STYLE LAYER (AESTHETIC MODIFIER)**
-The architectural style and materials are applied AS A LAYER over the geometric foundation established above. They modify surfaces, details, and finishes but CANNOT alter the fundamental geometry.
-
+**ARCHITECTURAL STYLE & SPECIFICATIONS (CLIENT PARAMETERS):**
 - **Project Type:** ${projectType} ${locationStr}
-- **Architectural Style:** ${archStyle} ${architects ? `(inspired by ${architects})` : ''}
-  * Apply this style's characteristic materials, proportions, and details WHILE MAINTAINING the floor plan geometry
-  * The style influences: surface treatments, window frame details, material textures, decorative elements
-  * The style does NOT influence: building shape, footprint, zone distribution, or volumetric massing
+- **Style:** ${archStyle} ${architects ? `(inspired by ${architects})` : ''}
+- **Technical Specs:** ${techSpecs}
 - **Materials:** ${materialsList}
-  * These materials wrap the geometric structure defined by the floor plan
-  * Material choice affects texture and color but not the underlying form
 - **Color Palette:** ${colors}
-- **Finish Level:** ${finish}
-- **Atmosphere/Mood:** ${moodDesc}
+- **Finish:** ${finish}
+- **Atmosphere:** ${moodDesc}
 
-**QUATERNARY: CONTEXT & PHOTOGRAPHY (ENVIRONMENTAL LAYER)**
-- **Setting:** ${environment}
+**ENVIRONMENT & PHOTOGRAPHY:**
+- **Context:** ${environment}
 - **Landscaping:** ${landscaping}
-${lotInstruction ? `- **LOT INTEGRATION:** ${lotInstruction}` : ''}
-${analysisResult ? `- **REFERENCE STYLE:** Incorporate these visual elements: ${analysisResult}` : ''}
+${lotImageBase64 ? `- **LOT INTEGRATION:** Use the attached LOT IMAGE as the exact environment and terrain for this project. The building MUST be perfectly integrated into the specific terrain, topography, vegetation, and lighting conditions shown in the lot image.` : ''}
+${referenceImagesBase64.length > 0 ? `- **VISUAL REFERENCE IMAGES:** ${referenceImagesBase64.length} reference image(s) are attached. Use these images as the PRIMARY source for architectural style, materials, colors, textures, and overall aesthetic atmosphere. Analyze the attached reference images and incorporate their visual language directly into the render.` : ''}
+- **Camera Configuration:** ${camera}
+- **Human Scale:** ${params.humanContext !== "Sin personas" ? params.humanContext : "None"}
 
-**PHOTOGRAPHY CONFIGURATION**
-- **Camera Settings:** ${camera}
-- **Human Scale:** ${params.humanContext !== "Sin personas" ? params.humanContext : "None, focus on architecture"}
-- **Quality:** Photorealistic, highly detailed, cinematic lighting, architectural visualization masterpiece, sharp focus.
+**FINAL DIRECTIVE:**
+1. If a **FLOOR PLAN IMAGE** is attached, it is the NON-NEGOTIABLE geometric limit for the building's form. The building's footprint, shape, and spatial organization MUST match the image exactly.
+2. If a **LOT IMAGE** is attached, the building MUST be perfectly integrated into that specific terrain, matching the topography, vegetation, and environmental conditions shown.
+3. If **VISUAL REFERENCE IMAGES** are attached, use them as the PRIMARY source for architectural style, material selection, color palette, and aesthetic details. Incorporate their visual language directly into the render.
+4. Apply the architectural style and materials specified in the parameters as an aesthetic layer over the structural geometry defined by the floor plan.
+5. Generate ONLY EXTERIOR VIEWS. Photorealistic quality, cinematic lighting.
 
-**ART DIRECTION (APPLIED WITHIN GEOMETRIC CONSTRAINTS)**
-${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}\n\nThis art direction should be applied while strictly maintaining the floor plan geometry and volumetrics described above.` : ''}
+${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
+`.trim();
 
-**ROLE & OBJECTIVE**
-Act as a world-renowned architectural photographer (e.g., Iwan Baan, Julius Shulman). 
-Generate an AWARD-WINNING EXTERIOR PHOTOGRAPH of a residential project.
-**VIEW:** EXTERIOR ONLY. Never generate interior views.
+    console.log("Generated Multimodal Prompt:", fullPrompt);
 
-**FINAL DIRECTIVE - ABSOLUTE PRIORITY ORDER**
-1. **PRIMARY (MANDATORY - NON-NEGOTIABLE):** The building MUST exactly match the floor plan geometry described above. The ${floorPlanImage ? 'uploaded floor plan' : floorPlan.shape.toLowerCase() + ' shape'} is the structural foundation that cannot be altered. The footprint, shape, and zone distribution are fixed.
-2. **SECONDARY (MANDATORY - DERIVED FROM PRIMARY):** The volumetrics and massing MUST accurately represent the spatial organization and height variations described. The facade composition (glass vs. solid) MUST reflect the interior-exterior connection strategy.
-3. **TERTIARY (APPLIED LAYER):** Apply the architectural style, materials, and visual elements AS A SURFACE LAYER over the geometric foundation. Style modifies appearance, not structure.
-4. **QUATERNARY (ENVIRONMENTAL):** Integrate with the site environment and apply photography settings to create the final image.
+    // --- Step 4: Generate Image (Multimodal Call) ---
+    const imageGenerationParts: any[] = [{ text: fullPrompt }];
 
-The final image must be a cohesive, photorealistic exterior shot with perfect perspective correction and lighting. The entire building should be visible within the frame. The exterior MUST clearly and accurately reflect the floor plan geometry as the absolute structural limit, with the architectural style applied as an aesthetic layer that respects this foundation.
-    `.trim();
+    // Add floor plan image if available
+    if (floorPlanImageBase64) {
+      imageGenerationParts.push({
+        inlineData: {
+          mimeType: floorPlanImageMimeType,
+          data: floorPlanImageBase64
+        }
+      });
+    }
 
-    console.log("Generated Prompt:", fullPrompt);
+    // Add lot image if available
+    if (lotImageBase64) {
+      imageGenerationParts.push({
+        inlineData: {
+          mimeType: lotImageMimeType,
+          data: lotImageBase64
+        }
+      });
+    }
 
-    // --- Step 4: Generate Image ---
+    // Add reference images if available
+    for (const refImage of referenceImagesBase64) {
+      imageGenerationParts.push({
+        inlineData: {
+          mimeType: refImage.mimeType,
+          data: refImage.data
+        }
+      });
+    }
+
     const generationResponse = await ai.models.generateContent({
       model: "gemini-3-pro-image-preview",
-      contents: [{ parts: [{ text: fullPrompt }] }],
+      contents: [{ parts: imageGenerationParts }],
       config: {
         tools: [{ googleSearch: {} }],
         imageConfig: {

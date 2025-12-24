@@ -34,12 +34,12 @@ const PROJECT_TYPE_MAP: Record<string, string> = {
 /**
  * Genera un floor plan arquitectónico basado en los parámetros del usuario
  * @param params - Parámetros del proyecto DreamHouse
- * @param visualContextAnalysis - Análisis opcional de imágenes de referencia/lote
+ * @param imageParts - Partes de imagen opcionales (lote, referencias) para contexto multimodal
  * @returns FloorPlan object con la estructura espacial generada
  */
 export async function generateFloorPlan(
   params: DreamHouseParams,
-  visualContextAnalysis?: string
+  imageParts: any[] = []
 ): Promise<FloorPlan> {
   try {
     // Construir el prompt para generar el floor plan
@@ -56,8 +56,27 @@ export async function generateFloorPlan(
     const maxSize = sizeMatch ? parseInt(sizeMatch[2]) : 300;
     const avgSize = Math.floor((minSize + maxSize) / 2);
     
+    // Check if there's an inspiration image (should be the first image part)
+    const hasInspirationImage = imageParts.length > 0;
+    
     const floorPlanPrompt = `
 **ROLE:** Act as a professional architect specializing in residential design. Your task is to create a coherent floor plan design based on the given parameters.
+
+${hasInspirationImage ? `
+**CRITICAL: INSPIRATION IMAGE PROVIDED (HIGHEST PRIORITY)**
+An inspiration image has been attached as the FIRST image. This image contains the user's vision for the basic shape, form, or silhouette of the house. This could be:
+- A hand-drawn sketch of the house shape
+- A photo of an inspiring house form
+- A free-form drawing or inspirational reference
+
+**YOUR PRIMARY TASK:** Analyze the inspiration image carefully and use it as the STRUCTURAL FOUNDATION for the floor plan. The overall shape, footprint, and general form of the house MUST follow the inspiration provided in this image. You should:
+1. Extract the basic shape and form from the inspiration image
+2. Adapt the functional requirements (bedrooms, bathrooms, etc.) to fit within this inspired shape
+3. Maintain the spirit and character of the inspiration while ensuring functionality
+4. The inspiration does not need to be followed exactly, but the general form, proportions, and character should be clearly inspired by it
+
+The inspiration image takes PRIORITY over generic shape suggestions. Use it as your starting point for the design.
+` : ''}
 
 **PROJECT CONTEXT:**
 - **Type:** ${projectType}
@@ -76,11 +95,12 @@ export async function generateFloorPlan(
 ${params.city ? `- **Location:** ${params.city}` : ''}
 ${params.exteriorElements.length > 0 ? `- **Exterior Elements:** ${params.exteriorElements.join(", ")}` : ''}
 ${params.technicalNotes ? `- **Technical Notes:** ${params.technicalNotes}` : ''}
-${visualContextAnalysis ? `- **Visual Context:** ${visualContextAnalysis}` : ''}
+${imageParts.length > 1 ? `- **Additional Visual Context:** Additional reference images and lot images are attached. Use these to inform material choices, context, and architectural style details.` : ''}
+${imageParts.length === 1 && !hasInspirationImage ? `- **Visual Context:** Reference images are attached. Use these images to inform the design: analyze the terrain, context, and architectural style references to create a floor plan that integrates with the site and follows the visual language of the reference images.` : ''}
 
 **TASK:**
-Design a functional and architecturally coherent floor plan following a ${params.layoutType} layout approach. Consider:
-1. **Shape:** What is the overall shape? (Rectangular, L-shaped, U-shaped, C-shaped, Organic, etc.) The shape should support the ${params.layoutType} layout type.
+Design a functional and architecturally coherent floor plan following a ${params.layoutType} layout approach. ${hasInspirationImage ? '**IMPORTANT: Start with the inspiration image shape and adapt the functional requirements to fit within it.**' : ''} Consider:
+1. **Shape:** ${hasInspirationImage ? 'Extract and adapt the shape from the inspiration image. If the inspiration shows a specific form (organic, angular, curved, etc.), use that as the foundation.' : 'What is the overall shape? (Rectangular, L-shaped, U-shaped, C-shaped, Organic, etc.)'} The shape should support the ${params.layoutType} layout type.
 2. **Zones:** Organize spaces into:
    - Public zones (living, dining, ${params.kitchenType} kitchen, etc.)
    - Private zones (EXACTLY ${params.bedrooms} bedrooms and EXACTLY ${params.bathrooms} bathrooms - this is mandatory)
@@ -189,9 +209,13 @@ Return a JSON object with this exact structure:
 - Return ONLY valid JSON, no markdown formatting or code blocks
 `;
 
+    // Build parts array with text prompt and any image parts
+    const parts: any[] = [{ text: floorPlanPrompt }];
+    parts.push(...imageParts);
+
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: [{ parts: [{ text: floorPlanPrompt }] }],
+      contents: [{ parts }],
       config: {
         responseMimeType: "application/json"
       }
