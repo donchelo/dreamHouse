@@ -58,60 +58,6 @@ export interface DreamHouseParams {
   artDirection: string;
 }
 
-// ============================================
-// FLOOR PLAN TYPE DEFINITIONS
-// ============================================
-
-export interface FloorPlan {
-  // Forma general de la planta
-  shape: string; // "Rectangular", "L-shaped", "U-shaped", "C-shaped", "Organic", etc.
-  
-  // Configuración de zonas
-  zones: {
-    public: string[]; // ["Living room", "Dining room", "Kitchen", etc.]
-    private: string[]; // ["Master bedroom", "Bedroom 2", "Bedroom 3", etc.]
-    services: string[]; // ["Bathroom", "Laundry", "Storage", etc.]
-    exterior: string[]; // ["Terrace", "Garden", "Pool area", etc.]
-  };
-  
-  // Flujo de circulación
-  circulation: {
-    mainAxis: string; // "Linear", "Radial", "Central", "Distributed"
-    entryPoint: string; // "Front center", "Side", "Corner", etc.
-    flowDescription: string; // Descripción textual del flujo
-  };
-  
-  // Relación interior-exterior
-  interiorExterior: {
-    connectionType: string; // "Open", "Semi-open", "Controlled", "Minimal"
-    mainConnections: string[]; // ["Living to terrace", "Kitchen to garden", etc.]
-    glazingStrategy: string; // "Large windows", "Sliding doors", "Glass walls", etc.
-  };
-  
-  // Dimensiones aproximadas (para contexto)
-  dimensions: {
-    approximateWidth: string; // "15-20m"
-    approximateDepth: string; // "10-15m"
-    footprint: string; // "150-200m²"
-  };
-  
-  // Características arquitectónicas del layout
-  layoutFeatures: string[]; // ["Open plan", "Double height", "Courtyard", etc.]
-  
-  // Volumetría exterior: traducción de la planta 2D a volúmenes 3D
-  exteriorVolumetrics: {
-    // Descripción de cómo la distribución de zonas afecta la altura y masa del edificio
-    massingDescription: string; // "El ala norte es de doble altura mientras el ala sur es de un solo nivel"
-    // Alturas por zona (si aplica)
-    heightVariations: string[]; // ["Public zone: double height", "Private zone: single level", etc.]
-    // Relación de llenos y vacíos en fachada
-    facadeComposition: string; // "Grandes ventanales en zona pública, muros más cerrados en zona privada"
-  };
-  
-  // Descripción textual completa para el prompt
-  description: string; // Descripción narrativa del floor plan
-}
-
 export const DEFAULT_PARAMS: DreamHouseParams = {
   // Section 1: Project Essence
   projectType: "Casa unifamiliar",

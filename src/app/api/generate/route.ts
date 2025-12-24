@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { DreamHouseParams, FloorPlan } from '@/types';
-import { generateFloorPlan, generateFloorPlanImage } from '@/lib/floor-plan-engine';
+import { DreamHouseParams } from '@/types';
+import { generateFloorPlan } from '@/lib/floor-plan-engine';
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -50,23 +50,12 @@ export async function POST(req: NextRequest) {
     const floorPlanImage = formData.get('floorPlanImage') as File | null;
     const inspirationImage = formData.get('inspirationImage') as File | null;
     const mode = (formData.get('mode') as string) || 'render'; // 'floor-plan' | 'render'
-    const floorPlanDataJson = formData.get('floorPlanData') as string | null;
 
     if (!paramsJson) {
       return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
     }
 
     const params: DreamHouseParams = JSON.parse(paramsJson);
-    
-    // Parse floor plan data if provided (for render mode)
-    let floorPlanData: FloorPlan | null = null;
-    if (floorPlanDataJson) {
-      try {
-        floorPlanData = JSON.parse(floorPlanDataJson);
-      } catch (e) {
-        console.error("Error parsing floorPlanData:", e);
-      }
-    }
 
     // Process all images to base64 for multimodal generation
     let lotImageBase64 = "";
@@ -126,55 +115,14 @@ export async function POST(req: NextRequest) {
       floorPlanImageMimeType = floorPlanImage.type;
     }
 
-    // --- Step 2: Generate Floor Plan (if not provided) ---
-    let floorPlan: FloorPlan;
-    
+    // --- Step 2: Generate Floor Plan Image (if mode is 'floor-plan') ---
     if (mode === 'floor-plan') {
-      // Generate floor plan data with images as context
-      console.log("Generating floor plan...");
-      floorPlan = await generateFloorPlan(params, imagePartsForFloorPlan);
-      console.log("Floor plan generated:", {
-        shape: floorPlan.shape,
-        zones: Object.keys(floorPlan.zones).length,
-        description: floorPlan.description.substring(0, 100) + "..."
-      });
-
-      // Generate floor plan image
       console.log("Generating floor plan image...");
-      const floorPlanImageUrl = await generateFloorPlanImage(floorPlan, params);
+      const floorPlanImageUrl = await generateFloorPlan(params, imagePartsForFloorPlan);
       
       return NextResponse.json({ 
-        imageUrl: floorPlanImageUrl,
-        floorPlanData: floorPlan
+        imageUrl: floorPlanImageUrl
       });
-    } else {
-      // Render mode: use provided floor plan or generate new one
-      if (floorPlanData) {
-        floorPlan = floorPlanData;
-        console.log("Using provided floor plan data");
-      } else if (floorPlanImage) {
-          // If we have an image but no structured data, we create a basic structure
-          // so the rest of the prompt construction doesn't fail
-          floorPlan = {
-              shape: "Custom (from uploaded image)",
-              dimensions: { footprint: "Varies", approximateWidth: "0", approximateDepth: "0" },
-              description: "The floor plan structure is defined by the uploaded floor plan image. The building's footprint, shape, and spatial organization must match the attached image exactly.",
-              zones: { public: [], private: [], services: [], exterior: [] },
-              circulation: { mainAxis: "Defined by plan", entryPoint: "Defined by plan", flowDescription: "As per uploaded plan" },
-              interiorExterior: { connectionType: "Direct", glazingStrategy: "Optimized", mainConnections: [] },
-              layoutFeatures: ["Uploaded floor plan"],
-              exteriorVolumetrics: {
-                  massingDescription: "Volumetrics defined by the uploaded floor plan geometry",
-                  heightVariations: ["As specified in uploaded plan"],
-                  facadeComposition: "Composition follows the spatial organization of the uploaded plan"
-              }
-          };
-          console.log("Using uploaded floor plan image");
-      } else {
-        console.log("Generating floor plan for render...");
-        floorPlan = await generateFloorPlan(params, imagePartsForFloorPlan);
-        console.log("Floor plan generated for render");
-      }
     }
 
     // --- Step 3: Construct Enhanced Prompt for Render ---
@@ -237,13 +185,7 @@ ${floorPlanImageBase64 ? `
 - Use the attached FLOOR PLAN IMAGE as the ABSOLUTE structural foundation.
 - The building's footprint, shape, and spatial organization MUST match the image exactly.
 - Analyze the floor plan image to understand the spatial distribution, zones, and circulation patterns.
-` : `
-**STRUCTURAL FOUNDATION (GENERATED PLAN):**
-- **Shape:** ${floorPlan.shape}
-- **Footprint:** ${floorPlan.dimensions.footprint} (${floorPlan.dimensions.approximateWidth} × ${floorPlan.dimensions.approximateDepth})
-- **Organization:** ${floorPlan.description}
-- **Zones:** Public (${floorPlan.zones.public.join(", ")}), Private (${floorPlan.zones.private.join(", ")})
-`}
+` : ''}
 
 **ARCHITECTURAL STYLE & SPECIFICATIONS (CLIENT PARAMETERS):**
 - **Project Type:** ${projectType} ${locationStr}

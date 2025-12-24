@@ -5,12 +5,11 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
-import FloorPlanUploader from '@/components/FloorPlanUploader';
 import InspirationCanvas from '@/components/InspirationCanvas';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
-import { DreamHouseParams, DEFAULT_PARAMS, FloorPlan } from '@/types';
+import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
 import { Wand2, AlertCircle, ArrowRight, Zap, Layers, Palette, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
@@ -32,12 +31,10 @@ const HERO_IMAGES = [
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
-  const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
   const [inspirationFile, setInspirationFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
-  const [floorPlanData, setFloorPlanData] = useState<FloorPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -131,7 +128,6 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setFloorPlanImageUrl(null);
-    setFloorPlanData(null);
 
     try {
       const formData = new FormData();
@@ -159,7 +155,6 @@ export default function Home() {
 
       const data = await response.json();
       setFloorPlanImageUrl(data.imageUrl);
-      setFloorPlanData(data.floorPlanData);
       showToast("Floor plan generated successfully!");
       
       setTimeout(() => {
@@ -179,12 +174,6 @@ export default function Home() {
   };
 
   const handleGenerateRender = async () => {
-    if (!floorPlanData && !floorPlanFile) {
-      setError('Please generate or upload a floor plan first');
-      showToast("Generate or upload floor plan first!");
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
@@ -197,26 +186,30 @@ export default function Home() {
       if (lotFile) {
         formData.append('lotImage', lotFile);
       }
-      if (floorPlanFile) {
-        formData.append('floorPlanImage', floorPlanFile);
+      if (inspirationFile) {
+        formData.append('inspirationImage', inspirationFile);
+      }
+      if (floorPlanImageUrl) {
+        // Convert data URL to blob and append as file
+        const response = await fetch(floorPlanImageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'floor-plan.png', { type: blob.type });
+        formData.append('floorPlanImage', file);
       }
       formData.append('params', JSON.stringify(params));
       formData.append('mode', 'render');
-      if (floorPlanData) {
-        formData.append('floorPlanData', JSON.stringify(floorPlanData));
-      }
 
-      const response = await fetch('/api/generate', {
+      const apiResponse = await fetch('/api/generate', {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
         throw new Error(errorData.message || 'Error generating render');
       }
 
-      const data = await response.json();
+      const data = await apiResponse.json();
       setImageUrl(data.imageUrl);
       showToast("Render generated successfully!");
       
@@ -396,24 +389,14 @@ export default function Home() {
 
           {/* Reference Uploader Section - Only in Rendering */}
           {currentTab === 'rendering' && (
-            <>
-              <Section 
-                title="Plano de Planta (Opcional)" 
-                number="01" 
-                isOpen={activeSection === 'floor-plan-upload'}
-                onToggle={() => toggleSection('floor-plan-upload')}
-              >
-                <FloorPlanUploader file={floorPlanFile} onFileChange={setFloorPlanFile} />
-              </Section>
-              <Section 
-                title="Referentes Visuales" 
-                number="02" 
-                isOpen={activeSection === 'references'}
-                onToggle={() => toggleSection('references')}
-              >
-                <ReferenceUploader files={files} onFilesChange={setFiles} />
-              </Section>
-            </>
+            <Section 
+              title="Referentes Visuales" 
+              number="01" 
+              isOpen={activeSection === 'references'}
+              onToggle={() => toggleSection('references')}
+            >
+              <ReferenceUploader files={files} onFilesChange={setFiles} />
+            </Section>
           )}
           
           {/* Parameters Section */}
@@ -470,12 +453,11 @@ export default function Home() {
               <Button
                 onClick={handleGenerateRender}
                 isLoading={isLoading}
-                disabled={!floorPlanData && !floorPlanFile}
                 size="lg"
-                className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
                 aria-label="Generate architectural render"
               >
-                {isLoading ? 'Rendering...' : (floorPlanData || floorPlanFile) ? 'Generate Render' : 'Generate/Upload Floor Plan First'}
+                {isLoading ? 'Rendering...' : 'Generate Render'}
                 {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
               </Button>
             )}
@@ -487,7 +469,7 @@ export default function Home() {
               {/* Left Column: Prompt DNA (Tags) */}
               <div className="lg:col-span-3 lg:order-1 order-2">
                 <div className="bg-card border border-border rounded-xl p-4 h-full max-h-[600px] overflow-hidden sticky top-24">
-                  <PromptPreview params={params} floorPlanData={floorPlanData} />
+                  <PromptPreview params={params} />
                 </div>
               </div>
 

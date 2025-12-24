@@ -1,11 +1,11 @@
 // ============================================
 // FLOOR PLAN ENGINE
 // ============================================
-// Este módulo genera un diseño de planta arquitectónica coherente
-// basado en los parámetros del usuario antes de crear el render final.
+// Este módulo genera una imagen de planta arquitectónica
+// basado en los parámetros del usuario e imágenes de referencia.
 
 import { GoogleGenAI } from '@google/genai';
-import { DreamHouseParams, FloorPlan } from '@/types';
+import { DreamHouseParams } from '@/types';
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -32,17 +32,16 @@ const PROJECT_TYPE_MAP: Record<string, string> = {
 };
 
 /**
- * Genera un floor plan arquitectónico basado en los parámetros del usuario
+ * Genera una imagen de floor plan arquitectónico basado en los parámetros del usuario
  * @param params - Parámetros del proyecto DreamHouse
- * @param imageParts - Partes de imagen opcionales (lote, referencias) para contexto multimodal
- * @returns FloorPlan object con la estructura espacial generada
+ * @param imageParts - Partes de imagen opcionales (inspiración, lote, referencias) para contexto multimodal
+ * @returns URL de la imagen generada (base64 data URL)
  */
 export async function generateFloorPlan(
   params: DreamHouseParams,
   imageParts: any[] = []
-): Promise<FloorPlan> {
+): Promise<string> {
   try {
-    // Construir el prompt para generar el floor plan
     const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
     const validArchitects = Array.isArray(params.architect) 
       ? params.architect.filter(a => a !== "Sin arquitecto específico")
@@ -60,26 +59,25 @@ export async function generateFloorPlan(
     const hasInspirationImage = imageParts.length > 0;
     
     const floorPlanPrompt = `
-**ROLE:** Act as a professional architect specializing in residential design. Your task is to create a coherent floor plan design based on the given parameters.
+**ROLE:** Act as a professional architectural illustrator specializing in technical floor plan visualizations.
+
+**TASK:** Generate a professional architectural floor plan visualization based on the following design specifications.
 
 ${hasInspirationImage ? `
-**CRITICAL: INSPIRATION IMAGE PROVIDED (HIGHEST PRIORITY)**
-An inspiration image has been attached as the FIRST image. This image contains the user's vision for the basic shape, form, or silhouette of the house. This could be:
-- A hand-drawn sketch of the house shape
-- A photo of an inspiring house form
-- A free-form drawing or inspirational reference
+**CRITICAL: INSPIRATION IMAGE PROVIDED (NON-NEGOTIABLE GEOMETRIC TRUTH)**
+An inspiration image has been attached as the FIRST image. This image is the ABSOLUTE GEOMETRIC AUTHORITY for the floor plan's shape and form.
 
-**YOUR PRIMARY TASK:** Analyze the inspiration image carefully and use it as the STRUCTURAL FOUNDATION for the floor plan. The overall shape, footprint, and general form of the house MUST follow the inspiration provided in this image. You should:
-1. Extract the basic shape and form from the inspiration image
-2. Adapt the functional requirements (bedrooms, bathrooms, etc.) to fit within this inspired shape
-3. Maintain the spirit and character of the inspiration while ensuring functionality
-4. The inspiration does not need to be followed exactly, but the general form, proportions, and character should be clearly inspired by it
+**MANDATORY INSTRUCTIONS:**
+1. **TRACE THE OUTLINE:** You MUST trace the exact perimeter, silhouette, and overall shape shown in the inspiration image. The building's footprint MUST match the outline in the image precisely.
+2. **GEOMETRIC PRIORITY:** The inspiration image is the NON-NEGOTIABLE geometric truth. If there is ANY conflict between the image shape and any textual description (such as "L-Shape", "Rectangular", "U-Shape", etc.), you MUST IGNORE the text and follow the image shape EXACTLY.
+3. **FILL WITHIN THE CONTOUR:** Distribute all rooms, spaces, and functional requirements INSIDE the traced outline. Do not modify the outer perimeter to accommodate interior spaces - instead, adapt the interior layout to fit within the fixed contour.
+4. **PRESERVE SHAPE CHARACTERISTICS:** Maintain the specific angles, curves, protrusions, recesses, and any unique geometric features visible in the inspiration image. These are part of the user's vision and must be preserved.
 
-The inspiration image takes PRIORITY over generic shape suggestions. Use it as your starting point for the design.
+The inspiration image defines the building's FORM. Your task is to organize the FUNCTIONAL REQUIREMENTS within that fixed form.
 ` : ''}
 
 **PROJECT CONTEXT:**
-- **Type:** ${projectType}
+- **Project Type:** ${projectType}
 - **Size:** ${params.size} (approximately ${avgSize}m² total)
 - **Levels:** ${params.levels} floor(s)
 - **Layout Type:** ${params.layoutType}
@@ -88,7 +86,7 @@ The inspiration image takes PRIORITY over generic shape suggestions. Use it as y
 - **Parking Spots:** ${params.parkingSpots} ${params.parkingSpots > 0 ? `(include ${params.parkingSpots} parking space(s) in the design)` : '(no parking required)'}
 - **Kitchen Type:** ${params.kitchenType}
 - **Living Area Type:** ${params.livingAreaType}
-- **Social Areas:** ${params.socialAreas.length > 0 ? params.socialAreas.join(", ") : "None specified"}
+- **Social Areas:** ${params.socialAreas.length > 0 ? params.socialAreas.join(", ") : "Standard layout"}
 - **Architectural Style:** ${archStyle}${architects ? ` (inspired by ${architects})` : ''}
 - **Materials:** ${params.materials.join(", ") || "Not specified"}
 - **Environment:** ${params.environment}, ${params.climate}
@@ -98,19 +96,19 @@ ${params.technicalNotes ? `- **Technical Notes:** ${params.technicalNotes}` : ''
 ${imageParts.length > 1 ? `- **Additional Visual Context:** Additional reference images and lot images are attached. Use these to inform material choices, context, and architectural style details.` : ''}
 ${imageParts.length === 1 && !hasInspirationImage ? `- **Visual Context:** Reference images are attached. Use these images to inform the design: analyze the terrain, context, and architectural style references to create a floor plan that integrates with the site and follows the visual language of the reference images.` : ''}
 
-**TASK:**
-Design a functional and architecturally coherent floor plan following a ${params.layoutType} layout approach. ${hasInspirationImage ? '**IMPORTANT: Start with the inspiration image shape and adapt the functional requirements to fit within it.**' : ''} Consider:
-1. **Shape:** ${hasInspirationImage ? 'Extract and adapt the shape from the inspiration image. If the inspiration shows a specific form (organic, angular, curved, etc.), use that as the foundation.' : 'What is the overall shape? (Rectangular, L-shaped, U-shaped, C-shaped, Organic, etc.)'} The shape should support the ${params.layoutType} layout type.
-2. **Zones:** Organize spaces into:
-   - Public zones (living, dining, ${params.kitchenType} kitchen, etc.)
-   - Private zones (EXACTLY ${params.bedrooms} bedrooms and EXACTLY ${params.bathrooms} bathrooms - this is mandatory)
-   - Service zones (utility, storage, laundry, etc.)
-   - Exterior zones (terraces, gardens${params.socialAreas.includes("Pool/Piscina") ? ", pool area" : ""}${params.socialAreas.includes("BBQ/Grill area") ? ", BBQ area" : ""}, etc.)
-   ${params.socialAreas.length > 0 ? `- **Social Areas Required:** ${params.socialAreas.join(", ")} - These must be included in the design` : ''}
-   ${params.parkingSpots > 0 ? `- **Parking:** Include ${params.parkingSpots} parking space(s) (garage or covered parking)` : ''}
-3. **Circulation:** How do people move through the space? (Linear, Radial, Central, Distributed) The circulation should support the ${params.layoutType} layout.
-4. **Interior-Exterior Connection:** How does the interior connect with exterior spaces? Consider the ${params.livingAreaType} living area type.
-5. **Layout Features:** The design must follow a ${params.layoutType} approach. Include the requested ${params.kitchenType} kitchen and ${params.livingAreaType} living area.
+**DESIGN REQUIREMENTS:**
+${hasInspirationImage ? `
+**GEOMETRIC CONSTRAINT (HIGHEST PRIORITY):**
+The inspiration image attached as the FIRST image defines the EXACT shape and footprint of the building. This is NON-NEGOTIABLE.
+
+**WORKFLOW:**
+1. First, trace the exact outline from the inspiration image - this becomes the fixed perimeter.
+2. Then, distribute all functional requirements (bedrooms, bathrooms, kitchen, living areas, etc.) INSIDE this fixed perimeter.
+3. If the specified layout type (${params.layoutType}) conflicts with the image shape, IGNORE the layout type text and follow the image shape. The image shape takes absolute precedence.
+4. Adapt room sizes and arrangements to fit within the traced contour while maintaining functionality and accessibility standards.
+
+The floor plan MUST match the inspiration image's shape exactly. All interior spaces must be organized within that fixed geometric boundary.
+` : `Design a functional and architecturally coherent floor plan following a ${params.layoutType} layout approach.`}
 
 **FUNDAMENTAL DESIGN PRINCIPLES (MANDATORY):**
 
@@ -122,11 +120,7 @@ The floor plan MUST incorporate traditional Feng Shui principles for optimal ene
   - Kitchen (fire element) should not be directly opposite the main entrance or bedroom doors.
   - Master bedroom should be positioned in a commanding position (not directly aligned with entrance or bathroom).
   - Bathrooms should not be placed in the center of the house or directly facing the main entrance.
-- **Bagua Map Consideration:** Distribute functions according to the Bagua map when possible:
-  - Wealth/Career area (front center): Living room or study
-  - Health/Family area (left center): Dining or family room
-  - Knowledge area (front left): Library or quiet space
-  - Fame area (front): Entry or prominent space
+- **Bagua Map Consideration:** Distribute functions according to the Bagua map when possible.
 - **Five Elements Balance:** Ensure representation of the five elements (Wood, Fire, Earth, Metal, Water) through spatial organization and material choices.
 - **Avoid Negative Energy:** Eliminate sharp corners pointing at key spaces, avoid long straight corridors, and ensure no direct alignment of doors creating energy conflicts.
 
@@ -153,60 +147,19 @@ The design MUST be fully accessible for people with reduced mobility. This is NO
 
 ${params.technicalNotes ? `\n\n**CRITICAL TECHNICAL REQUIREMENTS:**\n${params.technicalNotes}\n\nThese technical notes are MANDATORY and must be strictly followed in the floor plan design.` : ''}
 
-**CRITICAL: EXTERIOR VOLUMETRICS FOR RENDERING**
-The floor plan you generate will be the ABSOLUTE FOUNDATION for a photorealistic exterior render. You MUST think about how the 2D plan translates to 3D volumes that will be visible from the outside. Consider:
+**VISUALIZATION REQUIREMENTS:**
+- Create a professional architectural floor plan visualization
+- Style: Modern technical drawing with clean lines, or 3D isometric view showing the layout
+- Include room labels, dimensions, and circulation paths
+- Use architectural drawing conventions (walls, doors, windows, furniture outlines)
+- Color scheme: Professional blueprints style (white/light background with dark lines) OR modern 3D visualization with subtle colors
+- Include scale reference and north arrow if applicable
+- Make it clear and readable, suitable for architectural presentation
+- Show all ${params.levels} level(s) if multi-story (use separate views or stacked layout)
+- The floor plan should clearly show the spatial organization, circulation flow, and key features
 
-1. **Massing Description:** How do the different zones (public, private, services) translate to different building heights or volumes? For example:
-   - If public zones have double height, describe how this creates a taller volume in that area
-   - If private zones are on upper floors, describe how this creates a stepped or layered massing
-   - If there are courtyards or patios, describe how they create voids in the massing
-
-2. **Height Variations:** Specify which zones have different heights (single level, double height, mezzanine, etc.) and how this affects the exterior silhouette
-
-3. **Facade Composition:** Based on the interior-exterior connection strategy, describe how the facade will look:
-   - Where are large windows/glass (typically in public zones)?
-   - Where are more solid walls (typically in private zones)?
-   - How does the glazing strategy affect the visual weight and transparency of different parts of the building?
-
-**OUTPUT FORMAT (JSON):**
-Return a JSON object with this exact structure:
-{
-  "shape": "string describing the overall shape",
-  "zones": {
-    "public": ["list of public spaces"],
-    "private": ["list of private spaces"],
-    "services": ["list of service spaces"],
-    "exterior": ["list of exterior spaces"]
-  },
-  "circulation": {
-    "mainAxis": "Linear|Radial|Central|Distributed",
-    "entryPoint": "description of main entry location",
-    "flowDescription": "brief description of circulation flow"
-  },
-  "interiorExterior": {
-    "connectionType": "Open|Semi-open|Controlled|Minimal",
-    "mainConnections": ["list of main interior-exterior connections"],
-    "glazingStrategy": "description of window/glass strategy"
-  },
-  "dimensions": {
-    "approximateWidth": "estimated width range (e.g., '15-20m')",
-    "approximateDepth": "estimated depth range (e.g., '10-15m')",
-    "footprint": "estimated footprint (e.g., '150-200m²')"
-  },
-  "layoutFeatures": ["list of key layout features"],
-  "exteriorVolumetrics": {
-    "massingDescription": "Detailed description of how the 2D plan translates to 3D building massing, including height variations, stepped volumes, and how different zones create different exterior volumes",
-    "heightVariations": ["List of height variations by zone, e.g., 'Public zone: double height (6-7m)', 'Private zone: single level (3m)', etc."],
-    "facadeComposition": "Description of how the facade will appear based on interior-exterior connections: where glass dominates, where solid walls are, and how the glazing strategy affects the visual composition"
-  },
-  "description": "A comprehensive narrative description of the floor plan that explains the spatial organization, flow, and key architectural decisions. This should be 3-5 sentences and written in a way that can be directly used in an architectural visualization prompt."
-}
-
-**IMPORTANT:**
-- The design must be realistic and functional
-- Consider the number of levels specified
-- The description should be detailed enough to guide exterior visualization
-- Return ONLY valid JSON, no markdown formatting or code blocks
+**OUTPUT:**
+Generate a high-quality architectural floor plan visualization that clearly communicates the spatial organization, circulation flow, and key features described above.
 `;
 
     // Build parts array with text prompt and any image parts
@@ -214,119 +167,8 @@ Return a JSON object with this exact structure:
     parts.push(...imageParts);
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: [{ parts }],
-      config: {
-        responseMimeType: "application/json"
-      }
-    });
-
-    const responseText = response.text || "";
-    
-    // Limpiar la respuesta si viene con markdown code blocks
-    let cleanedText = responseText.trim();
-    if (cleanedText.startsWith("```json")) {
-      cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-    } else if (cleanedText.startsWith("```")) {
-      cleanedText = cleanedText.replace(/^```\s*/, "").replace(/\s*```$/, "");
-    }
-    
-    const floorPlanData = JSON.parse(cleanedText) as FloorPlan;
-    
-    // Validar que tenga la estructura mínima requerida
-    if (!floorPlanData.shape || !floorPlanData.zones || !floorPlanData.description) {
-      throw new Error("Invalid floor plan structure returned from AI");
-    }
-    
-    // Validar y asegurar que exteriorVolumetrics existe
-    if (!floorPlanData.exteriorVolumetrics) {
-      // Generar volumetría básica si no viene del AI
-      floorPlanData.exteriorVolumetrics = {
-        massingDescription: `The ${floorPlanData.shape.toLowerCase()} shape creates a ${params.levels}-level structure with ${floorPlanData.interiorExterior.connectionType.toLowerCase()} interior-exterior connections.`,
-        heightVariations: params.levels > 1 
-          ? [`Ground floor: public zones with ${floorPlanData.interiorExterior.glazingStrategy.toLowerCase()}`, `Upper floor(s): private zones with more controlled openings`]
-          : [`Single level structure with ${floorPlanData.interiorExterior.glazingStrategy.toLowerCase()}`],
-        facadeComposition: `${floorPlanData.interiorExterior.glazingStrategy} in public zones, more solid walls in private zones`
-      };
-    }
-    
-    return floorPlanData;
-    
-  } catch (error) {
-    console.error("Error generating floor plan:", error);
-    
-    // Fallback a un floor plan básico si falla la generación
-    return getDefaultFloorPlan(params);
-  }
-}
-
-/**
- * Genera una imagen visual del floor plan (estilo arquitectónico técnico)
- * @param floorPlan - Datos del floor plan generado
- * @param params - Parámetros del proyecto para contexto
- * @returns URL de la imagen generada (base64 data URL)
- */
-export async function generateFloorPlanImage(
-  floorPlan: FloorPlan,
-  params: DreamHouseParams
-): Promise<string> {
-  try {
-    const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
-    
-    const floorPlanImagePrompt = `
-**ROLE:** Act as a professional architectural illustrator specializing in technical floor plan visualizations.
-
-**TASK:** Generate a professional architectural floor plan visualization based on the following design specifications.
-
-**FLOOR PLAN SPECIFICATIONS:**
-- **Project Type:** ${projectType}
-- **Shape:** ${floorPlan.shape}
-- **Footprint:** ${floorPlan.dimensions.footprint} (${floorPlan.dimensions.approximateWidth} × ${floorPlan.dimensions.approximateDepth})
-- **Levels:** ${params.levels} floor(s)
-- **Rooms:** ${params.bedrooms} Bedrooms, ${params.bathrooms} Bathrooms
-- **Kitchen/Living:** ${params.kitchenType} kitchen, ${params.livingAreaType} living
-- **Parking:** ${params.parkingSpots} space(s)
-- **Social Areas:** ${params.socialAreas.length > 0 ? params.socialAreas.join(", ") : "Standard layout"}
-
-**SPATIAL ORGANIZATION:**
-- **Public Zones:** ${floorPlan.zones.public.join(", ")}
-- **Private Zones:** ${floorPlan.zones.private.join(", ")}
-- **Service Zones:** ${floorPlan.zones.services.join(", ")}
-- **Exterior Zones:** ${floorPlan.zones.exterior.join(", ")}
-
-**CIRCULATION:**
-- **Flow Type:** ${floorPlan.circulation.mainAxis}
-- **Entry Point:** ${floorPlan.circulation.entryPoint}
-- **Description:** ${floorPlan.circulation.flowDescription}
-
-**INTERIOR-EXTERIOR CONNECTION:**
-- **Type:** ${floorPlan.interiorExterior.connectionType}
-- **Main Connections:** ${floorPlan.interiorExterior.mainConnections.join(", ")}
-- **Glazing Strategy:** ${floorPlan.interiorExterior.glazingStrategy}
-
-**KEY FEATURES:** ${floorPlan.layoutFeatures.join(", ")}
-
-**DESIGN DESCRIPTION:**
-${floorPlan.description}
-
-**VISUALIZATION REQUIREMENTS:**
-- Create a professional architectural floor plan visualization
-- Style: Modern technical drawing with clean lines, or 3D isometric view showing the layout
-- Include room labels, dimensions, and circulation paths
-- Show the ${floorPlan.shape.toLowerCase()} shape clearly
-- Use architectural drawing conventions (walls, doors, windows, furniture outlines)
-- Color scheme: Professional blueprints style (white/light background with dark lines) OR modern 3D visualization with subtle colors
-- Include scale reference and north arrow if applicable
-- Make it clear and readable, suitable for architectural presentation
-- Show all ${params.levels} level(s) if multi-story (use separate views or stacked layout)
-
-**OUTPUT:**
-Generate a high-quality architectural floor plan visualization that clearly communicates the spatial organization, circulation flow, and key features described above.
-`;
-
-    const response = await ai.models.generateContent({
       model: "gemini-3-pro-image-preview",
-      contents: [{ parts: [{ text: floorPlanImagePrompt }] }],
+      contents: [{ parts }],
       config: {
         tools: [{ googleSearch: {} }],
         imageConfig: {
@@ -343,8 +185,8 @@ Generate a high-quality architectural floor plan visualization that clearly comm
     }
 
     const firstCandidate = candidates[0];
-    const parts = firstCandidate?.content?.parts;
-    const imagePart = parts?.find(part => part.inlineData);
+    const responseParts = firstCandidate?.content?.parts;
+    const imagePart = responseParts?.find(part => part.inlineData);
     
     if (!imagePart || !imagePart.inlineData) {
       throw new Error("No image data found in floor plan response");
@@ -357,89 +199,9 @@ Generate a high-quality architectural floor plan visualization that clearly comm
     return imageUrl;
     
   } catch (error) {
-    console.error("Error generating floor plan image:", error);
+    console.error("Error generating floor plan:", error);
     throw error;
   }
 }
 
-/**
- * Genera un floor plan por defecto como fallback
- */
-function getDefaultFloorPlan(params: DreamHouseParams): FloorPlan {
-  const sizeMatch = params.size.match(/(\d+)-(\d+)/);
-  const minSize = sizeMatch ? parseInt(sizeMatch[1]) : 150;
-  const maxSize = sizeMatch ? parseInt(sizeMatch[2]) : 300;
-  const avgSize = Math.floor((minSize + maxSize) / 2);
-  const footprint = Math.floor(avgSize / (params.levels || 1));
-  
-  // Generate bedroom list based on actual count
-  const bedrooms = [];
-  for (let i = 1; i <= params.bedrooms; i++) {
-    if (i === 1 && params.levels >= 2) {
-      bedrooms.push(`Master bedroom (upper floor)`);
-    } else if (params.levels >= 2) {
-      bedrooms.push(`Bedroom ${i} (upper floor)`);
-    } else {
-      bedrooms.push(i === 1 ? "Master bedroom" : `Bedroom ${i}`);
-    }
-  }
-  
-  // Generate bathroom list
-  const bathrooms = [];
-  for (let i = 1; i <= params.bathrooms; i++) {
-    bathrooms.push(i === 1 ? "Master bathroom" : `Bathroom ${i}`);
-  }
-  
-  const exteriorZones = params.exteriorElements.length > 0 
-    ? params.exteriorElements.slice(0, 3)
-    : ["Front terrace", "Back garden"];
-  
-  if (params.socialAreas.includes("Pool/Piscina")) {
-    exteriorZones.push("Pool area");
-  }
-  
-  return {
-    shape: "Rectangular",
-    zones: {
-      public: ["Living room", "Dining area", params.kitchenType],
-      private: bedrooms,
-      services: [...bathrooms, "Storage", "Laundry"],
-      exterior: exteriorZones
-    },
-    circulation: {
-      mainAxis: params.layoutType === "Open plan" ? "Distributed" : "Linear",
-      entryPoint: "Front center",
-      flowDescription: params.layoutType === "Open plan" 
-        ? "Open flow connecting all zones"
-        : "Central corridor connecting public and private zones"
-    },
-    interiorExterior: {
-      connectionType: params.livingAreaType.includes("Conexión directa") ? "Open" : "Semi-open",
-      mainConnections: ["Living room to terrace", "Kitchen to garden"],
-      glazingStrategy: "Large windows and sliding glass doors"
-    },
-    dimensions: {
-      approximateWidth: "12-18m",
-      approximateDepth: "8-12m",
-      footprint: `${footprint}m²`
-    },
-    layoutFeatures: [
-      params.layoutType,
-      params.livingAreaType,
-      params.kitchenType,
-      ...params.socialAreas
-    ],
-    exteriorVolumetrics: {
-      massingDescription: `A ${params.levels}-level rectangular structure where the ground floor contains public zones with extensive glazing, creating a transparent base. ${params.levels >= 2 ? "The upper floor(s) contain private bedrooms with more controlled openings, creating a more solid upper mass that contrasts with the open ground floor." : "The single-level structure maintains a uniform height with strategic glazing in public areas."}`,
-      heightVariations: params.levels > 1
-        ? [
-            `Ground floor: Public zones with large windows (3-4m height)`,
-            `Upper floor(s): Private zones with standard windows (2.5-3m height per level)`
-          ]
-        : [`Single level structure with varying window heights based on zone function`],
-      facadeComposition: `Large windows and sliding glass doors dominate the public zones (living, dining), creating transparency and connection to exterior. Private zones feature more controlled window placement, creating a rhythm of solid and void. The ${params.levels >= 2 ? "upper floors" : "structure"} present a more solid appearance with strategic openings.`
-    },
-    description: `A ${params.levels}-level ${params.size.toLowerCase()} with a ${params.layoutType.toLowerCase()} layout and rectangular footprint. The design includes exactly ${params.bedrooms} bedrooms and ${params.bathrooms} bathrooms. The ground floor features a ${params.livingAreaType.toLowerCase()} living and dining area connected to a ${params.kitchenType.toLowerCase()} kitchen, with direct access to exterior terraces. ${params.levels >= 2 ? "The private bedrooms are located on the upper floor(s), ensuring separation between public and private zones." : ""} ${params.parkingSpots > 0 ? `The design includes ${params.parkingSpots} parking space(s).` : ""} The design emphasizes natural light through large windows and maintains a clear circulation axis from the main entrance.`
-  };
-}
 
