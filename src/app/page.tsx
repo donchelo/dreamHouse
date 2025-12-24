@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
+import FloorPlanUploader from '@/components/FloorPlanUploader';
 import InspirationCanvas from '@/components/InspirationCanvas';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
@@ -32,6 +33,7 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
   const [inspirationFile, setInspirationFile] = useState<File | null>(null);
+  const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
@@ -189,7 +191,10 @@ export default function Home() {
       if (inspirationFile) {
         formData.append('inspirationImage', inspirationFile);
       }
-      if (floorPlanImageUrl) {
+      // Priority: uploaded floor plan file > generated floor plan image
+      if (floorPlanFile) {
+        formData.append('floorPlanImage', floorPlanFile);
+      } else if (floorPlanImageUrl) {
         // Convert data URL to blob and append as file
         const response = await fetch(floorPlanImageUrl);
         const blob = await response.blob();
@@ -396,6 +401,18 @@ export default function Home() {
               onToggle={() => toggleSection('references')}
             >
               <ReferenceUploader files={files} onFilesChange={setFiles} />
+            </Section>
+          )}
+
+          {/* Floor Plan Uploader Section - Only in Rendering */}
+          {currentTab === 'rendering' && (
+            <Section 
+              title="Plano de Planta" 
+              number="02" 
+              isOpen={activeSection === 'floorplan'}
+              onToggle={() => toggleSection('floorplan')}
+            >
+              <FloorPlanUploader file={floorPlanFile} onFileChange={setFloorPlanFile} />
             </Section>
           )}
           

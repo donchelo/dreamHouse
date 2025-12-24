@@ -29,6 +29,7 @@ export interface DreamHouseParams {
   roofType: string;
   materials: string[];
   finishLevel: string;
+  architecturalDetails: string[];
   
   // Section 4: Aesthetics & Details
   colorPalette: string[];
@@ -56,6 +57,7 @@ export interface DreamHouseParams {
   
   // Section 9: Art Direction (for Rendering)
   artDirection: string;
+  negativePrompt: string;
 }
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
@@ -85,6 +87,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   roofType: "Plano",
   materials: [],
   finishLevel: "Premium/Alto",
+  architecturalDetails: [],
   
   // Section 4: Aesthetics & Details
   colorPalette: [],
@@ -111,5 +114,6 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   technicalNotes: "",
   
   // Section 9: Art Direction (for Rendering)
-  artDirection: ""
+  artDirection: "",
+  negativePrompt: ""
 };

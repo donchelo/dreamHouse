@@ -92,6 +92,7 @@ The inspiration image defines the building's FORM. Your task is to organize the 
 - **Environment:** ${params.environment}, ${params.climate}
 ${params.city ? `- **Location:** ${params.city}` : ''}
 ${params.exteriorElements.length > 0 ? `- **Exterior Elements:** ${params.exteriorElements.join(", ")}` : ''}
+${params.architecturalDetails && params.architecturalDetails.length > 0 ? `- **Architectural Details:** ${params.architecturalDetails.join(", ")}` : ''}
 ${params.technicalNotes ? `- **Technical Notes:** ${params.technicalNotes}` : ''}
 ${imageParts.length > 1 ? `- **Additional Visual Context:** Additional reference images and lot images are attached. Use these to inform material choices, context, and architectural style details.` : ''}
 ${imageParts.length === 1 && !hasInspirationImage ? `- **Visual Context:** Reference images are attached. Use these images to inform the design: analyze the terrain, context, and architectural style references to create a floor plan that integrates with the site and follows the visual language of the reference images.` : ''}

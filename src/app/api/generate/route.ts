@@ -147,6 +147,9 @@ export async function POST(req: NextRequest) {
     const materialsList = params.materials.join(", ");
     const colors = params.colorPalette.join(", ");
     const finish = params.finishLevel;
+    const architecturalDetails = params.architecturalDetails && params.architecturalDetails.length > 0 
+      ? params.architecturalDetails.join(", ")
+      : "";
 
     // 4. Environment & Context
     const environment = [
@@ -181,10 +184,21 @@ export async function POST(req: NextRequest) {
 Act as a world-renowned architectural photographer. Your goal is to create a photorealistic render of a residential project based on the following parameters and attached visual context.
 
 ${floorPlanImageBase64 ? `
-**STRUCTURAL TRUTH (ATTACHED IMAGE):**
-- Use the attached FLOOR PLAN IMAGE as the ABSOLUTE structural foundation.
-- The building's footprint, shape, and spatial organization MUST match the image exactly.
-- Analyze the floor plan image to understand the spatial distribution, zones, and circulation patterns.
+**CRITICAL: FLOOR PLAN IMAGE PROVIDED (PRIMARY GEOMETRIC REFERENCE - ~80% FIDELITY)**
+A FLOOR PLAN IMAGE has been attached as the FIRST image. This floor plan is the PRIMARY GEOMETRIC REFERENCE for the building's exterior form, with approximately 80% fidelity requirement.
+
+**BALANCED INSTRUCTIONS FOR EXTERIOR RENDERING:**
+1. **GENERAL FOOTPRINT MATCH (~80%):** Aim for approximately 80% fidelity to the floor plan's geometry. Follow the general shape, footprint, and perimeter shown in the floor plan. The overall form and spatial organization should be recognizable and faithful to the plan.
+2. **SPATIAL ORGANIZATION:** The spatial distribution, room locations, and circulation patterns visible in the floor plan should be reflected in the exterior view. If the floor plan shows specific room arrangements, the exterior should show corresponding volumes, windows, and architectural elements that align with those interior spaces.
+3. **CREATIVE FLEXIBILITY (~20%):** You have approximately 20% creative freedom to adapt the perimeter, edges, protrusions, and details where necessary for:
+   - Structural logic and 3D architectural coherence
+   - Aesthetic refinement and visual impact
+   - Smoothing of irregular lines or angles that may not translate well to 3D
+   - Enhancing proportions and architectural harmony
+4. **EXTERIOR INTERPRETATION:** Translate the 2D floor plan into a 3D exterior view. The building's height, roof lines, window placement, and architectural features should be consistent with the spatial organization shown in the floor plan, while allowing for natural 3D refinements.
+5. **PRESERVE CORE SHAPE CHARACTERISTICS:** Maintain the essential angles, curves, protrusions, recesses, and unique geometric features visible in the floor plan. These define the building's character and should be preserved, but can be refined for better 3D architectural form.
+
+The floor plan provides the building's FORM foundation (~80%). Your task is to create a photorealistic EXTERIOR VIEW that respects this form while applying intelligent 3D refinements (~20%) and the specified architectural style, materials, and aesthetic details.
 ` : ''}
 
 **ARCHITECTURAL STYLE & SPECIFICATIONS (CLIENT PARAMETERS):**
@@ -195,6 +209,7 @@ ${floorPlanImageBase64 ? `
 - **Color Palette:** ${colors}
 - **Finish:** ${finish}
 - **Atmosphere:** ${moodDesc}
+${architecturalDetails ? `- **Architectural Details:** ${architecturalDetails}` : ''}
 
 **ENVIRONMENT & PHOTOGRAPHY:**
 - **Context:** ${environment}
@@ -204,12 +219,14 @@ ${referenceImagesBase64.length > 0 ? `- **VISUAL REFERENCE IMAGES:** ${reference
 - **Camera Configuration:** ${camera}
 - **Human Scale:** ${params.humanContext !== "Sin personas" ? params.humanContext : "None"}
 
-**FINAL DIRECTIVE:**
-1. If a **FLOOR PLAN IMAGE** is attached, it is the NON-NEGOTIABLE geometric limit for the building's form. The building's footprint, shape, and spatial organization MUST match the image exactly.
-2. If a **LOT IMAGE** is attached, the building MUST be perfectly integrated into that specific terrain, matching the topography, vegetation, and environmental conditions shown.
-3. If **VISUAL REFERENCE IMAGES** are attached, use them as the PRIMARY source for architectural style, material selection, color palette, and aesthetic details. Incorporate their visual language directly into the render.
-4. Apply the architectural style and materials specified in the parameters as an aesthetic layer over the structural geometry defined by the floor plan.
-5. Generate ONLY EXTERIOR VIEWS. Photorealistic quality, cinematic lighting.
+**FINAL DIRECTIVE (PRIORITY ORDER):**
+1. **FLOOR PLAN IMAGE (HIGHEST PRIORITY - ~80% FIDELITY):** If a FLOOR PLAN IMAGE is attached, it is the PRIMARY GEOMETRIC REFERENCE. Aim for approximately 80% fidelity to the floor plan's geometry - the building's exterior footprint, shape, perimeter, and spatial organization should closely follow the floor plan. You have ~20% creative freedom to refine edges, proportions, and details for superior 3D architectural coherence and aesthetic impact. The exterior view should be a faithful 3D interpretation of the 2D floor plan geometry, with intelligent refinements.
+2. **LOT IMAGE (SECOND PRIORITY):** If a LOT IMAGE is attached, the building MUST be perfectly integrated into that specific terrain, matching the topography, vegetation, and environmental conditions shown. The building's shape should respect the floor plan geometry (~80%) while allowing for terrain adaptation within the 20% flexibility.
+3. **VISUAL REFERENCE IMAGES (STYLE REFERENCE):** If VISUAL REFERENCE IMAGES are attached, use them as the PRIMARY source for architectural style, material selection, color palette, and aesthetic details. Incorporate their visual language directly into the render, working within the geometric framework defined by the floor plan (~80% fidelity).
+4. **PARAMETERS (AESTHETIC LAYER):** Apply the architectural style and materials specified in the parameters as an aesthetic layer over the structural geometry defined by the floor plan. These parameters inform HOW the building looks, while the floor plan provides the foundational shape (~80%) with room for refinement (~20%).
+5. **OUTPUT REQUIREMENT:** Generate ONLY EXTERIOR VIEWS. Photorealistic quality, cinematic lighting. The exterior should be a faithful 3D representation of the floor plan's geometry (~80% fidelity) with intelligent architectural refinements (~20%).
+
+${params.negativePrompt ? `\n**NEGATIVE PROMPT / AVOID:**\nThe following elements MUST NOT appear in the generated image:\n${params.negativePrompt}\n\nStrictly avoid these elements. If any of these are present in the generated image, it will be considered incorrect.` : ''}
 
 ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
 `.trim();

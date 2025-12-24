@@ -308,6 +308,15 @@ export default function ParameterForm({
                 "Selecciona espacios adicionales que deseas incluir en el diseño (piscina, gimnasio, cine, oficina, etc.)",
                 true
               )}
+
+              {/* Detalles arquitectónicos */}
+              {renderChipsGroup(
+                "Detalles Arquitectónicos", 
+                "architecturalDetails", 
+                C.ARCHITECTURAL_DETAILS, 
+                "Selecciona características arquitectónicas destacadas que deseas enfatizar en el diseño",
+                false
+              )}
             </div>
           </Section>
 
@@ -649,6 +658,29 @@ export default function ParameterForm({
                 rows={5}
                 className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
                 aria-describedby="art-direction-help"
+              />
+            </div>
+            <div className="flex flex-col gap-2 mt-6">
+              <div className="flex flex-col gap-1 pl-1">
+                <label 
+                  htmlFor="negative-prompt-textarea"
+                  className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
+                >
+                  Negative Prompt
+                </label>
+                <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
+                  Especifica qué elementos NO deseas ver en el render. Ej: "Sin personas", "Sin vehículos", "Sin cables eléctricos visibles", "Sin elementos decorativos excesivos", etc.
+                </p>
+              </div>
+              <textarea
+                id="negative-prompt-textarea"
+                value={params.negativePrompt || ''}
+                onChange={(e) => handleChange("negativePrompt", e.target.value)}
+                disabled={disabled}
+                placeholder="Ej: Sin personas, sin vehículos, sin cables eléctricos visibles, sin elementos decorativos excesivos, sin publicidad, sin basura..."
+                rows={4}
+                className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
+                aria-describedby="negative-prompt-help"
               />
             </div>
           </Section>

@@ -246,6 +246,13 @@ export const SOCIAL_AREAS = [
   "Bar/Barra"
 ];
 
+export const ARCHITECTURAL_DETAILS = [
+  "Techos altos",
+  "Puerta monumental",
+  "Espacios abiertos",
+  "Grandes ventanales"
+];
+
 export const MATERIALS = [
   "Concreto", "Concreto expuesto", "Madera", "Madera oscura", "Vidrio",
   "Acero", "Acero corten", "Piedra natural", "Ladrillo", "Ladrillo visto",
