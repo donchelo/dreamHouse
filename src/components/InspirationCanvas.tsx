@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { Upload, Pencil, Trash2, CheckCircle2, Download, RotateCcw } from 'lucide-react';
+import { Upload, Pencil, Trash2, CheckCircle2, Download, RotateCcw, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
 
 interface InspirationCanvasProps {
   file: File | null;
@@ -15,6 +16,7 @@ export default function InspirationCanvas({ file, onFileChange }: InspirationCan
   const [mode, setMode] = useState<Mode>('upload');
   const [isDragging, setIsDragging] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,20 +65,32 @@ export default function InspirationCanvas({ file, onFileChange }: InspirationCan
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    setError(null);
     
     const droppedFile = Array.from(e.dataTransfer.files).find(f => 
       f.type.startsWith('image/')
     );
     
     if (droppedFile) {
+      const validation = validateImageFile(droppedFile, 'Imagen de inspiración');
+      if (!validation.valid) {
+        setError(validation.error || 'Error al validar imagen');
+        return;
+      }
       onFileChange(droppedFile);
     }
   }, [onFileChange]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type.startsWith('image/')) {
+        const validation = validateImageFile(selectedFile, 'Imagen de inspiración');
+        if (!validation.valid) {
+          setError(validation.error || 'Error al validar imagen');
+          return;
+        }
         onFileChange(selectedFile);
       }
     }
@@ -257,6 +271,9 @@ export default function InspirationCanvas({ file, onFileChange }: InspirationCan
               <p className="text-xs text-muted-foreground mt-2">
                 Puede ser un boceto, una foto o cualquier imagen con la forma que te inspire
               </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Máx. {formatFileSize(MAX_IMAGE_SIZE)}
+              </p>
             </div>
           ) : (
             <div className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-purple-500/50 hover:shadow-lg">
@@ -323,6 +340,14 @@ export default function InspirationCanvas({ file, onFileChange }: InspirationCan
           <p className="text-xs text-muted-foreground text-center">
             Dibuja la forma básica de la casa. No tiene que ser perfecto, solo una guía para la inspiración.
           </p>
+        </div>
+      )}
+      
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+          <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
     </div>

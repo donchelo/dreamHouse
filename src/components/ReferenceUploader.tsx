@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { validateImageFiles, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
 
 interface ReferenceUploaderProps {
   files: File[];
@@ -12,6 +13,7 @@ interface ReferenceUploaderProps {
 export default function ReferenceUploader({ files, onFilesChange }: ReferenceUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -27,22 +29,39 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    setError(null);
     
     const droppedFiles = Array.from(e.dataTransfer.files).filter(file => 
       file.type.startsWith('image/')
     );
     
     if (droppedFiles.length > 0) {
+      const validation = validateImageFiles(droppedFiles, 'Imagen de referencia');
+      if (!validation.valid) {
+        setError(validation.error || 'Error al validar imágenes');
+        return;
+      }
+      
       const newFiles = [...files, ...droppedFiles].slice(0, 5);
       onFilesChange(newFiles);
     }
   }, [files, onFilesChange]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files).filter(file => 
         file.type.startsWith('image/')
       );
+      
+      if (selectedFiles.length > 0) {
+        const validation = validateImageFiles(selectedFiles, 'Imagen de referencia');
+        if (!validation.valid) {
+          setError(validation.error || 'Error al validar imágenes');
+          return;
+        }
+      }
+      
       const newFiles = [...files, ...selectedFiles].slice(0, 5);
       onFilesChange(newFiles);
     }
@@ -214,11 +233,19 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
             
             {/* Subtle hint */}
             <span className="text-[10px] text-muted mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              JPG, PNG, WebP
+              JPG, PNG, WebP · Máx. {formatFileSize(MAX_IMAGE_SIZE)}
             </span>
           </div>
         )}
       </div>
+      
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+          <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
       
       {/* Empty State Tip */}
       {files.length === 0 && (

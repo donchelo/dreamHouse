@@ -3,8 +3,21 @@ import { GoogleGenAI } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 import { generateFloorPlan } from '@/lib/floor-plan-engine';
 
+// Vercel configuration: maxDuration only works on Pro plan, but it's the correct way to declare it
+// Hobby plan has 10s limit, Pro plan allows up to 300s
+export const maxDuration = 60; // 60 seconds for Pro plan (or use 10 for Hobby)
+
+// Constants for validation
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
+const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total (Vercel limit is 4.5MB, we use 4MB for safety)
+const MAX_REFERENCE_IMAGES = 5;
+
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('⚠️ GEMINI_API_KEY is not set. API calls will fail.');
+}
 
 // Helper to map project types to English for better AI understanding
 const PROJECT_TYPE_MAP: Record<string, string> = {
@@ -41,8 +54,45 @@ const MOOD_MAP: Record<string, string> = {
   "Romántico y nostálgico": "romantic and nostalgic atmosphere"
 };
 
+// Helper function to validate image size
+function validateImageSize(file: File, fieldName: string): { valid: boolean; error?: string } {
+  if (file.size > MAX_IMAGE_SIZE) {
+    return {
+      valid: false,
+      error: `${fieldName} exceeds maximum size of ${MAX_IMAGE_SIZE / 1024 / 1024}MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`
+    };
+  }
+  if (!file.type.startsWith('image/')) {
+    return {
+      valid: false,
+      error: `${fieldName} must be an image file. Received: ${file.type}`
+    };
+  }
+  return { valid: true };
+}
+
+// Helper function to calculate total payload size
+function calculatePayloadSize(files: File[], lotImage: File | null, floorPlanImage: File | null, inspirationImage: File | null, paramsJson: string): number {
+  let totalSize = paramsJson.length; // JSON params size
+  
+  files.forEach(file => totalSize += file.size);
+  if (lotImage) totalSize += lotImage.size;
+  if (floorPlanImage) totalSize += floorPlanImage.size;
+  if (inspirationImage) totalSize += inspirationImage.size;
+  
+  return totalSize;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // Check API key
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { message: 'GEMINI_API_KEY is not configured. Please set it in Vercel environment variables.' },
+        { status: 500 }
+      );
+    }
+
     const formData = await req.formData();
     const paramsJson = formData.get('params') as string;
     const files = formData.getAll('files') as File[];
@@ -53,6 +103,54 @@ export async function POST(req: NextRequest) {
 
     if (!paramsJson) {
       return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
+    }
+
+    // Validate number of reference images
+    if (files.length > MAX_REFERENCE_IMAGES) {
+      return NextResponse.json(
+        { message: `Maximum ${MAX_REFERENCE_IMAGES} reference images allowed. Received: ${files.length}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate individual image sizes
+    for (const file of files) {
+      const validation = validateImageSize(file, 'Reference image');
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
+
+    if (lotImage) {
+      const validation = validateImageSize(lotImage, 'Lot image');
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
+
+    if (floorPlanImage) {
+      const validation = validateImageSize(floorPlanImage, 'Floor plan image');
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
+
+    if (inspirationImage) {
+      const validation = validateImageSize(inspirationImage, 'Inspiration image');
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
+
+    // Validate total payload size
+    const totalPayloadSize = calculatePayloadSize(files, lotImage, floorPlanImage, inspirationImage, paramsJson);
+    if (totalPayloadSize > MAX_TOTAL_PAYLOAD_SIZE) {
+      return NextResponse.json(
+        { 
+          message: `Total payload size (${(totalPayloadSize / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size of ${MAX_TOTAL_PAYLOAD_SIZE / 1024 / 1024}MB. Please reduce image sizes or number of images.` 
+        },
+        { status: 413 }
+      );
     }
 
     const params: DreamHouseParams = JSON.parse(paramsJson);
@@ -300,9 +398,56 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
 
   } catch (error: unknown) {
     console.error("API Error:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    
+    // Handle specific error types
+    if (error instanceof Error) {
+      // Timeout errors
+      if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
+        return NextResponse.json(
+          { 
+            message: 'Request timeout. The generation took too long. Consider using Vercel Pro plan for longer execution times, or reduce image complexity.',
+            code: 'TIMEOUT'
+          },
+          { status: 504 }
+        );
+      }
+      
+      // Payload size errors
+      if (error.message.includes('payload') || error.message.includes('too large')) {
+        return NextResponse.json(
+          { 
+            message: 'Payload too large. Please reduce image sizes or number of images.',
+            code: 'PAYLOAD_TOO_LARGE'
+          },
+          { status: 413 }
+        );
+      }
+      
+      // API key errors
+      if (error.message.includes('API_KEY') || error.message.includes('authentication')) {
+        return NextResponse.json(
+          { 
+            message: 'Invalid or missing GEMINI_API_KEY. Please check your Vercel environment variables.',
+            code: 'AUTH_ERROR'
+          },
+          { status: 500 }
+        );
+      }
+      
+      return NextResponse.json(
+        { 
+          message: error.message,
+          code: 'INTERNAL_ERROR'
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
-      { message: errorMessage },
+      { 
+        message: 'Internal Server Error',
+        code: 'UNKNOWN_ERROR'
+      },
       { status: 500 }
     );
   }

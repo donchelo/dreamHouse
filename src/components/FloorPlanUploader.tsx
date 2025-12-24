@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Layout, Trash2, CheckCircle2 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Layout, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
 
 interface FloorPlanUploaderProps {
   file: File | null;
@@ -11,6 +12,7 @@ interface FloorPlanUploaderProps {
 
 export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -26,20 +28,32 @@ export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploa
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    setError(null);
     
     const droppedFile = Array.from(e.dataTransfer.files).find(f => 
       f.type.startsWith('image/')
     );
     
     if (droppedFile) {
+      const validation = validateImageFile(droppedFile, 'Plano de planta');
+      if (!validation.valid) {
+        setError(validation.error || 'Error al validar imagen');
+        return;
+      }
       onFileChange(droppedFile);
     }
   }, [onFileChange]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type.startsWith('image/')) {
+        const validation = validateImageFile(selectedFile, 'Plano de planta');
+        if (!validation.valid) {
+          setError(validation.error || 'Error al validar imagen');
+          return;
+        }
         onFileChange(selectedFile);
       }
     }
@@ -100,6 +114,9 @@ export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploa
             <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
               <span className="text-blue-500 font-semibold">Haz clic para subir</span> o arrastra el plano aquí
             </p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Máx. {formatFileSize(MAX_IMAGE_SIZE)}
+            </p>
           </div>
         ) : (
           <div className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-blue-500/50 hover:shadow-lg">
@@ -126,6 +143,14 @@ export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploa
           </div>
         )}
       </div>
+      
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+          <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
     </div>
   );
 }
