@@ -205,6 +205,47 @@ export const ROOF_TYPES = [
   "Curvo", "Verde/Jardín", "Terraza habitable"
 ];
 
+export const KITCHEN_TYPES = [
+  "Abierta (Americana)", "Cerrada tradicional", "Con isla central", "En L", "En U", "Gourmet exterior"
+];
+
+export const LIVING_AREA_TYPES = [
+  "Concepto abierto", "Zonificado/Dividido", "Doble altura", "Con mezzanine", "Conexión directa jardín"
+];
+
+export const PARKING_TYPES = [
+  "Sin estacionamiento", "Garaje cerrado (1 auto)", "Garaje cerrado (2+ autos)", "Cochera techada abierta", "Espacio abierto/Driveway"
+];
+
+export const LAYOUT_TYPES = [
+  "Open plan",
+  "Traditional (zonificado)",
+  "Courtyard-centered",
+  "Linear/Corridor",
+  "Radial/Central",
+  "Split-level",
+  "Loft-style",
+  "Pavilion-style",
+  "Wing-based"
+];
+
+export const SOCIAL_AREAS = [
+  "Pool/Piscina",
+  "BBQ/Grill area",
+  "Gym/Gimnasio",
+  "Cinema/Sala de cine",
+  "Wine cellar/Bodega",
+  "Game room/Sala de juegos",
+  "Library/Biblioteca",
+  "Home office/Oficina",
+  "Studio/Taller",
+  "Rooftop terrace/Terraza en azotea",
+  "Outdoor kitchen/Cocina exterior",
+  "Spa/Sauna",
+  "Playroom/Cuarto de juegos",
+  "Bar/Barra"
+];
+
 export const MATERIALS = [
   "Concreto", "Concreto expuesto", "Madera", "Madera oscura", "Vidrio",
   "Acero", "Acero corten", "Piedra natural", "Ladrillo", "Ladrillo visto",

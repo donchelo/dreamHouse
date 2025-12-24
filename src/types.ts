@@ -19,6 +19,13 @@ export interface DreamHouseParams {
   // Section 3: Physical Specifications
   size: string;
   levels: number;
+  bedrooms: number;
+  bathrooms: number;
+  parkingSpots: number;
+  kitchenType: string;
+  livingAreaType: string;
+  layoutType: string;
+  socialAreas: string[];
   roofType: string;
   materials: string[];
   finishLevel: string;
@@ -36,12 +43,63 @@ export interface DreamHouseParams {
   lighting: string;
   humanContext: string;
   
-  // Section 6: Output Configuration
-  outputResolution: string;
-  aspectRatio: string;
+  // Section 6: Floor Plan Output Configuration
+  fpOutputResolution: string;
+  fpAspectRatio: string;
   
-  // Section 7: Personalization
-  additionalNotes: string;
+  // Section 7: Render Output Configuration
+  renderOutputResolution: string;
+  renderAspectRatio: string;
+  
+  // Section 8: Technical Notes (for Floor Plan)
+  technicalNotes: string;
+  
+  // Section 9: Art Direction (for Rendering)
+  artDirection: string;
+}
+
+// ============================================
+// FLOOR PLAN TYPE DEFINITIONS
+// ============================================
+
+export interface FloorPlan {
+  // Forma general de la planta
+  shape: string; // "Rectangular", "L-shaped", "U-shaped", "C-shaped", "Organic", etc.
+  
+  // Configuración de zonas
+  zones: {
+    public: string[]; // ["Living room", "Dining room", "Kitchen", etc.]
+    private: string[]; // ["Master bedroom", "Bedroom 2", "Bedroom 3", etc.]
+    services: string[]; // ["Bathroom", "Laundry", "Storage", etc.]
+    exterior: string[]; // ["Terrace", "Garden", "Pool area", etc.]
+  };
+  
+  // Flujo de circulación
+  circulation: {
+    mainAxis: string; // "Linear", "Radial", "Central", "Distributed"
+    entryPoint: string; // "Front center", "Side", "Corner", etc.
+    flowDescription: string; // Descripción textual del flujo
+  };
+  
+  // Relación interior-exterior
+  interiorExterior: {
+    connectionType: string; // "Open", "Semi-open", "Controlled", "Minimal"
+    mainConnections: string[]; // ["Living to terrace", "Kitchen to garden", etc.]
+    glazingStrategy: string; // "Large windows", "Sliding doors", "Glass walls", etc.
+  };
+  
+  // Dimensiones aproximadas (para contexto)
+  dimensions: {
+    approximateWidth: string; // "15-20m"
+    approximateDepth: string; // "10-15m"
+    footprint: string; // "150-200m²"
+  };
+  
+  // Características arquitectónicas del layout
+  layoutFeatures: string[]; // ["Open plan", "Double height", "Courtyard", etc.]
+  
+  // Descripción textual completa para el prompt
+  description: string; // Descripción narrativa del floor plan
 }
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
@@ -61,6 +119,13 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   // Section 3: Physical Specifications
   size: "Mediana (150-300m²)",
   levels: 2,
+  bedrooms: 3,
+  bathrooms: 2,
+  parkingSpots: 2,
+  kitchenType: "Abierta (Americana)",
+  livingAreaType: "Concepto abierto",
+  layoutType: "Open plan",
+  socialAreas: [],
   roofType: "Plano",
   materials: [],
   finishLevel: "Premium/Alto",
@@ -78,10 +143,17 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   lighting: "Golden hour cálida",
   humanContext: "Sin personas",
   
-  // Section 6: Output Configuration
-  outputResolution: "4K",
-  aspectRatio: "16:9",
+  // Section 6: Floor Plan Output Configuration
+  fpOutputResolution: "2K",
+  fpAspectRatio: "16:9",
   
-  // Section 7: Personalization
-  additionalNotes: ""
+  // Section 7: Render Output Configuration
+  renderOutputResolution: "4K",
+  renderAspectRatio: "16:9",
+  
+  // Section 8: Technical Notes (for Floor Plan)
+  technicalNotes: "",
+  
+  // Section 9: Art Direction (for Rendering)
+  artDirection: ""
 };

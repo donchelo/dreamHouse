@@ -5,14 +5,16 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
+import FloorPlanUploader from '@/components/FloorPlanUploader';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
-import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
+import { DreamHouseParams, DEFAULT_PARAMS, FloorPlan } from '@/types';
 import { Wand2, AlertCircle, ArrowRight, Zap, Layers, Palette, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import * as C from '@/app/constants';
+import clsx from 'clsx';
 
 // Feature cards for hero section
 const FEATURES = [
@@ -29,11 +31,22 @@ const HERO_IMAGES = [
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
+  const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
+  const [floorPlanData, setFloorPlanData] = useState<FloorPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  
+  // Tab state
+  const [currentTab, setCurrentTab] = useState<'basics' | 'rendering'>('basics');
+  
+  const handleTabChange = (tab: 'basics' | 'rendering') => {
+    setCurrentTab(tab);
+    setActiveSection(null); // Reset active accordion section when switching tabs
+  };
   
   // Accordion state - null means all closed by default
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -56,7 +69,7 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    setParams({ ...DEFAULT_PARAMS, city: "", additionalNotes: "" });
+    setParams({ ...DEFAULT_PARAMS, city: "", technicalNotes: "", artDirection: "" });
     showToast("Parameters reset to default");
   };
 
@@ -80,6 +93,13 @@ export default function Home() {
       weatherCondition: pick(C.WEATHER_CONDITIONS),
       size: pick(C.SIZES),
       levels: Math.floor(Math.random() * 3) + 1,
+      bedrooms: Math.floor(Math.random() * 5) + 2,
+      bathrooms: Math.floor(Math.random() * 4) + 1,
+      parkingSpots: Math.floor(Math.random() * 3),
+      kitchenType: pick(C.KITCHEN_TYPES),
+      livingAreaType: pick(C.LIVING_AREA_TYPES),
+      layoutType: pick(C.LAYOUT_TYPES),
+      socialAreas: pickMulti(C.SOCIAL_AREAS, 3),
       roofType: pick(C.ROOF_TYPES),
       materials: pickMulti(C.MATERIALS, 4),
       finishLevel: pick(C.FINISH_LEVELS),
@@ -92,17 +112,74 @@ export default function Home() {
       season: pick(C.SEASONS),
       lighting: pick(C.LIGHTING_TYPES),
       humanContext: pick(C.HUMAN_CONTEXT),
-      outputResolution: pick(C.OUTPUT_RESOLUTIONS),
-      aspectRatio: pick(C.ASPECT_RATIOS),
+      fpOutputResolution: pick(C.OUTPUT_RESOLUTIONS),
+      fpAspectRatio: pick(C.ASPECT_RATIOS),
+      renderOutputResolution: pick(C.OUTPUT_RESOLUTIONS),
+      renderAspectRatio: pick(C.ASPECT_RATIOS),
       city: params.city,
-      additionalNotes: params.additionalNotes
+      technicalNotes: params.technicalNotes,
+      artDirection: params.artDirection
     };
 
     setParams(randomParams);
     showToast("Random design generated!");
   };
 
-  const handleGenerate = async () => {
+  const handleGenerateFloorPlan = async () => {
+    setIsLoading(true);
+    setError(null);
+    setFloorPlanImageUrl(null);
+    setFloorPlanData(null);
+
+    try {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
+      if (lotFile) {
+        formData.append('lotImage', lotFile);
+      }
+      formData.append('params', JSON.stringify(params));
+      formData.append('mode', 'floor-plan');
+
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error generating floor plan');
+      }
+
+      const data = await response.json();
+      setFloorPlanImageUrl(data.imageUrl);
+      setFloorPlanData(data.floorPlanData);
+      showToast("Floor plan generated successfully!");
+      
+      setTimeout(() => {
+        document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Ocurrió un error inesperado.');
+      }
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGenerateRender = async () => {
+    if (!floorPlanData && !floorPlanFile) {
+      setError('Please generate or upload a floor plan first');
+      showToast("Generate or upload floor plan first!");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
@@ -115,7 +192,14 @@ export default function Home() {
       if (lotFile) {
         formData.append('lotImage', lotFile);
       }
+      if (floorPlanFile) {
+        formData.append('floorPlanImage', floorPlanFile);
+      }
       formData.append('params', JSON.stringify(params));
+      formData.append('mode', 'render');
+      if (floorPlanData) {
+        formData.append('floorPlanData', JSON.stringify(floorPlanData));
+      }
 
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -124,11 +208,12 @@ export default function Home() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error generating image');
+        throw new Error(errorData.message || 'Error generating render');
       }
 
       const data = await response.json();
       setImageUrl(data.imageUrl);
+      showToast("Render generated successfully!");
       
       setTimeout(() => {
         document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -248,19 +333,71 @@ export default function Home() {
               </div>
             </div>
           )}
-          
-          {/* Reference Uploader Section */}
-          <Section 
-            title="References" 
-            number="01" 
-            isOpen={activeSection === 'references'}
-            onToggle={() => toggleSection('references')}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <ReferenceUploader files={files} onFilesChange={setFiles} />
-              <LotUploader file={lotFile} onFileChange={setLotFile} />
+
+          {/* Tab Switcher */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-border pb-6">
+            <div className="flex bg-card border border-border p-1 rounded-none w-full md:w-auto">
+              <button
+                onClick={() => handleTabChange('basics')}
+                className={clsx(
+                  "flex-1 md:flex-none px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all",
+                  currentTab === 'basics' 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                01. Floor Plan
+              </button>
+              <button
+                onClick={() => handleTabChange('rendering')}
+                className={clsx(
+                  "flex-1 md:flex-none px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all",
+                  currentTab === 'rendering' 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                02. Rendering
+              </button>
             </div>
-          </Section>
+            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-tighter">
+              Current Step: <span className="text-foreground font-bold">{currentTab === 'basics' ? 'Architecture & Layout' : 'Visuals & Photography'}</span>
+            </p>
+          </div>
+          
+          {/* Lot Uploader Section - Only in Basics */}
+          {currentTab === 'basics' && (
+            <Section 
+              title="Lote" 
+              number="01" 
+              isOpen={activeSection === 'lot'}
+              onToggle={() => toggleSection('lot')}
+            >
+              <LotUploader file={lotFile} onFileChange={setLotFile} />
+            </Section>
+          )}
+
+          {/* Reference Uploader Section - Only in Rendering */}
+          {currentTab === 'rendering' && (
+            <>
+              <Section 
+                title="Plano de Planta (Opcional)" 
+                number="01" 
+                isOpen={activeSection === 'floor-plan-upload'}
+                onToggle={() => toggleSection('floor-plan-upload')}
+              >
+                <FloorPlanUploader file={floorPlanFile} onFileChange={setFloorPlanFile} />
+              </Section>
+              <Section 
+                title="Referentes Visuales" 
+                number="02" 
+                isOpen={activeSection === 'references'}
+                onToggle={() => toggleSection('references')}
+              >
+                <ReferenceUploader files={files} onFilesChange={setFiles} />
+              </Section>
+            </>
+          )}
           
           {/* Parameters Section */}
           <ParameterForm 
@@ -269,7 +406,24 @@ export default function Home() {
             disabled={isLoading}
             activeSection={activeSection}
             onSectionChange={toggleSection}
+            currentTab={currentTab}
           />
+
+          {/* Tab Navigation Button */}
+          {currentTab === 'basics' && floorPlanImageUrl && (
+            <div className="flex justify-center pt-8">
+              <button
+                onClick={() => {
+                  handleTabChange('rendering');
+                  window.scrollTo({ top: document.getElementById('form')?.offsetTop || 0, behavior: 'smooth' });
+                }}
+                className="group flex items-center gap-3 px-10 py-5 bg-card border border-border hover:border-primary transition-all text-sm font-bold uppercase tracking-widest"
+              >
+                Continue to Rendering
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -284,16 +438,30 @@ export default function Home() {
 
           {/* Floating Generate Button (FAB Style) */}
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
-            <Button
-              onClick={handleGenerate}
-              isLoading={isLoading}
-              size="lg"
-              className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
-              aria-label="Generate architectural render"
-            >
-              {isLoading ? 'Processing...' : 'Dream'}
-              {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
-            </Button>
+            {currentTab === 'basics' ? (
+              <Button
+                onClick={handleGenerateFloorPlan}
+                isLoading={isLoading}
+                size="lg"
+                className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
+                aria-label="Generate floor plan"
+              >
+                {isLoading ? 'Generating Plan...' : 'Generate Floor Plan'}
+                {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleGenerateRender}
+                isLoading={isLoading}
+                disabled={!floorPlanData && !floorPlanFile}
+                size="lg"
+                className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Generate architectural render"
+              >
+                {isLoading ? 'Rendering...' : (floorPlanData || floorPlanFile) ? 'Generate Render' : 'Generate/Upload Floor Plan First'}
+                {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
+              </Button>
+            )}
           </div>
 
           {/* Result Section with Prompt Preview */}
@@ -308,11 +476,23 @@ export default function Home() {
 
               {/* Right Column: Result Image */}
               <div className="lg:col-span-9 lg:order-2 order-1">
-                <ResultDisplay 
-                  imageUrl={imageUrl} 
-                  isLoading={isLoading} 
-                  onRegenerate={handleGenerate} 
-                />
+                {currentTab === 'basics' ? (
+                  <ResultDisplay 
+                    imageUrl={floorPlanImageUrl} 
+                    isLoading={isLoading} 
+                    onRegenerate={handleGenerateFloorPlan}
+                    title="Floor Plan"
+                    subtitle="Architectural layout visualization"
+                  />
+                ) : (
+                  <ResultDisplay 
+                    imageUrl={imageUrl} 
+                    isLoading={isLoading} 
+                    onRegenerate={handleGenerateRender}
+                    title="Final Render"
+                    subtitle="Photorealistic architectural visualization"
+                  />
+                )}
               </div>
             </div>
           </div>

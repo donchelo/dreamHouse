@@ -30,6 +30,8 @@ interface ResultDisplayProps {
   imageUrl: string | null;
   isLoading: boolean;
   onRegenerate: () => void;
+  title?: string;
+  subtitle?: string;
 }
 
 // Lightbox Modal Component
@@ -118,7 +120,13 @@ function ImageLightbox({
   );
 }
 
-export default function ResultDisplay({ imageUrl, isLoading, onRegenerate }: ResultDisplayProps) {
+export default function ResultDisplay({ 
+  imageUrl, 
+  isLoading, 
+  onRegenerate,
+  title = "Resultado Final",
+  subtitle = "Renderizado con inteligencia artificial"
+}: ResultDisplayProps) {
   const [messageIndex, setMessageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
 
@@ -167,10 +175,10 @@ export default function ResultDisplay({ imageUrl, isLoading, onRegenerate }: Res
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground tracking-tight">
-                Resultado Final
+                {title}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Renderizado con inteligencia artificial
+                {subtitle}
               </p>
             </div>
           </div>
