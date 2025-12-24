@@ -1,12 +1,13 @@
 import React from 'react';
-import { DreamHouseParams } from '@/types';
-import { Tag, Sparkles, MapPin, Building2, Palette, Camera, FileText } from 'lucide-react';
+import { DreamHouseParams, FloorPlan } from '@/types';
+import { Tag, Sparkles, MapPin, Building2, Palette, Camera, FileText, Layout } from 'lucide-react';
 
 interface PromptPreviewProps {
   params: DreamHouseParams;
+  floorPlanData?: FloorPlan | null;
 }
 
-export default function PromptPreview({ params }: PromptPreviewProps) {
+export default function PromptPreview({ params, floorPlanData }: PromptPreviewProps) {
   // Helper to check if value exists
   const hasValue = (val: string | string[] | number) => {
     if (Array.isArray(val)) return val.length > 0;
@@ -15,6 +16,20 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
 
   // Group parameters logically - Icons updated to be consistent
   const groups = [
+    // Floor Plan Section (First Truth) - Show first if available
+    ...(floorPlanData ? [{
+      title: "Floor Plan Structure",
+      icon: <Layout className="w-3.5 h-3.5" />,
+      items: [
+        { label: "SHAPE", value: floorPlanData.shape },
+        { label: "FOOTPRINT", value: floorPlanData.dimensions.footprint },
+        { label: "ENTRY", value: floorPlanData.circulation.entryPoint },
+        { label: "FLOW", value: floorPlanData.circulation.mainAxis },
+        ...(floorPlanData.exteriorVolumetrics ? [
+          { label: "MASSING", value: floorPlanData.exteriorVolumetrics.massingDescription.substring(0, 50) + "..." }
+        ] : [])
+      ]
+    }] : []),
     {
       title: "Project Identity",
       icon: <Sparkles className="w-3.5 h-3.5" />,

@@ -98,6 +98,16 @@ export interface FloorPlan {
   // Características arquitectónicas del layout
   layoutFeatures: string[]; // ["Open plan", "Double height", "Courtyard", etc.]
   
+  // Volumetría exterior: traducción de la planta 2D a volúmenes 3D
+  exteriorVolumetrics: {
+    // Descripción de cómo la distribución de zonas afecta la altura y masa del edificio
+    massingDescription: string; // "El ala norte es de doble altura mientras el ala sur es de un solo nivel"
+    // Alturas por zona (si aplica)
+    heightVariations: string[]; // ["Public zone: double height", "Private zone: single level", etc.]
+    // Relación de llenos y vacíos en fachada
+    facadeComposition: string; // "Grandes ventanales en zona pública, muros más cerrados en zona privada"
+  };
+  
   // Descripción textual completa para el prompt
   description: string; // Descripción narrativa del floor plan
 }

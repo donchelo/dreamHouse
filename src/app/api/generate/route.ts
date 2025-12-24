@@ -175,12 +175,17 @@ export async function POST(req: NextRequest) {
           // so the rest of the prompt construction doesn't fail
           floorPlan = {
               shape: "Custom (from uploaded image)",
-              dimensions: { footprint: "Varies", approximateWidth: 0, approximateDepth: 0 },
+              dimensions: { footprint: "Varies", approximateWidth: "0", approximateDepth: "0" },
               description: floorPlanAnalysis,
-              zones: { public: [], private: [], exterior: [] },
-              circulation: { mainAxis: "Defined by plan", entryPoint: "Defined by plan" },
-              interiorExterior: { connectionType: "Direct", glazingStrategy: "Optimized" },
-              layoutFeatures: ["Uploaded floor plan"]
+              zones: { public: [], private: [], services: [], exterior: [] },
+              circulation: { mainAxis: "Defined by plan", entryPoint: "Defined by plan", flowDescription: "As per uploaded plan" },
+              interiorExterior: { connectionType: "Direct", glazingStrategy: "Optimized", mainConnections: [] },
+              layoutFeatures: ["Uploaded floor plan"],
+              exteriorVolumetrics: {
+                  massingDescription: "Volumetrics defined by the uploaded floor plan geometry",
+                  heightVariations: ["As specified in uploaded plan"],
+                  facadeComposition: "Composition follows the spatial organization of the uploaded plan"
+              }
           };
           console.log("Using uploaded floor plan image analysis");
       } else {
@@ -244,9 +249,11 @@ export async function POST(req: NextRequest) {
       ? "CRITICAL: The building MUST be situated in the environment described in the 'Visual Context Analysis' corresponding to the LOT IMAGE. Match the terrain, vegetation, and lighting of the lot exactly."
       : "";
 
-    // Construct the Professional Prompt with Floor Plan - STRICT GEOMETRIC ADHERENCE
+    // Construct the Professional Prompt with Floor Plan as FIRST TRUTH
+    // Priority: 1) Geometry 2) Volumetrics 3) Style Layer 4) Context
     const fullPrompt = `
-**ABSOLUTE GEOMETRIC CONSTRAINT - FLOOR PLAN IS THE FOUNDATION**
+**PRIMARY FOUNDATION: FLOOR PLAN GEOMETRY IS THE ABSOLUTE STRUCTURAL TRUTH**
+
 ${floorPlanImage ? `
 **MANDATORY: UPLOADED FLOOR PLAN IMAGE IS THE ABSOLUTE LIMIT**
 The building you generate MUST be constructed EXACTLY according to the spatial geometry described below. This is NOT a suggestion - it is a structural requirement that cannot be violated.
@@ -254,16 +261,16 @@ The building you generate MUST be constructed EXACTLY according to the spatial g
 **FLOOR PLAN GEOMETRY (FROM UPLOADED IMAGE):**
 ${floorPlanAnalysis}
 
-**STRICT REQUIREMENTS:**
+**STRICT GEOMETRIC REQUIREMENTS:**
 1. The building's footprint MUST match the exact shape and dimensions described in the floor plan analysis.
 2. Window and door placements MUST correspond to the openings shown in the plan.
 3. The volumetric massing (where walls are, where spaces extend) MUST follow the plan's spatial organization.
 4. Any deviations from this geometry are FORBIDDEN. The architectural style is secondary to this geometric constraint.
 ` : `
-**MANDATORY: GENERATED FLOOR PLAN IS THE ABSOLUTE LIMIT**
+**MANDATORY: GENERATED FLOOR PLAN IS THE ABSOLUTE STRUCTURAL FOUNDATION**
 The building you generate MUST be constructed EXACTLY according to the spatial geometry described below. This is NOT a suggestion - it is a structural requirement that cannot be violated.
 
-**FLOOR PLAN GEOMETRY:**
+**FLOOR PLAN GEOMETRY (STRUCTURAL FOUNDATION):**
 - **Shape:** ${floorPlan.shape} - This exact shape MUST be visible in the exterior view
 - **Footprint:** ${floorPlan.dimensions.footprint} (${floorPlan.dimensions.approximateWidth} × ${floorPlan.dimensions.approximateDepth})
 - **Spatial Organization:** ${floorPlan.description}
@@ -275,7 +282,7 @@ The building you generate MUST be constructed EXACTLY according to the spatial g
 - **Interior-Exterior Connection:** ${floorPlan.interiorExterior.connectionType} - ${floorPlan.interiorExterior.glazingStrategy}
 - **Key Architectural Features:** ${floorPlan.layoutFeatures.join(", ")}
 
-**STRICT REQUIREMENTS:**
+**STRICT GEOMETRIC REQUIREMENTS:**
 1. The building's exterior form MUST reflect the ${floorPlan.shape.toLowerCase()} shape described above.
 2. Window and opening placements MUST align with the ${floorPlan.interiorExterior.glazingStrategy.toLowerCase()} strategy.
 3. The volumetric massing MUST correspond to the zones and circulation described.
@@ -283,21 +290,39 @@ The building you generate MUST be constructed EXACTLY according to the spatial g
 5. Any deviations from this geometry are FORBIDDEN. The architectural style is secondary to this geometric constraint.
 `}
 
-**ROLE & OBJECTIVE**
-Act as a world-renowned architectural photographer (e.g., Iwan Baan, Julius Shulman). 
-Generate an AWARD-WINNING EXTERIOR PHOTOGRAPH of a residential project.
-**VIEW:** EXTERIOR ONLY. Never generate interior views.
+**SECONDARY: EXTERIOR VOLUMETRICS (DERIVED FROM FLOOR PLAN)**
+${floorPlan.exteriorVolumetrics ? `
+The 3D massing and volumetrics of the building MUST follow these specifications derived from the floor plan:
 
-**VISUAL & ARTISTIC OVERLAY (SECONDARY TO GEOMETRY)**
+- **Massing Description:** ${floorPlan.exteriorVolumetrics.massingDescription}
+- **Height Variations:** ${floorPlan.exteriorVolumetrics.heightVariations.join(" | ")}
+- **Facade Composition:** ${floorPlan.exteriorVolumetrics.facadeComposition}
+
+**VOLUMETRIC REQUIREMENTS:**
+1. The building's height variations MUST match the massing description above.
+2. The facade composition (glass vs. solid walls) MUST follow the specified distribution.
+3. The relationship between public zones (more transparent) and private zones (more solid) MUST be clearly visible in the exterior.
+4. The volumetric expression MUST accurately represent the interior spatial organization described in the floor plan.
+` : `
+The building's volumetrics must reflect the spatial organization: public zones with ${floorPlan.interiorExterior.glazingStrategy.toLowerCase()}, private zones with more controlled openings. The ${floorPlan.shape.toLowerCase()} shape creates a clear volumetric expression that must be visible in the exterior render.
+`}
+
+**TERTIARY: ARCHITECTURAL STYLE LAYER (AESTHETIC MODIFIER)**
+The architectural style and materials are applied AS A LAYER over the geometric foundation established above. They modify surfaces, details, and finishes but CANNOT alter the fundamental geometry.
+
 - **Project Type:** ${projectType} ${locationStr}
 - **Architectural Style:** ${archStyle} ${architects ? `(inspired by ${architects})` : ''}
-- **Scale/Layout:** ${techSpecs}
+  * Apply this style's characteristic materials, proportions, and details WHILE MAINTAINING the floor plan geometry
+  * The style influences: surface treatments, window frame details, material textures, decorative elements
+  * The style does NOT influence: building shape, footprint, zone distribution, or volumetric massing
 - **Materials:** ${materialsList}
+  * These materials wrap the geometric structure defined by the floor plan
+  * Material choice affects texture and color but not the underlying form
 - **Color Palette:** ${colors}
 - **Finish Level:** ${finish}
 - **Atmosphere/Mood:** ${moodDesc}
 
-**SITE & ENVIRONMENT**
+**QUATERNARY: CONTEXT & PHOTOGRAPHY (ENVIRONMENTAL LAYER)**
 - **Setting:** ${environment}
 - **Landscaping:** ${landscaping}
 ${lotInstruction ? `- **LOT INTEGRATION:** ${lotInstruction}` : ''}
@@ -308,15 +333,21 @@ ${analysisResult ? `- **REFERENCE STYLE:** Incorporate these visual elements: ${
 - **Human Scale:** ${params.humanContext !== "Sin personas" ? params.humanContext : "None, focus on architecture"}
 - **Quality:** Photorealistic, highly detailed, cinematic lighting, architectural visualization masterpiece, sharp focus.
 
-**ART DIRECTION & VISUAL STYLE (APPLIED WITHIN GEOMETRIC CONSTRAINTS)**
-${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}\n\nThis art direction should be applied while strictly maintaining the floor plan geometry described above.` : ''}
+**ART DIRECTION (APPLIED WITHIN GEOMETRIC CONSTRAINTS)**
+${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}\n\nThis art direction should be applied while strictly maintaining the floor plan geometry and volumetrics described above.` : ''}
 
-**FINAL DIRECTIVE - PRIORITY ORDER**
-1. **PRIMARY (MANDATORY):** The building MUST exactly match the floor plan geometry described above. The ${floorPlanImage ? 'uploaded floor plan' : floorPlan.shape.toLowerCase() + ' shape'} is the foundation that cannot be altered.
-2. **SECONDARY:** Apply the architectural style, materials, and visual elements within the geometric constraints.
-3. **TERTIARY:** Integrate with the site environment and apply photography settings.
+**ROLE & OBJECTIVE**
+Act as a world-renowned architectural photographer (e.g., Iwan Baan, Julius Shulman). 
+Generate an AWARD-WINNING EXTERIOR PHOTOGRAPH of a residential project.
+**VIEW:** EXTERIOR ONLY. Never generate interior views.
 
-The final image must be a cohesive, photorealistic exterior shot with perfect perspective correction and lighting. The entire building should be visible within the frame. The exterior MUST clearly and accurately reflect the floor plan geometry as the absolute structural limit.
+**FINAL DIRECTIVE - ABSOLUTE PRIORITY ORDER**
+1. **PRIMARY (MANDATORY - NON-NEGOTIABLE):** The building MUST exactly match the floor plan geometry described above. The ${floorPlanImage ? 'uploaded floor plan' : floorPlan.shape.toLowerCase() + ' shape'} is the structural foundation that cannot be altered. The footprint, shape, and zone distribution are fixed.
+2. **SECONDARY (MANDATORY - DERIVED FROM PRIMARY):** The volumetrics and massing MUST accurately represent the spatial organization and height variations described. The facade composition (glass vs. solid) MUST reflect the interior-exterior connection strategy.
+3. **TERTIARY (APPLIED LAYER):** Apply the architectural style, materials, and visual elements AS A SURFACE LAYER over the geometric foundation. Style modifies appearance, not structure.
+4. **QUATERNARY (ENVIRONMENTAL):** Integrate with the site environment and apply photography settings to create the final image.
+
+The final image must be a cohesive, photorealistic exterior shot with perfect perspective correction and lighting. The entire building should be visible within the frame. The exterior MUST clearly and accurately reflect the floor plan geometry as the absolute structural limit, with the architectural style applied as an aesthetic layer that respects this foundation.
     `.trim();
 
     console.log("Generated Prompt:", fullPrompt);

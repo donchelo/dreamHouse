@@ -470,7 +470,7 @@ export default function Home() {
               {/* Left Column: Prompt DNA (Tags) */}
               <div className="lg:col-span-3 lg:order-1 order-2">
                 <div className="bg-card border border-border rounded-xl p-4 h-full max-h-[600px] overflow-hidden sticky top-24">
-                  <PromptPreview params={params} />
+                  <PromptPreview params={params} floorPlanData={floorPlanData} />
                 </div>
               </div>
 

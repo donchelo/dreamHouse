@@ -133,6 +133,21 @@ The design MUST be fully accessible for people with reduced mobility. This is NO
 
 ${params.technicalNotes ? `\n\n**CRITICAL TECHNICAL REQUIREMENTS:**\n${params.technicalNotes}\n\nThese technical notes are MANDATORY and must be strictly followed in the floor plan design.` : ''}
 
+**CRITICAL: EXTERIOR VOLUMETRICS FOR RENDERING**
+The floor plan you generate will be the ABSOLUTE FOUNDATION for a photorealistic exterior render. You MUST think about how the 2D plan translates to 3D volumes that will be visible from the outside. Consider:
+
+1. **Massing Description:** How do the different zones (public, private, services) translate to different building heights or volumes? For example:
+   - If public zones have double height, describe how this creates a taller volume in that area
+   - If private zones are on upper floors, describe how this creates a stepped or layered massing
+   - If there are courtyards or patios, describe how they create voids in the massing
+
+2. **Height Variations:** Specify which zones have different heights (single level, double height, mezzanine, etc.) and how this affects the exterior silhouette
+
+3. **Facade Composition:** Based on the interior-exterior connection strategy, describe how the facade will look:
+   - Where are large windows/glass (typically in public zones)?
+   - Where are more solid walls (typically in private zones)?
+   - How does the glazing strategy affect the visual weight and transparency of different parts of the building?
+
 **OUTPUT FORMAT (JSON):**
 Return a JSON object with this exact structure:
 {
@@ -159,6 +174,11 @@ Return a JSON object with this exact structure:
     "footprint": "estimated footprint (e.g., '150-200m²')"
   },
   "layoutFeatures": ["list of key layout features"],
+  "exteriorVolumetrics": {
+    "massingDescription": "Detailed description of how the 2D plan translates to 3D building massing, including height variations, stepped volumes, and how different zones create different exterior volumes",
+    "heightVariations": ["List of height variations by zone, e.g., 'Public zone: double height (6-7m)', 'Private zone: single level (3m)', etc."],
+    "facadeComposition": "Description of how the facade will appear based on interior-exterior connections: where glass dominates, where solid walls are, and how the glazing strategy affects the visual composition"
+  },
   "description": "A comprehensive narrative description of the floor plan that explains the spatial organization, flow, and key architectural decisions. This should be 3-5 sentences and written in a way that can be directly used in an architectural visualization prompt."
 }
 
@@ -192,6 +212,18 @@ Return a JSON object with this exact structure:
     // Validar que tenga la estructura mínima requerida
     if (!floorPlanData.shape || !floorPlanData.zones || !floorPlanData.description) {
       throw new Error("Invalid floor plan structure returned from AI");
+    }
+    
+    // Validar y asegurar que exteriorVolumetrics existe
+    if (!floorPlanData.exteriorVolumetrics) {
+      // Generar volumetría básica si no viene del AI
+      floorPlanData.exteriorVolumetrics = {
+        massingDescription: `The ${floorPlanData.shape.toLowerCase()} shape creates a ${params.levels}-level structure with ${floorPlanData.interiorExterior.connectionType.toLowerCase()} interior-exterior connections.`,
+        heightVariations: params.levels > 1 
+          ? [`Ground floor: public zones with ${floorPlanData.interiorExterior.glazingStrategy.toLowerCase()}`, `Upper floor(s): private zones with more controlled openings`]
+          : [`Single level structure with ${floorPlanData.interiorExterior.glazingStrategy.toLowerCase()}`],
+        facadeComposition: `${floorPlanData.interiorExterior.glazingStrategy} in public zones, more solid walls in private zones`
+      };
     }
     
     return floorPlanData;
@@ -373,6 +405,16 @@ function getDefaultFloorPlan(params: DreamHouseParams): FloorPlan {
       params.kitchenType,
       ...params.socialAreas
     ],
+    exteriorVolumetrics: {
+      massingDescription: `A ${params.levels}-level rectangular structure where the ground floor contains public zones with extensive glazing, creating a transparent base. ${params.levels >= 2 ? "The upper floor(s) contain private bedrooms with more controlled openings, creating a more solid upper mass that contrasts with the open ground floor." : "The single-level structure maintains a uniform height with strategic glazing in public areas."}`,
+      heightVariations: params.levels > 1
+        ? [
+            `Ground floor: Public zones with large windows (3-4m height)`,
+            `Upper floor(s): Private zones with standard windows (2.5-3m height per level)`
+          ]
+        : [`Single level structure with varying window heights based on zone function`],
+      facadeComposition: `Large windows and sliding glass doors dominate the public zones (living, dining), creating transparency and connection to exterior. Private zones feature more controlled window placement, creating a rhythm of solid and void. The ${params.levels >= 2 ? "upper floors" : "structure"} present a more solid appearance with strategic openings.`
+    },
     description: `A ${params.levels}-level ${params.size.toLowerCase()} with a ${params.layoutType.toLowerCase()} layout and rectangular footprint. The design includes exactly ${params.bedrooms} bedrooms and ${params.bathrooms} bathrooms. The ground floor features a ${params.livingAreaType.toLowerCase()} living and dining area connected to a ${params.kitchenType.toLowerCase()} kitchen, with direct access to exterior terraces. ${params.levels >= 2 ? "The private bedrooms are located on the upper floor(s), ensuring separation between public and private zones." : ""} ${params.parkingSpots > 0 ? `The design includes ${params.parkingSpots} parking space(s).` : ""} The design emphasizes natural light through large windows and maintains a clear circulation axis from the main entrance.`
   };
 }
