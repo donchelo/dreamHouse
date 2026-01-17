@@ -7,9 +7,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 // Helper to map project types to English
 const PROJECT_TYPE_MAP: Record<string, string> = {
   "Casa unifamiliar": "single-family house",
@@ -35,13 +32,20 @@ const PROJECT_TYPE_MAP: Record<string, string> = {
  * Genera una imagen de floor plan arquitectónico basado en los parámetros del usuario
  * @param params - Parámetros del proyecto DreamHouse
  * @param imageParts - Partes de imagen opcionales (inspiración, lote, referencias) para contexto multimodal
+ * @param apiKey - Gemini API Key proporcionada por el usuario
  * @returns URL de la imagen generada (base64 data URL)
  */
 export async function generateFloorPlan(
   params: DreamHouseParams,
-  imageParts: any[] = []
+  imageParts: any[] = [],
+  apiKey?: string
 ): Promise<string> {
   try {
+    if (!apiKey) {
+      throw new Error("API Key is required for floor plan generation.");
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
     const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
     const validArchitects = Array.isArray(params.architect) 
       ? params.architect.filter(a => a !== "Sin arquitecto específico")

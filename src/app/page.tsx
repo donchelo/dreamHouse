@@ -132,6 +132,11 @@ export default function Home() {
     setFloorPlanImageUrl(null);
 
     try {
+      const apiKey = localStorage.getItem('GEMINI_API_KEY');
+      if (!apiKey) {
+        throw new Error('Por favor, configura tu GEMINI_API_KEY en el encabezado.');
+      }
+
       const formData = new FormData();
       files.forEach((file) => {
         formData.append('files', file);
@@ -147,6 +152,9 @@ export default function Home() {
 
       const response = await fetch('/api/generate', {
         method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+        },
         body: formData,
       });
 
@@ -181,6 +189,11 @@ export default function Home() {
     setImageUrl(null);
 
     try {
+      const apiKey = localStorage.getItem('GEMINI_API_KEY');
+      if (!apiKey) {
+        throw new Error('Por favor, configura tu GEMINI_API_KEY en el encabezado.');
+      }
+
       const formData = new FormData();
       files.forEach((file) => {
         formData.append('files', file);
@@ -206,6 +219,9 @@ export default function Home() {
 
       const apiResponse = await fetch('/api/generate', {
         method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+        },
         body: formData,
       });
 

@@ -118,11 +118,11 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
           </div>
         ))}
 
-        {params.additionalNotes && (
+        {params.technicalNotes && (
           <div className="mt-6 pt-4 border-t border-border/40">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Technical Notes</p>
             <div className="p-3 bg-muted/30 border border-border/50 text-xs text-muted-foreground italic font-mono leading-relaxed">
-              "{params.additionalNotes}"
+              "{params.technicalNotes}"
             </div>
           </div>
         )}

@@ -12,13 +12,6 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
 const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total (Vercel limit is 4.5MB, we use 4MB for safety)
 const MAX_REFERENCE_IMAGES = 5;
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-if (!process.env.GEMINI_API_KEY) {
-  console.warn('⚠️ GEMINI_API_KEY is not set. API calls will fail.');
-}
-
 // Helper to map project types to English for better AI understanding
 const PROJECT_TYPE_MAP: Record<string, string> = {
   "Casa unifamiliar": "single-family house",
@@ -85,13 +78,18 @@ function calculatePayloadSize(files: File[], lotImage: File | null, floorPlanIma
 
 export async function POST(req: NextRequest) {
   try {
-    // Check API key
-    if (!process.env.GEMINI_API_KEY) {
+    // Check for API key in headers (client-side provided)
+    const apiKey = req.headers.get('x-api-key');
+    
+    if (!apiKey) {
       return NextResponse.json(
-        { message: 'GEMINI_API_KEY is not configured. Please set it in Vercel environment variables.' },
-        { status: 500 }
+        { message: 'API Key is missing. Please configure it in the header.' },
+        { status: 401 }
       );
     }
+
+    // Initialize Gemini Client with provided key
+    const ai = new GoogleGenAI({ apiKey });
 
     const formData = await req.formData();
     const paramsJson = formData.get('params') as string;
@@ -216,7 +214,7 @@ export async function POST(req: NextRequest) {
     // --- Step 2: Generate Floor Plan Image (if mode is 'floor-plan') ---
     if (mode === 'floor-plan') {
       console.log("Generating floor plan image...");
-      const floorPlanImageUrl = await generateFloorPlan(params, imagePartsForFloorPlan);
+      const floorPlanImageUrl = await generateFloorPlan(params, imagePartsForFloorPlan, apiKey);
       
       return NextResponse.json({ 
         imageUrl: floorPlanImageUrl
