@@ -78,12 +78,12 @@ function calculatePayloadSize(files: File[], lotImage: File | null, floorPlanIma
 
 export async function POST(req: NextRequest) {
   try {
-    // Check for API key in headers (client-side provided)
-    const apiKey = req.headers.get('x-api-key');
+    // Check for API key in headers (client-side provided) or environment variables
+    const apiKey = req.headers.get('x-api-key') || process.env.GEMINI_API_KEY;
     
     if (!apiKey) {
       return NextResponse.json(
-        { message: 'API Key is missing. Please configure it in the header.' },
+        { message: 'API Key is missing. Please configure GEMINI_API_KEY in Vercel environment variables or provide it in the header.' },
         { status: 401 }
       );
     }
