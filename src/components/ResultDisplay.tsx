@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Download, RefreshCw, Sparkles, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from './ui/Button';
 
 // Mensajes divertidos para el estado de carga
@@ -100,15 +101,18 @@ function ImageLightbox({
 
       {/* Image container */}
       <div 
-        className="max-w-[95vw] max-h-[90vh] overflow-auto"
+        className="max-w-[95vw] max-h-[90vh] overflow-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
+        <Image
           src={imageUrl}
           alt="DreamHouse Render - Pantalla Completa"
+          width={1920}
+          height={1080}
           className="transition-transform duration-200 cursor-move"
           style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
           draggable={false}
+          unoptimized
         />
       </div>
 
@@ -235,11 +239,13 @@ export default function ResultDisplay({
             ) : imageUrl ? (
               /* Result Image */
               <>
-                <img 
+                <Image 
                   src={imageUrl} 
                   alt="DreamHouse Render" 
+                  fill
                   className="w-full h-full object-contain bg-black/40 transition-transform duration-700 group-hover:scale-[1.01] cursor-pointer" 
                   onClick={openLightbox}
+                  unoptimized
                 />
                 
                 {/* Gradient overlay on hover */}

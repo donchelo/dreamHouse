@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, AlertCircle } from 'lucide-react';
+import { Upload, Image as ImageIcon, Plus, Sparkles, Trash2, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import Image from 'next/image';
 import { validateImageFiles, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
 
 interface ReferenceUploaderProps {
@@ -132,10 +133,12 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               animation: 'fade-in-up 0.5s ease-out forwards'
             }}
           >
-            <img
+            <Image
               src={URL.createObjectURL(file)}
               alt={`Referencia ${index + 1}`}
-              className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+              fill
+              className="object-cover transition-all duration-700 group-hover:scale-110"
+              unoptimized
             />
             
             {/* Gradient overlay */}

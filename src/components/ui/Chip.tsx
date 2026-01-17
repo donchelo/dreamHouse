@@ -18,7 +18,6 @@ export function Chip({
   className,
   children,
   disabled,
-  variant = 'default',
   ...props
 }: ChipProps) {
   return (

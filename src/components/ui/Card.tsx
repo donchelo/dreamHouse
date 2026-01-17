@@ -5,7 +5,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'elevated' | 'glass' | 'gradient';
 }
 
-export function Card({ className, variant = 'default', children, ...props }: CardProps) {
+export function Card({ className, children, ...props }: CardProps) {
   // Simplified variants for Architectural Theme
   const baseStyles = 'bg-card border border-border rounded-none';
   

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DreamHouseParams } from '@/types';
-import { Tag, Sparkles, MapPin, Building2, Palette, Camera, FileText } from 'lucide-react';
+import { Sparkles, MapPin, Building2, Palette, Camera, FileText } from 'lucide-react';
 
 interface PromptPreviewProps {
   params: DreamHouseParams;
@@ -122,7 +122,7 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
           <div className="mt-6 pt-4 border-t border-border/40">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Technical Notes</p>
             <div className="p-3 bg-muted/30 border border-border/50 text-xs text-muted-foreground italic font-mono leading-relaxed">
-              "{params.technicalNotes}"
+              &quot;{params.technicalNotes}&quot;
             </div>
           </div>
         )}

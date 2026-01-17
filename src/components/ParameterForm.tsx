@@ -669,7 +669,7 @@ export default function ParameterForm({
                   Negative Prompt
                 </label>
                 <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-                  Especifica qué elementos NO deseas ver en el render. Ej: "Sin personas", "Sin vehículos", "Sin cables eléctricos visibles", "Sin elementos decorativos excesivos", etc.
+                  Especifica qué elementos NO deseas ver en el render. Ej: &quot;Sin personas&quot;, &quot;Sin vehículos&quot;, &quot;Sin cables eléctricos visibles&quot;, &quot;Sin elementos decorativos excesivos&quot;, etc.
                 </p>
               </div>
               <textarea

@@ -4,7 +4,7 @@
 // Este módulo genera una imagen de planta arquitectónica
 // basado en los parámetros del usuario e imágenes de referencia.
 
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Part } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 
 // Helper to map project types to English
@@ -37,7 +37,7 @@ const PROJECT_TYPE_MAP: Record<string, string> = {
  */
 export async function generateFloorPlan(
   params: DreamHouseParams,
-  imageParts: any[] = [],
+  imageParts: Part[] = [],
   apiKey?: string
 ): Promise<string> {
   try {
@@ -168,7 +168,7 @@ Generate a high-quality architectural floor plan visualization that clearly comm
 `;
 
     // Build parts array with text prompt and any image parts
-    const parts: any[] = [{ text: floorPlanPrompt }];
+    const parts: Part[] = [{ text: floorPlanPrompt }];
     parts.push(...imageParts);
 
     const response = await ai.models.generateContent({
