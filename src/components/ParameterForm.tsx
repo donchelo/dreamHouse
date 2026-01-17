@@ -1,5 +1,5 @@
 import React from 'react';
-import { DreamHouseParams, DEFAULT_PARAMS } from '../types';
+import { DreamHouseParams } from '../types';
 import * as C from '../app/constants';
 import clsx from 'clsx';
 import { 
@@ -340,7 +340,7 @@ export default function ParameterForm({
                   Notas Técnicas
                 </label>
                 <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-                  Ej: "El dormitorio principal debe tener mínimo 4x4m", "Cumplir con normativa de accesibilidad", "Incluir muro de carga en eje central", etc.
+                  {`Ej: "El dormitorio principal debe tener mínimo 4x4m", "Cumplir con normativa de accesibilidad", "Incluir muro de carga en eje central", etc.`}
                 </p>
               </div>
               <textarea
@@ -646,7 +646,7 @@ export default function ParameterForm({
                   Dirección Artística
                 </label>
                 <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-                  Ej: "Estilo cinematográfico tipo Blade Runner 2049, con neón suave y atmósfera cyberpunk", "Referencia visual de la arquitectura de Tadao Ando con luz dramática", "Paleta monocromática con acentos dorados", etc.
+                  {`Ej: "Estilo cinematográfico tipo Blade Runner 2049, con neón suave y atmósfera cyberpunk", "Referencia visual de la arquitectura de Tadao Ando con luz dramática", "Paleta monocromática con acentos dorados", etc.`}
                 </p>
               </div>
               <textarea

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Layout, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, Layout, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import Image from 'next/image';
 import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
 
 interface FloorPlanUploaderProps {
@@ -120,10 +121,12 @@ export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploa
           </div>
         ) : (
           <div className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-blue-500/50 hover:shadow-lg">
-            <img
+            <Image
               src={URL.createObjectURL(file)}
               alt="Vista previa del plano de planta"
-              className="w-full h-full object-contain bg-card-elevated"
+              fill
+              className="object-contain bg-card-elevated"
+              unoptimized
             />
             
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">

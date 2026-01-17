@@ -11,19 +11,13 @@ import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2, AlertCircle, ArrowRight, Zap, Layers, Palette, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import * as C from '@/app/constants';
 import clsx from 'clsx';
 
-// Feature cards for hero section
-const FEATURES = [
-  { icon: Zap, label: 'Ultra fast', desc: '30-60s' },
-  { icon: Layers, label: 'High Res', desc: 'Up to 4K' },
-  { icon: Palette, label: 'Custom', desc: '100+ Options' },
-];
-
+// Hero images for slideshow
 const HERO_IMAGES = [
   "/images/dreamhouse-render.png",
   "/images/dreamhouse-render (1).png"

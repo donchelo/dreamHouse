@@ -3,6 +3,7 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { Upload, Pencil, Trash2, CheckCircle2, Download, RotateCcw, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import Image from 'next/image';
 import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
 
 interface InspirationCanvasProps {
@@ -20,9 +21,6 @@ export default function InspirationCanvas({ file, onFileChange }: InspirationCan
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Canvas drawing state
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
 
   // Initialize canvas
   useEffect(() => {
@@ -277,10 +275,12 @@ export default function InspirationCanvas({ file, onFileChange }: InspirationCan
             </div>
           ) : (
             <div className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-purple-500/50 hover:shadow-lg">
-              <img
+              <Image
                 src={URL.createObjectURL(file)}
                 alt="Vista previa de inspiración"
-                className="w-full h-full object-contain bg-muted/20"
+                fill
+                className="object-contain bg-muted/20"
+                unoptimized
               />
               
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">

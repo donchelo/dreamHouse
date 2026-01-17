@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Part } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 import { generateFloorPlan } from '@/lib/floor-plan-engine';
 
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
     let floorPlanImageBase64 = "";
     let floorPlanImageMimeType = "";
     const referenceImagesBase64: Array<{ mimeType: string; data: string }> = [];
-    const imagePartsForFloorPlan: any[] = [];
+    const imagePartsForFloorPlan: Part[] = [];
 
     // Process inspiration image (highest priority for floor plan structure)
     if (inspirationImage) {
@@ -330,7 +330,7 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
     console.log("Generated Multimodal Prompt:", fullPrompt);
 
     // --- Step 4: Generate Image (Multimodal Call) ---
-    const imageGenerationParts: any[] = [{ text: fullPrompt }];
+    const imageGenerationParts: Part[] = [{ text: fullPrompt }];
 
     // Add floor plan image if available
     if (floorPlanImageBase64) {
