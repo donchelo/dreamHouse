@@ -199,7 +199,7 @@ El prompt final se construye dinámicamente combinando:
    - Texturas
    - Ambiente y mood
 
-8. **Sufijo de calidad:** "8K, ultra detailed, professional architectural photography, [hora] lighting, award-winning design"
+8. **Sufijo de calidad:** "4K, ultra detailed, professional architectural photography, [hora] lighting, award-winning design"
 
 ---
 

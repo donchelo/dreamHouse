@@ -80,7 +80,7 @@ export default function Home() {
                         </Link>
                         <div className="flex gap-8 items-center text-white/40 font-mono text-[10px] uppercase tracking-widest">
                             <span className="flex items-center gap-2"><Zap className="w-3 h-3 text-primary" /> Instant Render</span>
-                            <span className="flex items-center gap-2"><Globe className="w-3 h-3 text-primary" /> 8K Quality</span>
+                            <span className="flex items-center gap-2"><Globe className="w-3 h-3 text-primary" /> 4K Quality</span>
                         </div>
                     </div>
                 </div>
@@ -165,7 +165,7 @@ export default function Home() {
                     { 
                         step: "03", 
                         title: "Generación", 
-                        desc: "Nuestra IA analiza tus datos y crea un render fotorrealista en 8K en segundos.",
+                        desc: "Nuestra IA analiza tus datos y crea un render fotorrealista en 4K en segundos.",
                         icon: <Sparkles className="w-8 h-8" />
                     }
                 ].map((item, i) => (
