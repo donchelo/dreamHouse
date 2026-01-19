@@ -28,8 +28,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${instrumentSans.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${instrumentSans.variable} ${jetbrainsMono.variable} antialiased relative`}
       >
+        <div className="fixed inset-0 bg-blueprint pointer-events-none z-0" />
         <ThemeProvider>
           {children}
         </ThemeProvider>
