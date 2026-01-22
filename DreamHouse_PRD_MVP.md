@@ -12,13 +12,13 @@
 
 ## 1. Visión del Producto
 
-DreamHouse es una aplicación web que permite a usuarios y arquitectos generar visualizaciones fotorrealistas de casas personalizadas mediante inteligencia artificial. A través de una interfaz única y parámetros configurables, el usuario puede crear el render exterior de su casa ideal en segundos.
+DreamHouse es una aplicación web que permite a usuarios y arquitectos generar visualizaciones fotorrealistas de casas personalizadas mediante inteligencia artificial. A través de una interfaz única y parámetros configurables, el usuario puede crear el exterior de su casa ideal en segundos.
 
 ---
 
 ## 2. Problema a Resolver
 
-Diseñar una casa requiere conocimientos técnicos, tiempo y recursos costosos. Los renders arquitectónicos tradicionales pueden costar cientos o miles de dólares y tomar días o semanas. DreamHouse democratiza este proceso permitiendo a cualquier persona visualizar conceptos arquitectónicos de alta calidad instantáneamente.
+Diseñar una casa requiere conocimientos técnicos, tiempo y recursos costosos. Las visualizaciones arquitectónicas tradicionales pueden costar cientos o miles de dólares y tomar días o semanas. DreamHouse democratiza este proceso permitiendo a cualquier persona visualizar conceptos arquitectónicos de alta calidad instantáneamente.
 
 ---
 
@@ -32,7 +32,7 @@ Diseñar una casa requiere conocimientos técnicos, tiempo y recursos costosos. 
 
 ## 4. Propuesta de Valor
 
-- Generación instantánea de renders arquitectónicos fotorrealistas
+- Generación instantánea de exteriores arquitectónicos fotorrealistas
 - Interfaz simple: una sola pantalla con parámetros claros
 - Personalización basada en estilos de arquitectos reconocidos mundialmente
 - Soporte para imágenes de referencia (materiales, formas, estilos)
@@ -95,7 +95,7 @@ El usuario puede seleccionar varias opciones (con límites recomendados para coh
 
 ### 5.4 Lista de Arquitectos de Referencia
 
-Dropdown con los siguientes arquitectos reconocidos mundialmente. El estilo del arquitecto influye en la estética general del render.
+Dropdown con los siguientes arquitectos reconocidos mundialmente. El estilo del arquitecto influye en la estética general del exterior.
 
 | Arquitecto | Estilo Característico |
 |------------|----------------------|
@@ -248,7 +248,7 @@ El prompt final se construye dinámicamente combinando:
 - API para terceros
 - Marketplace de estilos personalizados
 - Colaboración en tiempo real
-- Integración con renders 3D
+- Integración con visualizaciones 3D
 
 ---
 

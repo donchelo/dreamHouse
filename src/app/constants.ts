@@ -348,3 +348,80 @@ export const ASPECT_RATIOS = [
   "9:16",   // Vertical/Portrait
   "3:4"     // Vertical tradicional
 ];
+
+// ------------------------------------------
+// SECTION 10: INTERIOR DESIGN
+// ------------------------------------------
+
+export const ROOM_TYPES = [
+  "Sala de estar (Living Room)",
+  "Dormitorio principal (Master Bedroom)",
+  "Cocina (Kitchen)",
+  "Comedor (Dining Room)",
+  "Baño (Bathroom)",
+  "Oficina en casa (Home Office)",
+  "Habitación infantil (Kids Room)",
+  "Entrada/Pasillo (Entryway)",
+  "Cine en casa (Home Cinema)",
+  "Gimnasio (Gym)",
+  "Bodega (Wine Cellar)",
+  "Estudio/Taller (Studio)"
+];
+
+export const INTERIOR_STYLES = [
+  "Escandinavo", "Mid-Century Modern", "Industrial", "Minimalista",
+  "Bohemio", "Tradicional", "Transicional", "Art Deco", "Japandi",
+  "Wabi-Sabi", "Costero/Coastal", "Farmhouse", "Maximalista",   "Hollywood Regency"
+];
+
+export const INTERIOR_DESIGNERS = [
+  // ═══════════════════════════════════════════
+  // MAESTROS CLÁSICOS Y MODERNISTAS
+  // ═══════════════════════════════════════════
+  "Jean-Michel Frank", "Elsie de Wolfe", "Billy Baldwin", "Dorothy Draper",
+  "David Hicks", "Albert Hadley", "Sister Parish", "Mario Buatta",
+  
+  // ═══════════════════════════════════════════
+  // CONTEMPORÁNEOS ICÓNICOS (AD100)
+  // ═══════════════════════════════════════════
+  "Kelly Wearstler", "Jean-Louis Deniot", "Peter Marino", "Philippe Starck",
+  "India Mahdavi", "Joseph Dirand", "Axel Vervoordt", "Patricia Urquiola",
+  "Marcel Wanders", "Vincent Van Duysen", "Piet Boon", "Christian Liaigre",
+  
+  // ═══════════════════════════════════════════
+  // ESTILO AMERICANO LUJO
+  // ═══════════════════════════════════════════
+  "Victoria Hagan", "Nate Berkus", "Martyn Lawrence Bullard", "Roman and Williams",
+  "Ken Fulk", "Michael S. Smith", "Bunny Williams", "Miles Redd",
+  
+  // ═══════════════════════════════════════════
+  // MINIMALISTAS Y CONCEPTUALES
+  // ═══════════════════════════════════════════
+  "John Pawson", "Ilse Crawford", "Studio McGee", "Amber Lewis",
+  "Joanna Gaines (Magnolia)", "Rose Uniacke", "Pierre Yovanovitch",
+  
+  // ═══════════════════════════════════════════
+  // SIN PREFERENCIA
+  // ═══════════════════════════════════════════
+  "Sin diseñador específico"
+];
+
+export const FURNITURE_STYLES = [
+  "Moderno", "Vintage/Retro", "Minimalista", "Clásico",
+  "Rústico", "Vanguardista", "Bespoke/A medida"
+];
+
+export const INTERIOR_LIGHTING = [
+  "Natural suave", "Natural dramática", "Cálida ambiental",
+  "Luz de día fría", "Cenital/Claroscuro", "Neo-futurista/RGB", "Estudio fotográfico"
+];
+
+export const WALL_MATERIALS = [
+  "Mármol", "Concreto pulido", "Ladrillo visto", "Papel tapiz",
+  "Yeso veneciano", "Paneles de madera", "Piedra natural", "Pintura mate"
+];
+
+export const FLOOR_MATERIALS = [
+  "Madera de roble", "Madera de nogal", "Piedra caliza", "Terrazo",
+  "Microcemento", "Porcelanato", "Alfombra de lujo", "Mármol"
+];

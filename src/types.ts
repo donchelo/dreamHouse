@@ -48,16 +48,25 @@ export interface DreamHouseParams {
   fpOutputResolution: string;
   fpAspectRatio: string;
   
-  // Section 7: Render Output Configuration
+  // Section 7: Exterior Output Configuration
   renderOutputResolution: string;
   renderAspectRatio: string;
   
   // Section 8: Technical Notes (for Floor Plan)
   technicalNotes: string;
   
-  // Section 9: Art Direction (for Rendering)
+  // Section 9: Art Direction (for Exterior)
   artDirection: string;
   negativePrompt: string;
+
+  // Section 10: Interior Design
+  roomType: string;
+  interiorStyle: string[];
+  interiorDesigner: string[];
+  furnitureStyle: string;
+  interiorLighting: string;
+  wallMaterial: string[];
+  floorMaterial: string;
 }
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
@@ -106,14 +115,23 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   fpOutputResolution: "2K",
   fpAspectRatio: "16:9",
   
-  // Section 7: Render Output Configuration
+  // Section 7: Exterior Output Configuration
   renderOutputResolution: "4K",
   renderAspectRatio: "16:9",
   
   // Section 8: Technical Notes (for Floor Plan)
   technicalNotes: "",
   
-  // Section 9: Art Direction (for Rendering)
+  // Section 9: Art Direction (for Exterior)
   artDirection: "",
-  negativePrompt: ""
+  negativePrompt: "",
+
+  // Section 10: Interior Design
+  roomType: "Sala de estar (Living Room)",
+  interiorStyle: [],
+  interiorDesigner: [],
+  furnitureStyle: "Moderno",
+  interiorLighting: "Natural suave",
+  wallMaterial: [],
+  floorMaterial: "Madera de roble"
 };

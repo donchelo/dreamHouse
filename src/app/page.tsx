@@ -35,7 +35,7 @@ export default function Home() {
                <Image
                  key={src}
                  src={src}
-                 alt={`Architectural Render ${index + 1}`}
+                 alt={`Architectural Exterior ${index + 1}`}
                  fill
                  className={`object-cover object-center transition-opacity duration-1000 ${
                    index === currentImageIndex ? 'opacity-40' : 'opacity-0'
@@ -65,7 +65,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                     <p className="text-white/60 text-lg md:text-xl font-light leading-relaxed border-l-2 border-primary/30 pl-6">
-                      Democratizando la visualización arquitectónica. Genera renders fotorrealistas de alta calidad a partir de conceptos básicos en segundos.
+                      Democratizando la visualización arquitectónica. Genera exteriores fotorrealistas de alta calidad a partir de conceptos básicos en segundos.
                     </p>
                     
                     <div className="flex flex-col gap-6">
@@ -79,7 +79,7 @@ export default function Home() {
                           </Button>
                         </Link>
                         <div className="flex gap-8 items-center text-white/40 font-mono text-[10px] uppercase tracking-widest">
-                            <span className="flex items-center gap-2"><Zap className="w-3 h-3 text-primary" /> Instant Render</span>
+                            <span className="flex items-center gap-2"><Zap className="w-3 h-3 text-primary" /> Instant Exterior</span>
                             <span className="flex items-center gap-2"><Globe className="w-3 h-3 text-primary" /> 4K Quality</span>
                         </div>
                     </div>
@@ -115,7 +115,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-8 border-t border-border pt-12">
                     <div className="space-y-2">
                         <p className="text-3xl font-black text-primary uppercase">85%</p>
-                        <p className="text-xs uppercase font-bold tracking-widest opacity-60">Reducción en tiempo de render</p>
+                        <p className="text-xs uppercase font-bold tracking-widest opacity-60">Reducción en tiempo de generación</p>
                     </div>
                     <div className="space-y-2">
                         <p className="text-3xl font-black text-primary uppercase">100%</p>
@@ -141,7 +141,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
                 <div className="space-y-4">
                     <h2 className="text-sm font-mono text-primary uppercase tracking-[0.4em] font-bold">02. El Proceso</h2>
-                    <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Tres Pasos al <span className="text-primary">Render Perfecto</span>.</h3>
+                    <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Tres Pasos al <span className="text-primary">Exterior Perfecto</span>.</h3>
                 </div>
                 <p className="max-w-md text-background/60 text-sm uppercase tracking-widest font-medium">
                     Una interfaz única. Sin complicaciones. Todo lo que necesitas en un solo viewport.
@@ -165,7 +165,7 @@ export default function Home() {
                     { 
                         step: "03", 
                         title: "Generación", 
-                        desc: "Nuestra IA analiza tus datos y crea un render fotorrealista en 4K en segundos.",
+                        desc: "Nuestra IA analiza tus datos y crea un exterior fotorrealista en 4K en segundos.",
                         icon: <Sparkles className="w-8 h-8" />
                     }
                 ].map((item, i) => (

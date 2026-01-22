@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "DreamHouse | AI Architect",
-  description: "Transform your architectural visions into stunning AI-generated renders",
+  description: "Transform your architectural visions into stunning AI-generated exteriors",
 };
 
 export default function RootLayout({

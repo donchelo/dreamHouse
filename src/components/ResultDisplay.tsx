@@ -15,7 +15,7 @@ const LOADING_MESSAGES = [
   { emoji: "🌿", main: "Integrando arquitectura y naturaleza...", sub: "Frank Lloyd Wright lo aprobaría" },
   { emoji: "🏠", main: "Perfeccionando las líneas del techo...", sub: "Cada ángulo cuenta" },
   { emoji: "✨", main: "Añadiendo ese toque de magia...", sub: "Lo que hace único tu diseño" },
-  { emoji: "🎬", main: "Renderizando sombras cinematográficas...", sub: "Digno de una portada de ArchDaily" },
+  { emoji: "🎬", main: "Creando sombras cinematográficas...", sub: "Digno de una portada de ArchDaily" },
   { emoji: "🌱", main: "Plantando el jardín virtual...", sub: "Verde que te quiero verde" },
   { emoji: "🎨", main: "Ajustando la paleta de colores...", sub: "Armonía cromática en proceso" },
   { emoji: "🌅", main: "Capturando el golden hour perfecto...", sub: "La luz dorada lo cambia todo" },
@@ -106,7 +106,7 @@ function ImageLightbox({
       >
         <Image
           src={imageUrl}
-          alt="DreamHouse Render - Pantalla Completa"
+          alt="DreamHouse Exterior - Pantalla Completa"
           width={1920}
           height={1080}
           className="transition-transform duration-200 cursor-move"
@@ -129,7 +129,7 @@ export default function ResultDisplay({
   isLoading, 
   onRegenerate,
   title = "Resultado Final",
-  subtitle = "Renderizado con inteligencia artificial"
+  subtitle = "Generado con inteligencia artificial"
 }: ResultDisplayProps) {
   const [messageIndex, setMessageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -241,7 +241,7 @@ export default function ResultDisplay({
               <>
                 <Image 
                   src={imageUrl} 
-                  alt="DreamHouse Render" 
+                  alt="DreamHouse Exterior" 
                   fill
                   className="w-full h-full object-contain bg-black/40 transition-transform duration-700 group-hover:scale-[1.01] cursor-pointer" 
                   onClick={openLightbox}
@@ -285,7 +285,7 @@ export default function ResultDisplay({
                     </Button>
                     <a
                       href={imageUrl}
-                      download="dreamhouse-render.png"
+                      download="dreamhouse-exterior.png"
                       className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105"
                     >
                       <Download className="w-4 h-4" />

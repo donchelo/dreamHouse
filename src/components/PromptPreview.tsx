@@ -10,7 +10,13 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
   // Helper to check if value exists
   const hasValue = (val: string | string[] | number) => {
     if (Array.isArray(val)) return val.length > 0;
-    return val !== "" && val !== "Sin arquitecto específico" && val !== "Sin agua cercana" && val !== "Sin personas";
+    if (typeof val === 'number') return val > 0;
+    return val !== "" && 
+           val !== "Sin arquitecto específico" && 
+           val !== "Sin agua cercana" && 
+           val !== "Sin personas" &&
+           val !== undefined &&
+           val !== null;
   };
 
   // Group parameters logically - Icons updated to be consistent
@@ -20,26 +26,32 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       icon: <Sparkles className="w-3.5 h-3.5" />,
       items: [
         { label: "TYPE", value: params.projectType },
+        { label: "ROOM", value: params.roomType },
         { label: "STYLE", value: params.architecturalStyles },
+        { label: "INT STYLE", value: params.interiorStyle },
+        { label: "FURNITURE", value: params.furnitureStyle },
         { label: "ARCHITECT", value: params.architect },
         { label: "MOOD", value: params.mood },
       ]
     },
     {
-      title: "Site Context",
+      title: "Site & Light",
       icon: <MapPin className="w-3.5 h-3.5" />,
       items: [
         { label: "LOCATION", value: params.city },
         { label: "ENV", value: params.environment },
         { label: "CLIMATE", value: params.climate },
         { label: "TIME", value: params.timeOfDay },
+        { label: "INT LIGHT", value: params.interiorLighting },
       ]
     },
     {
       title: "Specifications",
       icon: <Building2 className="w-3.5 h-3.5" />,
       items: [
-        { label: "MATERIALS", value: params.materials },
+        { label: "EXT MAT", value: params.materials },
+        { label: "WALL MAT", value: params.wallMaterial },
+        { label: "FLOOR MAT", value: params.floorMaterial },
         { label: "SIZE", value: params.size },
         { label: "LEVELS", value: `${params.levels}` },
         { label: "FINISH", value: params.finishLevel },

@@ -15,7 +15,7 @@ interface ParameterFormProps {
   disabled?: boolean;
   activeSection: string | null;
   onSectionChange: (id: string) => void;
-  currentTab: 'basics' | 'rendering';
+  currentTab: 'basics' | 'exterior' | 'interior';
 }
 
 // Componente de descripción de sección
@@ -402,8 +402,8 @@ export default function ParameterForm({
         </>
       )}
 
-      {/* RENDERING TAB */}
-      {currentTab === 'rendering' && (
+      {/* EXTERIOR TAB */}
+      {currentTab === 'exterior' && (
         <>
           {/* SECTION 3: PROJECT ESSENCE */}
           <Section 
@@ -452,8 +452,8 @@ export default function ParameterForm({
             title="Materialidad y Acabados" 
             number="04"
             icon={<Building2 className="w-5 h-5" aria-hidden="true" />}
-            isOpen={activeSection === 'specs-rendering'}
-            onToggle={() => onSectionChange('specs-rendering')}
+            isOpen={activeSection === 'specs-exterior'}
+            onToggle={() => onSectionChange('specs-exterior')}
           >
             <SectionDescription>
               Define los materiales y el nivel de detalle que tendrá la visualización.
@@ -527,7 +527,7 @@ export default function ParameterForm({
             onToggle={() => onSectionChange('camera')}
           >
             <SectionDescription>
-              Controla cómo se visualizará el render final: ángulo de la cámara, composición fotográfica, iluminación y momento del día. Estos ajustes son clave para lograr imágenes profesionales.
+              Controla cómo se visualizará el exterior final: ángulo de la cámara, composición fotográfica, iluminación y momento del día. Estos ajustes son clave para lograr imágenes profesionales.
             </SectionDescription>
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -583,7 +583,7 @@ export default function ParameterForm({
 
           {/* SECTION 7: RENDER OUTPUT CONFIGURATION */}
           <Section 
-            title="Configuración de Salida del Render" 
+            title="Configuración de Salida Exterior" 
             number="07"
             icon={<ImageIcon className="w-5 h-5" aria-hidden="true" />}
             badge="CALIDAD"
@@ -591,7 +591,7 @@ export default function ParameterForm({
             onToggle={() => onSectionChange('output')}
           >
             <SectionDescription>
-              Define la calidad técnica de la imagen del render final generada. Mayor resolución produce más detalle pero requiere más tiempo de procesamiento.
+              Define la calidad técnica de la imagen exterior final generada. Mayor resolución produce más detalle pero requiere más tiempo de procesamiento.
             </SectionDescription>
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -635,7 +635,7 @@ export default function ParameterForm({
             onToggle={() => onSectionChange('art-direction')}
           >
             <SectionDescription>
-              Define la dirección artística y estética del render final. Aquí puedes especificar el estilo visual, la atmósfera, referencias cinematográficas, paletas de color específicas, o cualquier aspecto visual que debe priorizarse en la imagen generada.
+              Define la dirección artística y estética del exterior final. Aquí puedes especificar el estilo visual, la atmósfera, referencias cinematográficas, paletas de color específicas, o cualquier aspecto visual que debe priorizarse en la imagen generada.
             </SectionDescription>
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-1 pl-1">
@@ -669,7 +669,7 @@ export default function ParameterForm({
                   Negative Prompt
                 </label>
                 <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-                  Especifica qué elementos NO deseas ver en el render. Ej: &quot;Sin personas&quot;, &quot;Sin vehículos&quot;, &quot;Sin cables eléctricos visibles&quot;, &quot;Sin elementos decorativos excesivos&quot;, etc.
+                  Especifica qué elementos NO deseas ver en el exterior. Ej: &quot;Sin personas&quot;, &quot;Sin vehículos&quot;, &quot;Sin cables eléctricos visibles&quot;, &quot;Sin elementos decorativos excesivos&quot;, etc.
                 </p>
               </div>
               <textarea
@@ -681,6 +681,192 @@ export default function ParameterForm({
                 rows={4}
                 className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
                 aria-describedby="negative-prompt-help"
+              />
+            </div>
+          </Section>
+        </>
+      )}
+
+      {/* INTERIOR TAB */}
+      {currentTab === 'interior' && (
+        <>
+          {/* SECTION 3: INTERIOR ESSENCE */}
+          <Section 
+            title="Esencia del Espacio" 
+            number="03"
+            icon={<Sparkles className="w-5 h-5" aria-hidden="true" />}
+            badge="INTERIOR"
+            isOpen={activeSection === 'interior-essence'}
+            onToggle={() => onSectionChange('interior-essence')}
+          >
+            <SectionDescription>
+              Define el tipo de habitación y el estilo decorativo que deseas aplicar. <strong>IMPORTANTE:</strong> El diseño se aplicará estrictamente sobre la base de la foto de habitación que subiste. Las paredes, pisos, puertas y ventanas se mantendrán exactamente como en tu foto. Solo se modificarán los muebles y elementos decorativos.
+            </SectionDescription>
+            <div className="space-y-8">
+              <Select 
+                label="Tipo de Habitación" 
+                value={params.roomType}
+                onChange={(e) => handleChange("roomType", e.target.value)}
+                options={C.ROOM_TYPES}
+                disabled={disabled}
+              />
+              
+              <div className="grid grid-cols-1 gap-6">
+                {renderChipsGroup(
+                  "Estilo de Interior", 
+                  "interiorStyle", 
+                  C.INTERIOR_STYLES, 
+                  "Selecciona los estilos que definirán la decoración y atmósfera del espacio.",
+                  true
+                )}
+                {renderChipsGroup(
+                  "Maestro de Diseño de Interior", 
+                  "interiorDesigner", 
+                  C.INTERIOR_DESIGNERS, 
+                  "Elige diseñadores famosos cuyo estilo quieras emular para el interior.",
+                  true
+                )}
+                <Select 
+                  label="Estilo de Mobiliario"
+                  value={params.furnitureStyle}
+                  onChange={(e) => handleChange("furnitureStyle", e.target.value)}
+                  options={C.FURNITURE_STYLES}
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+          </Section>
+
+          {/* SECTION 4: INTERIOR MATERIALS & LIGHTING */}
+          <Section 
+            title="Materiales e Iluminación" 
+            number="04"
+            icon={<Building2 className="w-5 h-5" aria-hidden="true" />}
+            isOpen={activeSection === 'interior-materials'}
+            onToggle={() => onSectionChange('interior-materials')}
+          >
+            <SectionDescription>
+              Configura el esquema de iluminación y los estilos decorativos. Si subiste una foto, estos parámetros guiarán la decoración que se añadirá al espacio, mientras que la estructura y materiales existentes se preservan.
+            </SectionDescription>
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Select 
+                  label="Iluminación Interior"
+                  value={params.interiorLighting}
+                  onChange={(e) => handleChange("interiorLighting", e.target.value)}
+                  options={C.INTERIOR_LIGHTING}
+                  disabled={disabled}
+                />
+                <Select 
+                  label="Material del Suelo"
+                  value={params.floorMaterial}
+                  onChange={(e) => handleChange("floorMaterial", e.target.value)}
+                  options={C.FLOOR_MATERIALS}
+                  disabled={disabled}
+                />
+              </div>
+              {renderChipsGroup(
+                "Materiales de Paredes", 
+                "wallMaterial", 
+                C.WALL_MATERIALS, 
+                "Selecciona los acabados para las paredes y superficies verticales."
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Select 
+                  label="Mood / Atmósfera"
+                  value={params.mood}
+                  onChange={(e) => handleChange("mood", e.target.value)}
+                  options={C.MOODS}
+                  disabled={disabled}
+                />
+                <Select 
+                  label="Nivel de Acabados"
+                  value={params.finishLevel}
+                  onChange={(e) => handleChange("finishLevel", e.target.value)}
+                  options={C.FINISH_LEVELS}
+                  disabled={disabled}
+                />
+              </div>
+              {renderChipsGroup(
+                "Paleta de Color", 
+                "colorPalette", 
+                C.COLORS, 
+                "Define los colores que dominarán el diseño interior."
+              )}
+            </div>
+          </Section>
+
+          {/* SECTION 5: CAMERA & OUTPUT (Adapted for Interior) */}
+          <Section 
+            title="Configuración de Visualización" 
+            number="05"
+            icon={<Camera className="w-5 h-5" aria-hidden="true" />}
+            isOpen={activeSection === 'interior-camera'}
+            onToggle={() => onSectionChange('interior-camera')}
+          >
+            <SectionDescription>
+              Ajusta el encuadre y la calidad de la imagen generada.
+            </SectionDescription>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Select 
+                  label="Ángulo de Cámara"
+                  value={params.cameraAngle}
+                  onChange={(e) => handleChange("cameraAngle", e.target.value)}
+                  options={["Frontal", "Perspectiva de esquina", "Plano detalle", "Gran angular", "Ojo de pez"]}
+                  disabled={disabled}
+                />
+                <Select 
+                  label="Relación de Aspecto"
+                  value={params.renderAspectRatio}
+                  onChange={(e) => handleChange("renderAspectRatio", e.target.value)}
+                  options={C.ASPECT_RATIOS}
+                  disabled={disabled}
+                />
+              </div>
+              <Select 
+                label="Resolución"
+                value={params.renderOutputResolution}
+                onChange={(e) => handleChange("renderOutputResolution", e.target.value)}
+                options={C.OUTPUT_RESOLUTIONS}
+                disabled={disabled}
+              />
+            </div>
+          </Section>
+
+          {/* SECTION 6: ART DIRECTION (Same as exterior) */}
+          <Section 
+            title="Dirección Artística" 
+            number="06"
+            icon={<Palette className="w-5 h-5" aria-hidden="true" />}
+            badge="VISUAL"
+            isOpen={activeSection === 'interior-art-direction'}
+            onToggle={() => onSectionChange('interior-art-direction')}
+          >
+            <SectionDescription>
+              Define la dirección artística y estética del interior.
+            </SectionDescription>
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={params.artDirection || ''}
+                onChange={(e) => handleChange("artDirection", e.target.value)}
+                disabled={disabled}
+                placeholder="Ej: Estilo minimalista japonés con luz cenital dramática. Inspiración en hoteles de lujo de Suiza..."
+                rows={5}
+                className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
+              />
+            </div>
+            <div className="flex flex-col gap-2 mt-6">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Negative Prompt
+              </label>
+              <textarea
+                value={params.negativePrompt || ''}
+                onChange={(e) => handleChange("negativePrompt", e.target.value)}
+                disabled={disabled}
+                placeholder="Ej: Sin sombras duras, sin muebles antiguos, sin colores brillantes..."
+                rows={4}
+                className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
               />
             </div>
           </Section>
