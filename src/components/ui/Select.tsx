@@ -35,6 +35,7 @@ export function Select({
           )}
           {...props}
         >
+          <option value="">—</option>
           {options.map((opt) => (
             <option key={opt} value={opt} className="bg-card text-foreground py-2">
               {opt}

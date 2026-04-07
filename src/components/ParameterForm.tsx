@@ -3,7 +3,7 @@ import { DreamHouseParams } from '../types';
 import * as C from '../app/constants';
 import clsx from 'clsx';
 import {
-  Sparkles, MapPin, Building2, Palette, Camera, PenLine, ImageIcon
+  Sparkles, MapPin, Box, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine
 } from 'lucide-react';
 import { Section } from './ui/Section';
 import { Select } from './ui/Select';
@@ -107,17 +107,17 @@ export default function ParameterForm({
   return (
     <div className="space-y-0" role="form" aria-label="Formulario de parámetros de diseño arquitectónico">
 
-      {/* SECTION 01: PROJECT ESSENCE */}
+      {/* ── 04 IDENTIDAD DEL PROYECTO ─────────────────────────────── */}
       <Section
-        title="Esencia del Proyecto"
-        number="01"
+        title="Identidad del Proyecto"
+        number="04"
         icon={<Sparkles className="w-5 h-5" aria-hidden="true" />}
-        badge="PRINCIPAL"
-        isOpen={activeSection === 'essence'}
-        onToggle={() => onSectionChange('essence')}
+        badge="ESENCIA"
+        isOpen={activeSection === 'identity'}
+        onToggle={() => onSectionChange('identity')}
       >
         <SectionDescription>
-          Define la identidad fundamental de tu proyecto. El tipo de construcción, los estilos arquitectónicos que te inspiran y la atmósfera general que deseas transmitir.
+          Define qué es y cómo debe sentirse el proyecto. El tipo de edificación, los estilos arquitectónicos de referencia, el arquitecto inspirador y la atmósfera general son el punto de partida de todo el diseño.
         </SectionDescription>
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -141,31 +141,31 @@ export default function ParameterForm({
               "Estilo Arquitectónico",
               "architecturalStyles",
               C.STYLES,
-              "Selecciona los estilos arquitectónicos que definirán la estética de tu diseño. Puedes combinar varios para crear algo único.",
+              "Selecciona los estilos que definirán la estética. Puedes combinar varios para crear algo único.",
               true
             )}
             {renderChipsGroup(
               "Arquitecto de Referencia",
               "architect",
               C.ARCHITECTS,
-              "Elige arquitectos famosos cuyo estilo quieras emular. La IA usará sus características distintivas como inspiración.",
+              "La IA usará las características visuales y compositivas del arquitecto seleccionado como inspiración.",
               true
             )}
           </div>
         </div>
       </Section>
 
-      {/* SECTION 02: CONTEXT & LOCATION */}
+      {/* ── 05 UBICACIÓN Y ENTORNO ────────────────────────────────── */}
       <Section
-        title="Contexto y Ubicación"
-        number="02"
+        title="Ubicación y Entorno"
+        number="05"
         icon={<MapPin className="w-5 h-5" aria-hidden="true" />}
-        badge="UBICACIÓN"
+        badge="CONTEXTO"
         isOpen={activeSection === 'location'}
         onToggle={() => onSectionChange('location')}
       >
         <SectionDescription>
-          Establece el entorno donde se ubicará tu proyecto. El clima, el paisaje circundante y las condiciones ambientales influyen directamente en el diseño arquitectónico resultante.
+          Dónde se emplaza el proyecto. La ciudad, el clima, el tipo de entorno y las condiciones meteorológicas determinan la integración contextual del edificio y la paleta lumínica del render.
         </SectionDescription>
         <div className="space-y-6">
           <div className="flex flex-col gap-2">
@@ -174,10 +174,10 @@ export default function ParameterForm({
                 htmlFor="city-input"
                 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
               >
-                Ciudad / Localización
+                Ciudad / Región
               </label>
               <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-                Escribe una ciudad o región para adaptar el estilo al contexto cultural
+                Adapta el estilo al contexto cultural y urbano local
               </p>
             </div>
             <input
@@ -185,12 +185,19 @@ export default function ParameterForm({
               type="text"
               value={params.city}
               onChange={(e) => handleChange("city", e.target.value)}
-              placeholder="Ej: Tokyo, Barcelona, Dubai..."
+              placeholder="Ej: Tokyo, Barcelona, Dubai, Ciudad de México..."
               disabled={disabled}
               className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm font-medium focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Select
+              label="Entorno Urbano"
+              value={params.environment}
+              onChange={(e) => handleChange("environment", e.target.value)}
+              options={C.ENVIRONMENTS}
+              disabled={disabled}
+            />
             <Select
               label="Clima"
               value={params.climate}
@@ -198,24 +205,17 @@ export default function ParameterForm({
               options={C.CLIMATES}
               disabled={disabled}
             />
-            <Select
-              label="Entorno"
-              value={params.environment}
-              onChange={(e) => handleChange("environment", e.target.value)}
-              options={C.ENVIRONMENTS}
-              disabled={disabled}
-            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
-              label="Cuerpo de Agua"
+              label="Cuerpo de Agua Cercano"
               value={params.waterBody}
               onChange={(e) => handleChange("waterBody", e.target.value)}
               options={C.WATER_BODIES}
               disabled={disabled}
             />
             <Select
-              label="Condición Climática"
+              label="Condición Meteorológica"
               value={params.weatherCondition}
               onChange={(e) => handleChange("weatherCondition", e.target.value)}
               options={C.WEATHER_CONDITIONS}
@@ -225,18 +225,18 @@ export default function ParameterForm({
         </div>
       </Section>
 
-      {/* SECTION 03: BUILDING PROGRAM & SPECIFICATIONS */}
+      {/* ── 06 VOLUMETRÍA Y FORMA ─────────────────────────────────── */}
       <Section
-        title="Programa y Especificaciones"
-        number="03"
-        icon={<Building2 className="w-5 h-5" aria-hidden="true" />}
-        isOpen={activeSection === 'specs'}
-        onToggle={() => onSectionChange('specs')}
+        title="Volumetría y Forma"
+        number="06"
+        icon={<Box className="w-5 h-5" aria-hidden="true" />}
+        isOpen={activeSection === 'volumetry'}
+        onToggle={() => onSectionChange('volumetry')}
       >
         <SectionDescription>
-          Configura las características del programa arquitectónico: dimensiones, distribución de espacios y tipología estructural. Estos parámetros definen la volumetría y el carácter exterior de la edificación.
+          La geometría visible del edificio. Tamaño, número de pisos, tipo de cubierta y organización espacial definen la silueta y la masa volumétrica que aparecerá en el render exterior.
         </SectionDescription>
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
               label="Tamaño"
@@ -245,15 +245,54 @@ export default function ParameterForm({
               options={C.SIZES}
               disabled={disabled}
             />
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Número de Niveles
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={params.levels || ''}
+                onChange={(e) => handleChange("levels", parseInt(e.target.value) || 0)}
+                placeholder="—"
+                disabled={disabled}
+                className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm font-medium uppercase tracking-wide focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 hover:border-foreground placeholder:text-muted-foreground/50"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
-              label="Niveles"
-              value={params.levels}
-              onChange={(e) => handleChange("levels", parseInt(e.target.value))}
-              options={[1, 2, 3, 4, 5]}
+              label="Tipo de Cubierta / Techo"
+              value={params.roofType}
+              onChange={(e) => handleChange("roofType", e.target.value)}
+              options={C.ROOF_TYPES}
+              disabled={disabled}
+            />
+            <Select
+              label="Organización Espacial (Layout)"
+              value={params.layoutType}
+              onChange={(e) => handleChange("layoutType", e.target.value)}
+              options={C.LAYOUT_TYPES}
               disabled={disabled}
             />
           </div>
+        </div>
+      </Section>
 
+      {/* ── 07 PROGRAMA ARQUITECTÓNICO ───────────────────────────── */}
+      <Section
+        title="Programa Arquitectónico"
+        number="07"
+        icon={<LayoutGrid className="w-5 h-5" aria-hidden="true" />}
+        isOpen={activeSection === 'program'}
+        onToggle={() => onSectionChange('program')}
+      >
+        <SectionDescription>
+          El contenido funcional del edificio. Habitaciones, baños, estacionamiento y áreas de servicio informan al modelo la escala de uso y los volúmenes que deben reflejarse en el exterior.
+        </SectionDescription>
+        <div className="space-y-8">
+          {/* Counts */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
@@ -262,7 +301,7 @@ export default function ParameterForm({
               <input
                 type="number"
                 min="1"
-                max="10"
+                max="20"
                 value={params.bedrooms}
                 onChange={(e) => handleChange("bedrooms", parseInt(e.target.value) || 1)}
                 disabled={disabled}
@@ -276,7 +315,7 @@ export default function ParameterForm({
               <input
                 type="number"
                 min="1"
-                max="10"
+                max="20"
                 value={params.bathrooms}
                 onChange={(e) => handleChange("bathrooms", parseInt(e.target.value) || 1)}
                 disabled={disabled}
@@ -285,12 +324,12 @@ export default function ParameterForm({
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                Estacionamientos
+                Estacionamientos (nº)
               </label>
               <input
                 type="number"
                 min="0"
-                max="10"
+                max="20"
                 value={params.parkingSpots}
                 onChange={(e) => handleChange("parkingSpots", parseInt(e.target.value) || 0)}
                 disabled={disabled}
@@ -299,6 +338,7 @@ export default function ParameterForm({
             </div>
           </div>
 
+          {/* Parking type */}
           <Select
             label="Tipo de Estacionamiento"
             value={params.parkingType}
@@ -307,23 +347,7 @@ export default function ParameterForm({
             disabled={disabled}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Select
-              label="Tipo de Layout"
-              value={params.layoutType}
-              onChange={(e) => handleChange("layoutType", e.target.value)}
-              options={C.LAYOUT_TYPES}
-              disabled={disabled}
-            />
-            <Select
-              label="Tipo de Techo"
-              value={params.roofType}
-              onChange={(e) => handleChange("roofType", e.target.value)}
-              options={C.ROOF_TYPES}
-              disabled={disabled}
-            />
-          </div>
-
+          {/* Interior types */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
               label="Tipo de Cocina"
@@ -333,7 +357,7 @@ export default function ParameterForm({
               disabled={disabled}
             />
             <Select
-              label="Tipo de Área Social"
+              label="Tipo de Área Social Principal"
               value={params.livingAreaType}
               onChange={(e) => handleChange("livingAreaType", e.target.value)}
               options={C.LIVING_AREA_TYPES}
@@ -341,33 +365,27 @@ export default function ParameterForm({
             />
           </div>
 
+          {/* Social areas */}
           {renderChipsGroup(
-            "Áreas Sociales Adicionales",
+            "Áreas y Espacios Adicionales",
             "socialAreas",
             C.SOCIAL_AREAS,
-            "Selecciona espacios adicionales que deseas incluir (piscina, gimnasio, cine, oficina, etc.)",
+            "Espacios que generan volúmenes reconocibles en el exterior: piscina, gimnasio, sala de cine, bodega, etc.",
             true
-          )}
-
-          {renderChipsGroup(
-            "Detalles Arquitectónicos",
-            "architecturalDetails",
-            C.ARCHITECTURAL_DETAILS,
-            "Selecciona características arquitectónicas destacadas que deseas enfatizar en el diseño"
           )}
         </div>
       </Section>
 
-      {/* SECTION 04: MATERIALITY & FINISHES */}
+      {/* ── 08 MATERIALIDAD Y TEXTURA ─────────────────────────────── */}
       <Section
-        title="Materialidad y Acabados"
-        number="04"
-        icon={<Building2 className="w-5 h-5" aria-hidden="true" />}
-        isOpen={activeSection === 'specs-exterior'}
-        onToggle={() => onSectionChange('specs-exterior')}
+        title="Materialidad y Textura"
+        number="08"
+        icon={<Layers className="w-5 h-5" aria-hidden="true" />}
+        isOpen={activeSection === 'materials'}
+        onToggle={() => onSectionChange('materials')}
       >
         <SectionDescription>
-          Define los materiales constructivos y el nivel de detalle que tendrá la visualización exterior.
+          Los materiales y su tratamiento superficial son el lenguaje táctil del edificio. Definen la textura, el reflejo, el peso visual y el nivel de detalle constructivo visible en la fachada.
         </SectionDescription>
         <div className="space-y-8">
           <Select
@@ -378,58 +396,64 @@ export default function ParameterForm({
             disabled={disabled}
           />
           {renderChipsGroup(
-            "Materiales Principales",
+            "Materiales de Fachada",
             "materials",
             C.MATERIALS,
-            "Selecciona los materiales de construcción visibles en el exterior. Combínalos para crear texturas interesantes."
+            "Selecciona los materiales visibles en el exterior. La combinación de texturas enriquece la profundidad visual del render."
+          )}
+          {renderChipsGroup(
+            "Detalles Arquitectónicos",
+            "architecturalDetails",
+            C.ARCHITECTURAL_DETAILS,
+            "Elementos formales que definen el carácter de la fachada: alturas, vanos, proporciones y gestos arquitectónicos destacados."
           )}
         </div>
       </Section>
 
-      {/* SECTION 05: AESTHETICS & DETAILS */}
+      {/* ── 09 COLOR Y PAISAJE ────────────────────────────────────── */}
       <Section
-        title="Estética y Detalles"
-        number="05"
+        title="Color y Paisaje"
+        number="09"
         icon={<Palette className="w-5 h-5" aria-hidden="true" />}
-        isOpen={activeSection === 'aesthetics'}
-        onToggle={() => onSectionChange('aesthetics')}
+        isOpen={activeSection === 'landscape'}
+        onToggle={() => onSectionChange('landscape')}
       >
         <SectionDescription>
-          Personaliza los aspectos visuales del diseño: colores predominantes, elementos decorativos exteriores y tipo de vegetación que rodeará la construcción.
+          La paleta cromática del edificio y el entorno verde que lo enmarca. El paisajismo y los elementos exteriores (piscinas, pérgolas, muros) completan la composición y dan escala a la imagen.
         </SectionDescription>
         <div className="space-y-8">
           {renderChipsGroup(
             "Paleta de Color",
             "colorPalette",
             C.COLORS,
-            "Elige los colores dominantes del diseño. Estos definirán la personalidad visual de la fachada y exteriores."
+            "Tonos dominantes de la fachada. Definen la temperatura visual y el carácter emocional del render."
           )}
           {renderChipsGroup(
             "Elementos Exteriores",
             "exteriorElements",
             C.EXTERIOR_ELEMENTS,
-            "Añade elementos arquitectónicos y decorativos al exterior: piscinas, terrazas, pérgolas, etc.",
+            "Elementos construidos del entorno inmediato: piscinas, terrazas, pérgolas, iluminación arquitectónica, paneles solares, etc.",
             true
           )}
           {renderChipsGroup(
-            "Vegetación",
+            "Vegetación y Paisajismo",
             "vegetation",
             C.VEGETATION,
-            "Define el tipo de plantas y jardines que rodearán la construcción para integrarla con el paisaje."
+            "Tipo de vegetación que integra el edificio con el paisaje circundante y aporta escala y naturalidad a la imagen."
           )}
         </div>
       </Section>
 
-      {/* SECTION 06: CAMERA CONFIGURATION */}
+      {/* ── 10 FOTOGRAFÍA ────────────────────────────────────────── */}
       <Section
-        title="Configuración de Cámara"
-        number="06"
+        title="Fotografía"
+        number="10"
         icon={<Camera className="w-5 h-5" aria-hidden="true" />}
-        isOpen={activeSection === 'camera'}
-        onToggle={() => onSectionChange('camera')}
+        isOpen={activeSection === 'photography'}
+        onToggle={() => onSectionChange('photography')}
       >
         <SectionDescription>
-          Controla cómo se visualizará el exterior final: ángulo de la cámara, composición fotográfica, iluminación y momento del día. Estos ajustes son clave para lograr imágenes profesionales.
+          El encuadre, la luz y el momento del día determinan la calidad fotográfica del resultado. Estos parámetros controlan la narrativa visual: desde un amanecer sereno hasta un anochecer dramático con interiores iluminados.
         </SectionDescription>
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -457,7 +481,7 @@ export default function ParameterForm({
               disabled={disabled}
             />
             <Select
-              label="Estación"
+              label="Estación del Año"
               value={params.season}
               onChange={(e) => handleChange("season", e.target.value)}
               options={C.SEASONS}
@@ -466,7 +490,7 @@ export default function ParameterForm({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
-              label="Iluminación"
+              label="Tipo de Iluminación"
               value={params.lighting}
               onChange={(e) => handleChange("lighting", e.target.value)}
               options={C.LIGHTING_TYPES}
@@ -483,17 +507,17 @@ export default function ParameterForm({
         </div>
       </Section>
 
-      {/* SECTION 07: OUTPUT CONFIGURATION */}
+      {/* ── 11 CONFIGURACIÓN DE SALIDA ───────────────────────────── */}
       <Section
         title="Configuración de Salida"
-        number="07"
+        number="11"
         icon={<ImageIcon className="w-5 h-5" aria-hidden="true" />}
-        badge="CALIDAD"
+        badge="OUTPUT"
         isOpen={activeSection === 'output'}
         onToggle={() => onSectionChange('output')}
       >
         <SectionDescription>
-          Define la calidad técnica de la imagen generada. Mayor resolución produce más detalle pero requiere más tiempo de procesamiento.
+          Parámetros técnicos de la imagen generada: estilo visual del render, formato, resolución y nivel de razonamiento del modelo. Mayor resolución y mayor pensamiento producen resultados superiores a costa de más tiempo de generación.
         </SectionDescription>
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -521,7 +545,7 @@ export default function ParameterForm({
               disabled={disabled}
             />
             <Select
-              label="Nivel de Pensamiento (AI)"
+              label="Nivel de Razonamiento (AI)"
               value={params.thinkingLevel}
               onChange={(e) => handleChange("thinkingLevel", e.target.value as "Minimal" | "High")}
               options={C.THINKING_LEVELS}
@@ -535,53 +559,28 @@ export default function ParameterForm({
             <div className="text-xs text-muted-foreground space-y-1">
               <p className="font-bold uppercase tracking-wider text-foreground">Pro Tip</p>
               <p>
-                Mayor resolución = más tiempo de generación.
-                <span className="text-primary font-bold"> 4K </span> ideal para impresión y presentación.
+                <span className="text-primary font-bold">4K + High</span> produce la máxima calidad. Ideal para presentaciones y material impreso. El tiempo de generación aumenta notablemente.
               </p>
             </div>
           </div>
         </div>
       </Section>
 
-      {/* SECTION 08: CREATIVE DIRECTION */}
+      {/* ── 12 DIRECCIÓN CREATIVA ────────────────────────────────── */}
       <Section
-        title="Dirección Artística"
-        number="08"
+        title="Dirección Creativa"
+        number="12"
         icon={<PenLine className="w-5 h-5" aria-hidden="true" />}
-        badge="VISUAL"
-        isOpen={activeSection === 'art-direction'}
-        onToggle={() => onSectionChange('art-direction')}
+        badge="OVERRIDES"
+        isOpen={activeSection === 'creative'}
+        onToggle={() => onSectionChange('creative')}
       >
         <SectionDescription>
-          Guía la visión artística y técnica del resultado. Aquí puedes especificar referencias cinematográficas, requisitos técnicos o cualquier elemento que deba priorizarse o evitarse en la imagen generada.
+          Instrucciones prioritarias que complementan o corrigen los parámetros anteriores. Las notas técnicas establecen restricciones obligatorias; la dirección artística añade visión creativa libre; el negative prompt excluye elementos no deseados.
         </SectionDescription>
 
-        {/* Art Direction */}
+        {/* Technical Notes — constraints first */}
         <div className="flex flex-col gap-2">
-          <div className="flex flex-col gap-1 pl-1">
-            <label
-              htmlFor="art-direction-textarea"
-              className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
-            >
-              Dirección Artística
-            </label>
-            <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-              {`Ej: "Estilo cinematográfico tipo Blade Runner 2049", "Paleta monocromática con acentos dorados", "Luz dramática de atardecer", etc.`}
-            </p>
-          </div>
-          <textarea
-            id="art-direction-textarea"
-            value={params.artDirection || ''}
-            onChange={(e) => handleChange("artDirection", e.target.value)}
-            disabled={disabled}
-            placeholder="Ej: Estilo cinematográfico tipo Blade Runner 2049, con neón suave y atmósfera cyberpunk. Referencia visual de la arquitectura de Tadao Ando con luz dramática. Paleta monocromática con acentos dorados..."
-            rows={4}
-            className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
-          />
-        </div>
-
-        {/* Technical Notes */}
-        <div className="flex flex-col gap-2 mt-6">
           <div className="flex flex-col gap-1 pl-1">
             <label
               htmlFor="technical-notes-textarea"
@@ -590,7 +589,7 @@ export default function ParameterForm({
               Notas Técnicas
             </label>
             <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-              {`Ej: "Fachada principal orientada al norte", "Requiere acceso vehicular por el lateral derecho", "Cumplir normativa de altura máxima 9m", etc.`}
+              {`Restricciones obligatorias: orientación solar, accesos, normativas de altura, retiros, etc.`}
             </p>
           </div>
           <textarea
@@ -598,13 +597,37 @@ export default function ParameterForm({
             value={params.technicalNotes || ''}
             onChange={(e) => handleChange("technicalNotes", e.target.value)}
             disabled={disabled}
-            placeholder="Ej: Fachada principal orientada al norte. Requiere acceso vehicular por el lateral derecho. Cumplir normativa de altura máxima 9m. El garaje debe ser visible desde la calle..."
+            placeholder="Ej: Fachada principal orientada al norte. Acceso vehicular por lateral derecho. Altura máxima 9m. El garaje debe ser visible desde la calle. Retiro frontal mínimo 3m..."
+            rows={3}
+            className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
+          />
+        </div>
+
+        {/* Art Direction — creative vision second */}
+        <div className="flex flex-col gap-2 mt-6">
+          <div className="flex flex-col gap-1 pl-1">
+            <label
+              htmlFor="art-direction-textarea"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"
+            >
+              Dirección Artística
+            </label>
+            <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
+              {`Visión creativa libre: referencias cinematográficas, paletas específicas, atmósferas, estados emocionales, etc.`}
+            </p>
+          </div>
+          <textarea
+            id="art-direction-textarea"
+            value={params.artDirection || ''}
+            onChange={(e) => handleChange("artDirection", e.target.value)}
+            disabled={disabled}
+            placeholder="Ej: Estilo cinematográfico tipo Blade Runner 2049, atmósfera melancólica con neón suave. Referencia a la brutalidad poética de Scarpa. Paleta monocromática con un único acento dorado en la entrada..."
             rows={4}
             className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
           />
         </div>
 
-        {/* Negative Prompt */}
+        {/* Negative Prompt — exclusions last */}
         <div className="flex flex-col gap-2 mt-6">
           <div className="flex flex-col gap-1 pl-1">
             <label
@@ -614,7 +637,7 @@ export default function ParameterForm({
               Negative Prompt
             </label>
             <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight ml-1">
-              Especifica qué elementos NO deseas ver en la imagen. Ej: &quot;Sin personas&quot;, &quot;Sin vehículos&quot;, &quot;Sin cables eléctricos visibles&quot;, etc.
+              Elementos que NO deben aparecer en la imagen generada.
             </p>
           </div>
           <textarea
@@ -622,7 +645,7 @@ export default function ParameterForm({
             value={params.negativePrompt || ''}
             onChange={(e) => handleChange("negativePrompt", e.target.value)}
             disabled={disabled}
-            placeholder="Ej: Sin personas, sin vehículos, sin cables eléctricos visibles, sin elementos decorativos excesivos, sin publicidad..."
+            placeholder="Ej: Sin personas, sin vehículos, sin cables eléctricos, sin carteles publicitarios, sin elementos anacrónicos..."
             rows={3}
             className="w-full bg-card border border-border rounded-none py-3 px-4 text-foreground text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 placeholder:text-muted-foreground/50 hover:border-foreground resize-y"
           />

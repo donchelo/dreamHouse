@@ -1,138 +1,224 @@
 import React from 'react';
 import { DreamHouseParams } from '@/types';
-import { Sparkles, MapPin, Building2, Palette, Camera, FileText } from 'lucide-react';
+import {
+  FileText, Sparkles, MapPin, Layers, LayoutGrid,
+  Hammer, Palette, Camera, Settings2, PenLine
+} from 'lucide-react';
 
 interface PromptPreviewProps {
   params: DreamHouseParams;
 }
 
-export default function PromptPreview({ params }: PromptPreviewProps) {
-  // Helper to check if value exists
-  const hasValue = (val: string | string[] | number) => {
-    if (Array.isArray(val)) return val.length > 0;
-    if (typeof val === 'number') return val > 0;
-    return val !== "" && 
-           val !== "Sin arquitecto específico" && 
-           val !== "Sin agua cercana" && 
-           val !== "Sin personas" &&
-           val !== undefined &&
-           val !== null;
-  };
+type ParamValue = string | string[] | number;
 
-  // Group parameters logically - Icons updated to be consistent
-  const groups = [
+interface ParamItem {
+  label: string;
+  value: ParamValue;
+}
+
+interface ParamGroup {
+  number: string;
+  title: string;
+  icon: React.ReactNode;
+  items: ParamItem[];
+}
+
+function hasValue(val: ParamValue): boolean {
+  if (Array.isArray(val)) return val.length > 0;
+  if (typeof val === 'number') return val > 0;
+  return val !== '' && val !== undefined && val !== null;
+}
+
+function renderValue(val: ParamValue): string[] {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'number') return [String(val)];
+  return [val];
+}
+
+export default function PromptPreview({ params }: PromptPreviewProps) {
+  const groups: ParamGroup[] = [
     {
-      title: "Project Identity",
+      number: '04',
+      title: 'Esencia del Proyecto',
       icon: <Sparkles className="w-3.5 h-3.5" />,
       items: [
-        { label: "TYPE", value: params.projectType },
-        { label: "STYLE", value: params.architecturalStyles },
-        { label: "ARCHITECT", value: params.architect },
-        { label: "MOOD", value: params.mood },
-      ]
+        { label: 'TIPO', value: params.projectType },
+        { label: 'ESTILO', value: params.architecturalStyles },
+        { label: 'ARQUITECTO', value: params.architect },
+        { label: 'MOOD', value: params.mood },
+      ],
     },
     {
-      title: "Site & Light",
+      number: '05',
+      title: 'Contexto y Ubicación',
       icon: <MapPin className="w-3.5 h-3.5" />,
       items: [
-        { label: "LOCATION", value: params.city },
-        { label: "ENV", value: params.environment },
-        { label: "CLIMATE", value: params.climate },
-        { label: "TIME", value: params.timeOfDay },
-      ]
+        { label: 'CIUDAD', value: params.city },
+        { label: 'CLIMA', value: params.climate },
+        { label: 'ENTORNO', value: params.environment },
+        { label: 'AGUA', value: params.waterBody },
+        { label: 'TIEMPO', value: params.weatherCondition },
+      ],
     },
     {
-      title: "Specifications",
-      icon: <Building2 className="w-3.5 h-3.5" />,
+      number: '06',
+      title: 'Volumetría y Forma',
+      icon: <Layers className="w-3.5 h-3.5" />,
       items: [
-        { label: "MATERIALS", value: params.materials },
-        { label: "SIZE", value: params.size },
-        { label: "LEVELS", value: `${params.levels}` },
-        { label: "FINISH", value: params.finishLevel },
-      ]
+        { label: 'TAMAÑO', value: params.size },
+        { label: 'NIVELES', value: params.levels },
+        { label: 'CUBIERTA', value: params.roofType },
+        { label: 'PLANTA', value: params.layoutType },
+      ],
     },
     {
-      title: "Aesthetics",
+      number: '07',
+      title: 'Programa Arquitectónico',
+      icon: <LayoutGrid className="w-3.5 h-3.5" />,
+      items: [
+        { label: 'HABITAC.', value: params.bedrooms },
+        { label: 'BAÑOS', value: params.bathrooms },
+        { label: 'PARQUEO', value: params.parkingSpots },
+        { label: 'TIPO PKG', value: params.parkingType },
+        { label: 'COCINA', value: params.kitchenType },
+        { label: 'SALA', value: params.livingAreaType },
+        { label: 'ÁREAS SOC.', value: params.socialAreas },
+      ],
+    },
+    {
+      number: '08',
+      title: 'Materialidad y Acabados',
+      icon: <Hammer className="w-3.5 h-3.5" />,
+      items: [
+        { label: 'MATERIALES', value: params.materials },
+        { label: 'ACABADO', value: params.finishLevel },
+        { label: 'DETALLES', value: params.architecturalDetails },
+      ],
+    },
+    {
+      number: '09',
+      title: 'Estética y Detalles',
       icon: <Palette className="w-3.5 h-3.5" />,
       items: [
-        { label: "PALETTE", value: params.colorPalette },
-        { label: "ELEMENTS", value: params.exteriorElements },
-        { label: "NATURE", value: params.vegetation },
-      ]
+        { label: 'PALETA', value: params.colorPalette },
+        { label: 'ELEMENTOS', value: params.exteriorElements },
+        { label: 'VEGETACIÓN', value: params.vegetation },
+      ],
     },
     {
-      title: "Photography",
+      number: '10',
+      title: 'Cámara y Fotografía',
       icon: <Camera className="w-3.5 h-3.5" />,
       items: [
-        { label: "ANGLE", value: params.cameraAngle },
-        { label: "LIGHT", value: params.lighting },
-      ]
-    }
+        { label: 'ÁNGULO', value: params.cameraAngle },
+        { label: 'COMPOSICIÓN', value: params.composition },
+        { label: 'HORA', value: params.timeOfDay },
+        { label: 'ESTACIÓN', value: params.season },
+        { label: 'LUZ', value: params.lighting },
+        { label: 'PERSONAS', value: params.humanContext },
+      ],
+    },
+    {
+      number: '11',
+      title: 'Configuración de Salida',
+      icon: <Settings2 className="w-3.5 h-3.5" />,
+      items: [
+        { label: 'RENDER', value: params.renderStyle },
+        { label: 'RATIO', value: params.renderAspectRatio },
+        { label: 'RESOLUCIÓN', value: params.renderOutputResolution },
+        { label: 'THINKING', value: params.thinkingLevel !== 'Minimal' ? params.thinkingLevel : '' },
+      ],
+    },
+    {
+      number: '12',
+      title: 'Dirección Artística',
+      icon: <PenLine className="w-3.5 h-3.5" />,
+      items: [
+        { label: 'TÉCNICAS', value: params.technicalNotes },
+        { label: 'ART DIR.', value: params.artDirection },
+        { label: 'EXCLUIR', value: params.negativePrompt },
+      ],
+    },
   ];
+
+  // Only show groups that have at least one value set
+  const activeGroups = groups.filter(g => g.items.some(item => hasValue(item.value)));
+
+  const totalParams = groups.reduce(
+    (acc, g) => acc + g.items.filter(item => hasValue(item.value)).length,
+    0
+  );
 
   return (
     <div className="h-full flex flex-col animate-fade-in-up bg-card/50 backdrop-blur-sm">
-      {/* Header Styled like a technical document header */}
-      <div className="flex items-center justify-between pb-4 border-b border-border/60 mb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-border/60 mb-4">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-primary/10 rounded-sm">
-             <FileText className="w-4 h-4 text-primary" />
+            <FileText className="w-4 h-4 text-primary" />
           </div>
           <div>
             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">Design Spec</h3>
-            <p className="text-[10px] text-muted-foreground font-mono">LIVE PARAMETERS</p>
+            <p className="text-[10px] text-muted-foreground font-mono">
+              {totalParams > 0 ? `${totalParams} PARAMS ACTIVE` : 'NO PARAMS SET'}
+            </p>
           </div>
         </div>
         <div className="flex gap-1">
-            <div className="w-1 h-1 rounded-full bg-primary/40"></div>
-            <div className="w-1 h-1 rounded-full bg-primary/40"></div>
-            <div className="w-1 h-1 rounded-full bg-primary"></div>
+          <div className="w-1 h-1 rounded-full bg-primary/40"></div>
+          <div className="w-1 h-1 rounded-full bg-primary/40"></div>
+          <div className={`w-1 h-1 rounded-full ${totalParams > 0 ? 'bg-primary' : 'bg-border'}`}></div>
         </div>
       </div>
-      
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-8">
-        {groups.map((group, idx) => (
-          <div key={idx} className="relative pl-3 border-l border-border/40 hover:border-primary/30 transition-colors duration-300">
-            {/* Category Header */}
-            <div className="flex items-center gap-2 mb-3">
-               <span className="text-muted-foreground">{group.icon}</span>
-               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">{group.title}</span>
-            </div>
-            
-            {/* Items Grid */}
-            <div className="grid grid-cols-1 gap-2">
-              {group.items.map((item, i) => {
-                if (!hasValue(item.value)) return null;
-                
-                const values = Array.isArray(item.value) ? item.value : [item.value];
-                
-                return values.map((val, vIdx) => (
-                  <div 
-                    key={`${i}-${vIdx}`}
-                    className="group flex items-baseline gap-3 text-sm transition-all"
-                  >
-                    <span className="text-[10px] font-mono text-muted-foreground/50 w-16 shrink-0 uppercase tracking-tight text-right group-hover:text-primary/70 transition-colors">
-                      {item.label}
-                    </span>
-                    <span className="text-xs font-medium text-foreground border-b border-dashed border-border/50 pb-0.5 group-hover:border-primary/30 transition-colors">
-                      {val}
-                    </span>
-                  </div>
-                ));
-              })}
-            </div>
-          </div>
-        ))}
 
-        {params.technicalNotes && (
-          <div className="mt-6 pt-4 border-t border-border/40">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Technical Notes</p>
-            <div className="p-3 bg-muted/30 border border-border/50 text-xs text-muted-foreground italic font-mono leading-relaxed">
-              &quot;{params.technicalNotes}&quot;
-            </div>
-          </div>
-        )}
-      </div>
+      {totalParams === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest text-center">
+            Configure parameters<br />to see the spec
+          </p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto pr-2 space-y-5">
+          {activeGroups.map((group) => {
+            const activeItems = group.items.filter(item => hasValue(item.value));
+            return (
+              <div
+                key={group.number}
+                className="relative pl-3 border-l border-border/40 hover:border-primary/30 transition-colors duration-300"
+              >
+                {/* Section Header */}
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-[9px] font-mono text-muted-foreground/40">{group.number}</span>
+                  <span className="text-muted-foreground">{group.icon}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                    {group.title}
+                  </span>
+                </div>
+
+                {/* Items */}
+                <div className="grid grid-cols-1 gap-1.5">
+                  {activeItems.map((item, i) => {
+                    const values = renderValue(item.value);
+                    return values.map((val, vIdx) => (
+                      <div
+                        key={`${i}-${vIdx}`}
+                        className="group flex items-baseline gap-3 transition-all"
+                      >
+                        <span className="text-[10px] font-mono text-muted-foreground/50 w-[4.5rem] shrink-0 uppercase tracking-tight text-right group-hover:text-primary/70 transition-colors">
+                          {item.label}
+                        </span>
+                        <span className="text-xs font-medium text-foreground border-b border-dashed border-border/50 pb-0.5 group-hover:border-primary/30 transition-colors leading-tight">
+                          {val}
+                        </span>
+                      </div>
+                    ));
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

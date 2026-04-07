@@ -167,120 +167,155 @@ export async function POST(req: NextRequest) {
       floorPlanImageMimeType = floorPlanImage.type;
     }
 
-    // --- Construct Exterior Generation Prompt ---
+    // --- Construct Exterior Generation Prompt (JSON context) ---
 
-    // 1. Core Subject Definition
     const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
-    const locationStr = params.city ? `in ${params.city}` : "";
     const validArchitects = Array.isArray(params.architect)
       ? params.architect.filter(a => a !== "Sin arquitecto específico")
       : [];
-    const architects = validArchitects.join(" and ");
-    const archStyle = params.architecturalStyles.join(", ");
-
-    // 2. Technical Specifications
-    const techSpecs = [
-      params.size || null,
-      params.levels > 0 ? `${params.levels} levels` : null,
-      params.roofType ? `${params.roofType} roof` : null
-    ].filter(Boolean).join(", ");
-
-    // 3. Materials & Finishes
-    const materialsList = params.materials.join(", ");
-    const colors = params.colorPalette.join(", ");
-    const finish = params.finishLevel;
-    const architecturalDetails = params.architecturalDetails && params.architecturalDetails.length > 0
-      ? params.architecturalDetails.join(", ")
-      : "";
-
-    // 4. Environment & Context
-    const environment = [
-      params.environment,
-      params.climate,
-      params.waterBody,
-      params.weatherCondition
-    ].filter(Boolean).join(", ");
-
-    // 5. Landscaping
-    const landscaping = [
-      ...params.vegetation,
-      ...params.exteriorElements
-    ].join(", ");
-
-    // 6. Atmosphere & Mood
     const moodDesc = MOOD_MAP[params.mood] || params.mood;
 
-    // 7. Render Style
-    const renderStyle = params.renderStyle;
+    // Build the structured JSON context object — only include fields with actual values
+    const ctx: Record<string, unknown> = {};
 
-    // 8. Photography Settings
-    const camera = [
-      params.cameraAngle ? `Angle: ${params.cameraAngle}` : null,
-      params.composition ? `Composition: ${params.composition}` : null,
-      params.timeOfDay ? `Time: ${params.timeOfDay}` : null,
-      params.season ? `Season: ${params.season}` : null,
-      params.lighting ? `Lighting: ${params.lighting}` : null
-    ].filter(Boolean).join(" | ");
+    ctx.task = "generate_exterior_architectural_render";
+    ctx.output_type = "exterior_view_only";
 
-    const fullPrompt = `
-**OBJECTIVE: GENERATE AN AWARD-WINNING EXTERIOR PHOTOGRAPH**
-Act as a world-renowned architectural photographer. Your goal is to create a photorealistic exterior view based on the following parameters and attached visual context.
+    // ── CRITICAL ABSOLUTE CONSTRAINTS (always first, highest model weight) ──
+    const mandatory: Record<string, unknown> = {
+      WARNING: "ALL values in this block are NON-NEGOTIABLE. Violating any constraint means the image is INCORRECT.",
+    };
+    if (projectType) mandatory.project_type = projectType;
+    if (params.city) mandatory.location = params.city;
+    if (params.architecturalStyles.length > 0) mandatory.architectural_style = params.architecturalStyles;
+    if (validArchitects.length > 0) mandatory.architect_reference = validArchitects;
+    if (moodDesc) mandatory.mood_atmosphere = moodDesc;
+    if (params.levels > 0) {
+      mandatory.levels = params.levels;
+      mandatory.levels_mandate = `The building MUST show EXACTLY ${params.levels} floor(s) in the exterior. Count the stories before finalizing. If incorrect, regenerate.`;
+    }
+    if (params.bedrooms > 0) mandatory.bedrooms = params.bedrooms;
+    if (params.bathrooms > 0) mandatory.bathrooms = params.bathrooms;
+    if (params.parkingSpots > 0) mandatory.parking_spots = params.parkingSpots;
+    if (params.parkingType) mandatory.parking_type = params.parkingType;
+    ctx.CRITICAL_ABSOLUTE_CONSTRAINTS = mandatory;
 
-${floorPlanImageBase64 ? `
-**CRITICAL: FLOOR PLAN IMAGE PROVIDED (PRIMARY GEOMETRIC REFERENCE - ~80% FIDELITY)**
-A FLOOR PLAN IMAGE has been attached as the FIRST image. This floor plan is the PRIMARY GEOMETRIC REFERENCE for the building's exterior form, with approximately 80% fidelity requirement.
+    // ── IMAGE REFERENCES (floor plan → lot → style references) ──
+    const imgRefs: Record<string, unknown> = {};
+    if (floorPlanImageBase64) {
+      imgRefs.floor_plan = {
+        provided: true,
+        fidelity: "~80% geometric fidelity required",
+        mandate: "Trace the floor plan's footprint and perimeter as the building's 3D form. 20% creative freedom for structural coherence, proportion refinement, and 3D translation. Preserve all essential angles, curves, protrusions, and recesses.",
+      };
+    }
+    if (lotImageBase64) {
+      imgRefs.lot_image = {
+        provided: true,
+        mandate: "Integrate the building PERFECTLY into the terrain, topography, and vegetation shown. Match the site's lighting conditions exactly.",
+      };
+    }
+    if (referenceImagesBase64.length > 0) {
+      imgRefs.visual_references = {
+        count: referenceImagesBase64.length,
+        mandate: "Use as PRIMARY source for architectural style, materials, colors, textures, and aesthetic atmosphere. Incorporate their visual language directly.",
+      };
+    }
+    if (Object.keys(imgRefs).length > 0) ctx.image_references = imgRefs;
 
-**BALANCED INSTRUCTIONS FOR EXTERIOR:**
-1. **GENERAL FOOTPRINT MATCH (~80%):** Aim for approximately 80% fidelity to the floor plan's geometry. Follow the general shape, footprint, and perimeter shown in the floor plan. The overall form and spatial organization should be recognizable and faithful to the plan.
-2. **SPATIAL ORGANIZATION:** The spatial distribution, room locations, and circulation patterns visible in the floor plan should be reflected in the exterior view. If the floor plan shows specific room arrangements, the exterior should show corresponding volumes, windows, and architectural elements that align with those interior spaces.
-3. **CREATIVE FLEXIBILITY (~20%):** You have approximately 20% creative freedom to adapt the perimeter, edges, protrusions, and details where necessary for:
-   - Structural logic and 3D architectural coherence
-   - Aesthetic refinement and visual impact
-   - Smoothing of irregular lines or angles that may not translate well to 3D
-   - Enhancing proportions and architectural harmony
-4. **EXTERIOR INTERPRETATION:** Translate the 2D floor plan into a 3D exterior view. The building's height, roof lines, window placement, and architectural features should be consistent with the spatial organization shown in the floor plan, while allowing for natural 3D refinements.
-5. **PRESERVE CORE SHAPE CHARACTERISTICS:** Maintain the essential angles, curves, protrusions, recesses, and unique geometric features visible in the floor plan. These define the building's character and should be preserved, but can be refined for better 3D architectural form.
+    // ── VOLUMETRY ──
+    const volumetry: Record<string, unknown> = {};
+    if (params.size) volumetry.size = params.size;
+    if (params.levels > 0) volumetry.levels = params.levels; // repeated — critical for 3D form
+    if (params.roofType) volumetry.roof_type = params.roofType;
+    if (params.layoutType) volumetry.spatial_layout = params.layoutType;
+    if (Object.keys(volumetry).length > 0) ctx.volumetry = volumetry;
 
-The floor plan provides the building's FORM foundation (~80%). Your task is to create a photorealistic EXTERIOR VIEW that respects this form while applying intelligent 3D refinements (~20%) and the specified architectural style, materials, and aesthetic details.
-` : ''}
+    // ── BUILDING PROGRAM ──
+    const program: Record<string, unknown> = {};
+    if (params.bedrooms > 0) program.bedrooms = params.bedrooms;
+    if (params.bathrooms > 0) program.bathrooms = params.bathrooms;
+    if (params.parkingSpots > 0) program.parking_spots = params.parkingSpots;
+    if (params.parkingType) program.parking_type = params.parkingType;
+    if (params.kitchenType) program.kitchen_type = params.kitchenType;
+    if (params.livingAreaType) program.living_area_type = params.livingAreaType;
+    if (params.socialAreas.length > 0) program.social_areas = params.socialAreas;
+    if (Object.keys(program).length > 0) ctx.building_program = program;
 
-**ARCHITECTURAL STYLE & SPECIFICATIONS (CLIENT PARAMETERS):**
-- **Project Type:** ${projectType}${locationStr ? ` ${locationStr}` : ''}
-${renderStyle ? `- **Render Style:** ${renderStyle}` : ''}
-${archStyle ? `- **Style:** ${archStyle}${architects ? ` (inspired by ${architects})` : ''}` : architects ? `- **Inspired by:** ${architects}` : ''}
-${techSpecs ? `- **Technical Specs:** ${techSpecs}` : ''}
-${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : '', params.parkingType || ''].filter(Boolean).join(', ') ? `- **Building Program:** ${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : '', params.parkingType || ''].filter(Boolean).join(', ')}` : ''}
-${params.kitchenType ? `- **Kitchen Type:** ${params.kitchenType}` : ''}
-${params.livingAreaType ? `- **Living Area:** ${params.livingAreaType}` : ''}
-${params.socialAreas.length > 0 ? `- **Social Areas:** ${params.socialAreas.join(', ')}` : ''}
-${params.layoutType ? `- **Layout Type:** ${params.layoutType}` : ''}
-${materialsList ? `- **Materials:** ${materialsList}` : ''}
-${colors ? `- **Color Palette:** ${colors}` : ''}
-${finish ? `- **Finish:** ${finish}` : ''}
-${moodDesc ? `- **Atmosphere:** ${moodDesc}` : ''}
-${architecturalDetails ? `- **Architectural Details:** ${architecturalDetails}` : ''}
+    // ── MATERIALITY ──
+    const mat: Record<string, unknown> = {};
+    if (params.materials.length > 0) mat.facade_materials = params.materials;
+    if (params.finishLevel) mat.finish_level = params.finishLevel;
+    if (params.architecturalDetails && params.architecturalDetails.length > 0) mat.architectural_details = params.architecturalDetails;
+    if (Object.keys(mat).length > 0) ctx.materiality = mat;
 
-**ENVIRONMENT & PHOTOGRAPHY:**
-${environment ? `- **Context:** ${environment}` : ''}
-${landscaping ? `- **Landscaping:** ${landscaping}` : ''}
-${lotImageBase64 ? `- **LOT INTEGRATION:** Use the attached LOT IMAGE as the exact environment and terrain for this project. The building MUST be perfectly integrated into the specific terrain, topography, vegetation, and lighting conditions shown in the lot image.` : ''}
-${referenceImagesBase64.length > 0 ? `- **VISUAL REFERENCE IMAGES:** ${referenceImagesBase64.length} reference image(s) are attached. Use these images as the PRIMARY source for architectural style, materials, colors, textures, and overall aesthetic atmosphere. Analyze the attached reference images and incorporate their visual language directly into the final image.` : ''}
-${camera ? `- **Camera Configuration:** ${camera}` : ''}
-${params.humanContext ? `- **Human Scale:** ${params.humanContext}` : ''}
+    // ── SITE & ENVIRONMENT ──
+    const site: Record<string, unknown> = {};
+    if (params.environment) site.urban_context = params.environment;
+    if (params.climate) site.climate = params.climate;
+    if (params.waterBody) site.water_body = params.waterBody;
+    if (params.weatherCondition) site.weather_condition = params.weatherCondition;
+    if (Object.keys(site).length > 0) ctx.site_and_environment = site;
 
-**FINAL DIRECTIVE (PRIORITY ORDER):**
-1. **FLOOR PLAN IMAGE (HIGHEST PRIORITY - ~80% FIDELITY):** If a FLOOR PLAN IMAGE is attached, it is the PRIMARY GEOMETRIC REFERENCE. Aim for approximately 80% fidelity to the floor plan's geometry - the building's exterior footprint, shape, perimeter, and spatial organization should closely follow the floor plan. You have ~20% creative freedom to refine edges, proportions, and details for superior 3D architectural coherence and aesthetic impact. The exterior view should be a faithful 3D interpretation of the 2D floor plan geometry, with intelligent refinements.
-2. **LOT IMAGE (SECOND PRIORITY):** If a LOT IMAGE is attached, the building MUST be perfectly integrated into that specific terrain, matching the topography, vegetation, and environmental conditions shown. The building's shape should respect the floor plan geometry (~80%) while allowing for terrain adaptation within the 20% flexibility.
-3. **VISUAL REFERENCE IMAGES (STYLE REFERENCE):** If VISUAL REFERENCE IMAGES are attached, use them as the PRIMARY source for architectural style, material selection, color palette, and aesthetic details. Incorporate their visual language directly into the final image, working within the geometric framework defined by the floor plan (~80% fidelity).
-4. **PARAMETERS (AESTHETIC LAYER):** Apply the architectural style and materials specified in the parameters as an aesthetic layer over the structural geometry defined by the floor plan. These parameters inform HOW the building looks, while the floor plan provides the foundational shape (~80%) with room for refinement (~20%).
-5. **OUTPUT REQUIREMENT:** Generate ONLY EXTERIOR VIEWS. Photorealistic quality, cinematic lighting. The exterior should be a faithful 3D representation of the floor plan's geometry (~80% fidelity) with intelligent architectural refinements (~20%).
+    // ── COLOR & LANDSCAPE ──
+    const colorLandscape: Record<string, unknown> = {};
+    if (params.colorPalette.length > 0) colorLandscape.color_palette = params.colorPalette;
+    if (params.exteriorElements.length > 0) colorLandscape.exterior_elements = params.exteriorElements;
+    if (params.vegetation.length > 0) colorLandscape.vegetation = params.vegetation;
+    if (Object.keys(colorLandscape).length > 0) ctx.color_and_landscape = colorLandscape;
 
-${params.technicalNotes ? `\n**TECHNICAL REQUIREMENTS:**\n${params.technicalNotes}` : ''}
+    // ── PHOTOGRAPHY ──
+    const photo: Record<string, unknown> = {};
+    if (params.renderStyle) photo.render_style = params.renderStyle;
+    if (params.cameraAngle) photo.camera_angle = params.cameraAngle;
+    if (params.composition) photo.composition = params.composition;
+    if (params.timeOfDay) photo.time_of_day = params.timeOfDay;
+    if (params.season) photo.season = params.season;
+    if (params.lighting) photo.lighting = params.lighting;
+    if (params.humanContext) photo.human_context = params.humanContext;
+    if (Object.keys(photo).length > 0) ctx.photography = photo;
 
-${params.negativePrompt ? `\n**NEGATIVE PROMPT / AVOID:**\nThe following elements MUST NOT appear in the generated image:\n${params.negativePrompt}\n\nStrictly avoid these elements. If any of these are present in the generated image, it will be considered incorrect.` : ''}
+    // ── CREATIVE DIRECTION ──
+    const creative: Record<string, unknown> = {};
+    if (params.technicalNotes) creative.technical_notes = params.technicalNotes;
+    if (params.artDirection) creative.art_direction = params.artDirection;
+    if (Object.keys(creative).length > 0) ctx.creative_direction = creative;
 
-${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
-`.trim();
+    // ── NEGATIVE PROMPT (last — explicit exclusions) ──
+    if (params.negativePrompt) {
+      ctx.negative_prompt = {
+        STRICTLY_FORBIDDEN: "The following elements MUST NOT appear in the generated image under any circumstances.",
+        avoid: params.negativePrompt,
+      };
+    }
+
+    // Build verification checklist for mandatory numeric params
+    const checks: string[] = [];
+    if (params.levels > 0) checks.push(`- [ ] LEVELS: exactly ${params.levels} floor(s) clearly visible in the exterior view`);
+    if (projectType) checks.push(`- [ ] PROJECT TYPE: building is architecturally recognizable as a ${projectType}`);
+    if (params.architecturalStyles.length > 0) checks.push(`- [ ] STYLE: ${params.architecturalStyles.join(", ")} clearly expressed in the design`);
+    if (params.bedrooms > 0) checks.push(`- [ ] BEDROOMS: ${params.bedrooms} bedroom-scale volumes implied by the building massing`);
+    if (params.parkingSpots > 0 || params.parkingType) checks.push(`- [ ] PARKING: ${[params.parkingType, params.parkingSpots > 0 ? `${params.parkingSpots} space(s)` : ''].filter(Boolean).join(', ')} visible`);
+    if (params.negativePrompt) checks.push(`- [ ] NEGATIVE PROMPT: none of the forbidden elements appear in the image`);
+
+    const verificationBlock = checks.length > 0
+      ? `\nFINAL VERIFICATION — check every item before outputting:\n${checks.join('\n')}\nIf any check fails, correct and regenerate. Do not output an incorrect image.`
+      : '';
+
+    const fullPrompt = `You are a world-class architectural visualization AI. Generate a photorealistic exterior architectural render that EXACTLY matches ALL parameters in the JSON context below.
+
+FUNDAMENTAL RULE: This is a professional architectural concept design tool. Every parameter is a MANDATORY design requirement — not a suggestion. Deviating from any value means the output is incorrect.
+
+=== ARCHITECTURAL DESIGN CONTEXT ===
+${JSON.stringify(ctx, null, 2)}
+=== END CONTEXT ===
+
+OUTPUT REQUIREMENTS:
+- Generate EXTERIOR VIEW ONLY — no interiors, no sections, no floor plans
+- ${params.renderStyle || 'Photorealistic'} quality, cinematic lighting
+- Apply ALL parameters from the context above without exception
+- Image priority order: floor plan geometry (~80%) > lot terrain > visual references > parameters
+${verificationBlock}`.trim();
 
     console.log("Generated Exterior Prompt:", fullPrompt);
 
