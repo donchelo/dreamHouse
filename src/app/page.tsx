@@ -41,6 +41,7 @@ export default function Home() {
                    index === currentImageIndex ? 'opacity-40' : 'opacity-0'
                  }`}
                  priority={index === 0}
+                 sizes="100vw"
                />
              ))}
              {/* Blueprint Overlay for Hero */}
@@ -129,6 +130,7 @@ export default function Home() {
                     alt="Vision" 
                     fill 
                     className="object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                 />
                 <div className="absolute inset-0 bg-primary/10 mix-blend-multiply" />
             </div>
