@@ -358,3 +358,13 @@ export const THINKING_LEVELS = [
   "Minimal",
   "High"
 ];
+
+export const RENDER_STYLES = [
+  "Fotorrealista",
+  "Editorial / Magazine",
+  "Ilustración arquitectónica",
+  "Render artístico / Painterly",
+  "Acuarela arquitectónica",
+  "Boceto digital / Sketch",
+  "3D técnico / Clean render"
+];

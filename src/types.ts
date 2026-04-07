@@ -22,6 +22,7 @@ export interface DreamHouseParams {
   bedrooms: number;
   bathrooms: number;
   parkingSpots: number;
+  parkingType: string;
   kitchenType: string;
   livingAreaType: string;
   layoutType: string;
@@ -47,6 +48,7 @@ export interface DreamHouseParams {
   // Section 6: Output Configuration
   renderOutputResolution: string;
   renderAspectRatio: string;
+  renderStyle: string;
 
   // Section 7: Technical Notes
   technicalNotes: string;
@@ -77,6 +79,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   bedrooms: 0,
   bathrooms: 0,
   parkingSpots: 0,
+  parkingType: "",
   kitchenType: "",
   livingAreaType: "",
   layoutType: "",
@@ -102,6 +105,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   // Section 6: Output Configuration
   renderOutputResolution: "",
   renderAspectRatio: "",
+  renderStyle: "",
 
   // Section 7: Technical Notes
   technicalNotes: "",

@@ -299,6 +299,14 @@ export default function ParameterForm({
             </div>
           </div>
 
+          <Select
+            label="Tipo de Estacionamiento"
+            value={params.parkingType}
+            onChange={(e) => handleChange("parkingType", e.target.value)}
+            options={C.PARKING_TYPES}
+            disabled={disabled}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
               label="Tipo de Layout"
@@ -490,10 +498,10 @@ export default function ParameterForm({
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
-              label="Resolución"
-              value={params.renderOutputResolution}
-              onChange={(e) => handleChange("renderOutputResolution", e.target.value)}
-              options={C.OUTPUT_RESOLUTIONS}
+              label="Estilo de Render"
+              value={params.renderStyle}
+              onChange={(e) => handleChange("renderStyle", e.target.value)}
+              options={C.RENDER_STYLES}
               disabled={disabled}
             />
             <Select
@@ -505,6 +513,13 @@ export default function ParameterForm({
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Select
+              label="Resolución"
+              value={params.renderOutputResolution}
+              onChange={(e) => handleChange("renderOutputResolution", e.target.value)}
+              options={C.OUTPUT_RESOLUTIONS}
+              disabled={disabled}
+            />
             <Select
               label="Nivel de Pensamiento (AI)"
               value={params.thinkingLevel}

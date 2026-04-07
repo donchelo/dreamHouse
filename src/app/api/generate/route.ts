@@ -210,7 +210,10 @@ export async function POST(req: NextRequest) {
     // 6. Atmosphere & Mood
     const moodDesc = MOOD_MAP[params.mood] || params.mood;
 
-    // 7. Photography Settings
+    // 7. Render Style
+    const renderStyle = params.renderStyle;
+
+    // 8. Photography Settings
     const camera = [
       params.cameraAngle ? `Angle: ${params.cameraAngle}` : null,
       params.composition ? `Composition: ${params.composition}` : null,
@@ -243,9 +246,10 @@ The floor plan provides the building's FORM foundation (~80%). Your task is to c
 
 **ARCHITECTURAL STYLE & SPECIFICATIONS (CLIENT PARAMETERS):**
 - **Project Type:** ${projectType}${locationStr ? ` ${locationStr}` : ''}
+${renderStyle ? `- **Render Style:** ${renderStyle}` : ''}
 ${archStyle ? `- **Style:** ${archStyle}${architects ? ` (inspired by ${architects})` : ''}` : architects ? `- **Inspired by:** ${architects}` : ''}
 ${techSpecs ? `- **Technical Specs:** ${techSpecs}` : ''}
-${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : ''].filter(Boolean).join(', ') ? `- **Building Program:** ${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : ''].filter(Boolean).join(', ')}` : ''}
+${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : '', params.parkingType || ''].filter(Boolean).join(', ') ? `- **Building Program:** ${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : '', params.parkingType || ''].filter(Boolean).join(', ')}` : ''}
 ${params.kitchenType ? `- **Kitchen Type:** ${params.kitchenType}` : ''}
 ${params.livingAreaType ? `- **Living Area:** ${params.livingAreaType}` : ''}
 ${params.socialAreas.length > 0 ? `- **Social Areas:** ${params.socialAreas.join(', ')}` : ''}
