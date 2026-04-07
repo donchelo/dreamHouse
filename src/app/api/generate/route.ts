@@ -249,38 +249,38 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const interiorStyles = params.interiorStyle.length > 0 ? params.interiorStyle.join(", ") : "Not specified";
-      const validInteriorDesigners = Array.isArray(params.interiorDesigner) 
+      const interiorStyles = params.interiorStyle.length > 0 ? params.interiorStyle.join(", ") : "";
+      const validInteriorDesigners = Array.isArray(params.interiorDesigner)
         ? params.interiorDesigner.filter(d => d !== "Sin diseñador específico")
         : [];
       const interiorDesigners = validInteriorDesigners.join(" and ");
-      const wallMaterials = params.wallMaterial.length > 0 ? params.wallMaterial.join(", ") : "Not specified";
-      const colors = params.colorPalette.length > 0 ? params.colorPalette.join(", ") : "Not specified";
+      const wallMaterials = params.wallMaterial.join(", ");
+      const colors = params.colorPalette.join(", ");
       const moodDesc = MOOD_MAP[params.mood] || params.mood;
 
       // Build a narrative, descriptive prompt following Nano Banana best practices
       // "Describe the scene, don't just list keywords" - from documentation
       const interiorPrompt = roomImageBase64 ? `
-You are a world-class interior decorator working with a real photograph of a ${params.roomType}. The image attached shows the existing room structure - its walls, floor, doors, windows, and architectural elements. Your task is to transform this space through decoration, adding furniture, textiles, lighting, and decorative elements that bring it to life in a ${interiorStyles} style${interiorDesigners ? `, inspired by the work of ${interiorDesigners}` : ''}.
+You are a world-class interior decorator working with a real photograph of a ${params.roomType}. The image attached shows the existing room structure - its walls, floor, doors, windows, and architectural elements. Your task is to transform this space through decoration, adding furniture, textiles, lighting, and decorative elements that bring it to life${interiorStyles ? ` in a ${interiorStyles} style` : ''}${interiorDesigners ? `, inspired by the work of ${interiorDesigners}` : ''}.
 
 **THE ROOM AS YOUR FOUNDATION:**
 The photograph shows a ${params.roomType} with its existing architecture. Preserve the room's structure - the walls, floor surface, doors, windows, and ceiling remain as they appear in the photo. Think of yourself as a decorator who walks into this exact space and transforms it through furniture placement, color accents, lighting design, and decorative accessories.
 
 **YOUR DECORATION MISSION:**
-Decorate this room to create a ${moodDesc} atmosphere. Fill the space with ${params.furnitureStyle} furniture that complements the existing architecture. The color palette should emphasize ${colors !== "Not specified" ? colors : "harmonious tones that work with the room's existing materials"}. 
+${moodDesc ? `Decorate this room to create a ${moodDesc} atmosphere. ` : ''}Fill the space with ${params.furnitureStyle ? `${params.furnitureStyle} furniture` : 'thoughtfully selected furniture'} that complements the existing architecture.${colors ? ` The color palette should emphasize ${colors}.` : ''}${wallMaterials ? ` Wall materials: ${wallMaterials}.` : ''}${params.floorMaterial ? ` Floor material: ${params.floorMaterial}.` : ''}
 
-Imagine the scene: ${params.interiorLighting} illuminates the space, creating ${moodDesc === "Elegante y sofisticado" ? "an elegant and sophisticated" : moodDesc === "Acogedor y cálido" ? "a warm and inviting" : moodDesc === "Sereno y zen" ? "a serene and peaceful" : "a refined"} atmosphere. The furniture selection should reflect ${params.finishLevel} quality, with pieces that feel authentic and well-crafted.
+${params.interiorLighting ? `Imagine ${params.interiorLighting} illuminating the space, creating depth and atmosphere. ` : ''}${params.finishLevel ? `The furniture selection should reflect ${params.finishLevel} quality, with pieces that feel authentic and well-crafted.` : ''}
 
 **DECORATIVE ELEMENTS TO ADD:**
-- Furniture pieces appropriate for a ${params.roomType} in ${interiorStyles} style
-- Textiles: cushions, throws, rugs that complement the existing floor
-- Lighting: lamps, pendant lights, or chandeliers that enhance the ${params.interiorLighting} ambiance
+- Furniture pieces appropriate for a ${params.roomType}${interiorStyles ? ` in ${interiorStyles} style` : ''}
+- Textiles: cushions, throws, rugs${params.floorMaterial ? ` that complement the ${params.floorMaterial} floor` : ''}
+${params.interiorLighting ? `- Lighting: lamps, pendant lights, or chandeliers that enhance the ${params.interiorLighting} ambiance` : '- Lighting: lamps, pendant lights, or chandeliers that enhance the ambiance'}
 - Decorative accessories: artwork, plants, vases, books, and objects that tell a story
 - Window treatments: curtains or blinds that frame the existing windows beautifully
 - Personal touches that make the space feel lived-in and inviting
 
 **THE RESULT:**
-The final image should look like a professional interior photography shot of this same room, but now fully decorated and styled. The architecture remains recognizable - same walls, same floor, same windows - but the space is now transformed through thoughtful decoration. The lighting should feel natural and cinematic, highlighting both the existing architecture and the new decorative elements. The overall composition should feel balanced, inviting, and true to the ${interiorStyles} aesthetic.
+The final image should look like a professional interior photography shot of this same room, but now fully decorated and styled. The architecture remains recognizable - same walls, same floor, same windows - but the space is now transformed through thoughtful decoration. The lighting should feel natural and cinematic, highlighting both the existing architecture and the new decorative elements. The overall composition should feel balanced, inviting${interiorStyles ? `, and true to the ${interiorStyles} aesthetic` : ''}.
 
 ${referenceImagesBase64.length > 0 ? `
 **STYLE REFERENCES:**
@@ -288,26 +288,26 @@ ${referenceImagesBase64.length} reference image(s) are provided to guide the fur
 ` : ''}
 
 **PHOTOGRAPHIC QUALITY:**
-Capture this decorated room as if photographed by a professional interior photographer for a luxury design magazine. The image should be photorealistic, with attention to natural lighting behavior, realistic material textures, and authentic details. ${params.renderOutputResolution || "4K"} resolution, cinematic composition from a ${params.cameraAngle} perspective.
+Capture this decorated room as if photographed by a professional interior photographer for a luxury design magazine. The image should be photorealistic, with attention to natural lighting behavior, realistic material textures, and authentic details.${params.renderOutputResolution ? ` ${params.renderOutputResolution} resolution,` : ''} cinematic${params.composition ? ` ${params.composition}` : ''} composition${params.cameraAngle ? ` from a ${params.cameraAngle} perspective` : ''}.${params.season ? ` Season: ${params.season}.` : ''}${params.humanContext ? ` Human presence: ${params.humanContext}.` : ''}
 
 ${params.negativePrompt ? `**ELEMENTS TO AVOID:** ${params.negativePrompt}` : ''}
 ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
 ` : `
 **OBJECTIVE: CREATE AN AWARD-WINNING INTERIOR PHOTOGRAPH**
 
-You are a world-class interior designer and architectural photographer. Create a complete, photorealistic interior visualization of a ${params.roomType} that embodies ${interiorStyles} style${interiorDesigners ? `, inspired by the work of ${interiorDesigners}` : ''}.
+You are a world-class interior designer and architectural photographer. Create a complete, photorealistic interior visualization of a ${params.roomType}${interiorStyles ? ` that embodies ${interiorStyles} style` : ''}${interiorDesigners ? `, inspired by the work of ${interiorDesigners}` : ''}.
 
 **THE DESIGN VISION:**
-Design a ${params.roomType} that feels ${moodDesc}. The space should feature ${params.furnitureStyle} furniture, with a color palette emphasizing ${colors !== "Not specified" ? colors : "harmonious and sophisticated tones"}. The materials should reflect ${params.finishLevel} quality - think authentic textures, natural materials, and refined finishes.
+Design a ${params.roomType}${moodDesc ? ` that feels ${moodDesc}` : ''}. The space should feature ${params.furnitureStyle ? `${params.furnitureStyle} furniture` : 'carefully selected furniture'}${colors ? `, with a color palette emphasizing ${colors}` : ''}.${wallMaterials ? ` Wall materials: ${wallMaterials}.` : ''}${params.floorMaterial ? ` Floor: ${params.floorMaterial}.` : ''}${params.finishLevel ? ` The materials should reflect ${params.finishLevel} quality — think authentic textures, natural materials, and refined finishes.` : ''}
 
 **THE ATMOSPHERE:**
-Imagine ${params.interiorLighting} filling the space, creating depth and atmosphere. The room should feel lived-in yet pristine, with every element carefully considered. The design should tell a story - this is a space where someone would want to spend time, relax, work, or entertain, depending on the room type.
+${params.interiorLighting ? `Imagine ${params.interiorLighting} filling the space, creating depth and atmosphere. ` : ''}The room should feel lived-in yet pristine, with every element carefully considered. The design should tell a story — this is a space where someone would want to spend time, relax, work, or entertain.${params.season ? ` The scene is set in ${params.season}, influencing the quality and angle of natural light.` : ''}
 
 **ARCHITECTURAL ELEMENTS:**
-Design walls, floor, ceiling, windows, and doors that complement the ${interiorStyles} aesthetic. Consider how natural light enters through windows, how materials interact with each other, and how the space flows. Every architectural decision should support the overall design vision.
+Design walls, floor, ceiling, windows, and doors that complement${interiorStyles ? ` the ${interiorStyles}` : ' the overall'} aesthetic. Consider how natural light enters through windows, how materials interact with each other, and how the space flows. Every architectural decision should support the overall design vision.
 
 **FURNITURE AND DECORATION:**
-Populate the space with appropriate furniture pieces, decorative accessories, artwork, plants, and textiles that bring the design to life. Each element should feel intentional and contribute to the ${moodDesc} atmosphere you're creating.
+Populate the space with appropriate furniture pieces, decorative accessories, artwork, plants, and textiles that bring the design to life. Each element should feel intentional${moodDesc ? ` and contribute to the ${moodDesc} atmosphere you're creating` : ''}.
 
 ${referenceImagesBase64.length > 0 ? `
 **VISUAL REFERENCES:**
@@ -315,7 +315,7 @@ ${referenceImagesBase64.length} reference image(s) are provided to guide the sty
 ` : ''}
 
 **THE FINAL IMAGE:**
-Generate a high-end, professional architectural interior photograph that looks like it was shot by a luxury design magazine photographer. The image should be photorealistic with attention to realistic textures, natural lighting behavior, and authentic material properties. ${params.renderOutputResolution || "4K"} resolution, ultra-detailed, cinematic lighting, captured from a ${params.cameraAngle} perspective.
+Generate a high-end, professional architectural interior photograph that looks like it was shot by a luxury design magazine photographer. The image should be photorealistic with attention to realistic textures, natural lighting behavior, and authentic material properties.${params.renderOutputResolution ? ` ${params.renderOutputResolution} resolution,` : ''} ultra-detailed, cinematic lighting${params.composition ? `, ${params.composition} composition` : ''}${params.cameraAngle ? `, captured from a ${params.cameraAngle} perspective` : ''}.${params.humanContext ? ` Human presence: ${params.humanContext}.` : ''}
 
 ${params.negativePrompt ? `**ELEMENTS TO AVOID:** ${params.negativePrompt}` : ''}
 ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
@@ -369,8 +369,8 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
             }
           ],
           imageConfig: {
-            aspectRatio: params.renderAspectRatio || "16:9",
-            imageSize: params.renderOutputResolution || "4K"
+            ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
+            ...(params.renderOutputResolution ? { imageSize: params.renderOutputResolution } : {})
           },
           ...(params.thinkingLevel === "High" ? {
             thinkingConfig: {
@@ -404,9 +404,9 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
     
     // 2. Technical Specifications
     const techSpecs = [
-      `${params.size}`,
-      `${params.levels} levels`,
-      `${params.roofType} roof`
+      params.size || null,
+      params.levels > 0 ? `${params.levels} levels` : null,
+      params.roofType ? `${params.roofType} roof` : null
     ].filter(Boolean).join(", ");
 
     // 3. Materials & Finishes
@@ -421,7 +421,7 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
     const environment = [
         params.environment,
         params.climate,
-        params.waterBody !== "Sin agua cercana" ? params.waterBody : null,
+        params.waterBody,
         params.weatherCondition
     ].filter(Boolean).join(", ");
 
@@ -468,22 +468,26 @@ The floor plan provides the building's FORM foundation (~80%). Your task is to c
 ` : ''}
 
 **ARCHITECTURAL STYLE & SPECIFICATIONS (CLIENT PARAMETERS):**
-- **Project Type:** ${projectType} ${locationStr}
-- **Style:** ${archStyle} ${architects ? `(inspired by ${architects})` : ''}
-- **Technical Specs:** ${techSpecs}
-- **Materials:** ${materialsList}
-- **Color Palette:** ${colors}
-- **Finish:** ${finish}
-- **Atmosphere:** ${moodDesc}
+- **Project Type:** ${projectType}${locationStr ? ` ${locationStr}` : ''}
+${archStyle ? `- **Style:** ${archStyle}${architects ? ` (inspired by ${architects})` : ''}` : architects ? `- **Inspired by:** ${architects}` : ''}
+${techSpecs ? `- **Technical Specs:** ${techSpecs}` : ''}
+${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : ''].filter(Boolean).join(', ') ? `- **Building Program:** ${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms > 0 ? `${params.bathrooms} bathroom(s)` : '', params.parkingSpots > 0 ? `${params.parkingSpots} parking space(s)` : ''].filter(Boolean).join(', ')}` : ''}
+${params.kitchenType ? `- **Kitchen Type:** ${params.kitchenType}` : ''}
+${params.livingAreaType ? `- **Living Area:** ${params.livingAreaType}` : ''}
+${params.socialAreas.length > 0 ? `- **Social Areas:** ${params.socialAreas.join(', ')}` : ''}
+${materialsList ? `- **Materials:** ${materialsList}` : ''}
+${colors ? `- **Color Palette:** ${colors}` : ''}
+${finish ? `- **Finish:** ${finish}` : ''}
+${moodDesc ? `- **Atmosphere:** ${moodDesc}` : ''}
 ${architecturalDetails ? `- **Architectural Details:** ${architecturalDetails}` : ''}
 
 **ENVIRONMENT & PHOTOGRAPHY:**
-- **Context:** ${environment}
-- **Landscaping:** ${landscaping}
+${environment ? `- **Context:** ${environment}` : ''}
+${landscaping ? `- **Landscaping:** ${landscaping}` : ''}
 ${lotImageBase64 ? `- **LOT INTEGRATION:** Use the attached LOT IMAGE as the exact environment and terrain for this project. The building MUST be perfectly integrated into the specific terrain, topography, vegetation, and lighting conditions shown in the lot image.` : ''}
 ${referenceImagesBase64.length > 0 ? `- **VISUAL REFERENCE IMAGES:** ${referenceImagesBase64.length} reference image(s) are attached. Use these images as the PRIMARY source for architectural style, materials, colors, textures, and overall aesthetic atmosphere. Analyze the attached reference images and incorporate their visual language directly into the final image.` : ''}
-- **Camera Configuration:** ${camera}
-- **Human Scale:** ${params.humanContext !== "Sin personas" ? params.humanContext : "None"}
+${camera ? `- **Camera Configuration:** ${camera}` : ''}
+${params.humanContext ? `- **Human Scale:** ${params.humanContext}` : ''}
 
 **FINAL DIRECTIVE (PRIORITY ORDER):**
 1. **FLOOR PLAN IMAGE (HIGHEST PRIORITY - ~80% FIDELITY):** If a FLOOR PLAN IMAGE is attached, it is the PRIMARY GEOMETRIC REFERENCE. Aim for approximately 80% fidelity to the floor plan's geometry - the building's exterior footprint, shape, perimeter, and spatial organization should closely follow the floor plan. You have ~20% creative freedom to refine edges, proportions, and details for superior 3D architectural coherence and aesthetic impact. The exterior view should be a faithful 3D interpretation of the 2D floor plan geometry, with intelligent refinements.
@@ -542,8 +546,8 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
           }
         ],
         imageConfig: {
-          aspectRatio: params.renderAspectRatio || "16:9",
-          imageSize: params.renderOutputResolution || "4K"
+          ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
+          ...(params.renderOutputResolution ? { imageSize: params.renderOutputResolution } : {})
         },
         ...(params.thinkingLevel === "High" ? {
           thinkingConfig: {

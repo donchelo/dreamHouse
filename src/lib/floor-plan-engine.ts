@@ -181,8 +181,8 @@ Generate a high-quality architectural floor plan visualization that clearly comm
           }
         ],
         imageConfig: {
-          aspectRatio: params.fpAspectRatio || "16:9",
-          imageSize: params.fpOutputResolution || "2K"
+          ...(params.fpAspectRatio ? { aspectRatio: params.fpAspectRatio } : {}),
+          ...(params.fpOutputResolution ? { imageSize: params.fpOutputResolution } : {})
         },
         ...(params.thinkingLevel === "High" ? {
           thinkingConfig: {

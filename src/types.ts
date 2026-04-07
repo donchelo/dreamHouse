@@ -72,68 +72,68 @@ export interface DreamHouseParams {
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
   // Section 1: Project Essence
-  projectType: "Casa unifamiliar",
+  projectType: "",
   architecturalStyles: [],
   architect: [],
-  mood: "Elegante y sofisticado",
-  
+  mood: "",
+
   // Section 2: Context & Location
   city: "",
-  climate: "Mediterráneo",
-  environment: "Suburbana",
-  waterBody: "Sin agua cercana",
-  weatherCondition: "Despejado/Soleado",
-  
+  climate: "",
+  environment: "",
+  waterBody: "",
+  weatherCondition: "",
+
   // Section 3: Physical Specifications
-  size: "Mediana (150-300m²)",
-  levels: 2,
-  bedrooms: 3,
-  bathrooms: 2,
-  parkingSpots: 2,
-  kitchenType: "Abierta (Americana)",
-  livingAreaType: "Concepto abierto",
-  layoutType: "Open plan",
+  size: "",
+  levels: 0,
+  bedrooms: 0,
+  bathrooms: 0,
+  parkingSpots: 0,
+  kitchenType: "",
+  livingAreaType: "",
+  layoutType: "",
   socialAreas: [],
-  roofType: "Plano",
+  roofType: "",
   materials: [],
-  finishLevel: "Premium/Alto",
+  finishLevel: "",
   architecturalDetails: [],
-  
+
   // Section 4: Aesthetics & Details
   colorPalette: [],
   exteriorElements: [],
   vegetation: [],
-  
+
   // Section 5: Camera Configuration
-  cameraAngle: "3/4 frontal",
-  composition: "Regla de tercios",
-  timeOfDay: "Atardecer (Golden Hour)",
-  season: "Verano",
-  lighting: "Golden hour cálida",
-  humanContext: "Sin personas",
-  
+  cameraAngle: "",
+  composition: "",
+  timeOfDay: "",
+  season: "",
+  lighting: "",
+  humanContext: "",
+
   // Section 6: Floor Plan Output Configuration
-  fpOutputResolution: "2K",
-  fpAspectRatio: "16:9",
-  
+  fpOutputResolution: "",
+  fpAspectRatio: "",
+
   // Section 7: Exterior Output Configuration
-  renderOutputResolution: "4K",
-  renderAspectRatio: "16:9",
-  
+  renderOutputResolution: "",
+  renderAspectRatio: "",
+
   // Section 8: Technical Notes (for Floor Plan)
   technicalNotes: "",
-  
+
   // Section 9: Art Direction (for Exterior)
   artDirection: "",
   negativePrompt: "",
   thinkingLevel: "Minimal",
 
   // Section 10: Interior Design
-  roomType: "Sala de estar (Living Room)",
+  roomType: "",
   interiorStyle: [],
   interiorDesigner: [],
-  furnitureStyle: "Moderno",
-  interiorLighting: "Natural suave",
+  furnitureStyle: "",
+  interiorLighting: "",
   wallMaterial: [],
-  floorMaterial: "Madera de roble"
+  floorMaterial: ""
 };
