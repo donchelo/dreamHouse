@@ -4,7 +4,7 @@
 // Este módulo genera una imagen de planta arquitectónica
 // basado en los parámetros del usuario e imágenes de referencia.
 
-import { GoogleGenAI, Part } from '@google/genai';
+import { GoogleGenAI, Part, ThinkingLevel } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 
 // Helper to map project types to English
@@ -177,12 +177,7 @@ Generate a high-quality architectural floor plan visualization that clearly comm
       config: {
         tools: [
           {
-            googleSearch: {
-              searchTypes: {
-                webSearch: {},
-                imageSearch: {}
-              }
-            }
+            googleSearch: {}
           }
         ],
         imageConfig: {
@@ -190,7 +185,7 @@ Generate a high-quality architectural floor plan visualization that clearly comm
           imageSize: params.fpOutputResolution || "2K"
         },
         thinkingConfig: {
-          thinkingLevel: params.thinkingLevel || "Minimal",
+          thinkingLevel: params.thinkingLevel === "High" ? ThinkingLevel.HIGH : ThinkingLevel.LOW,
           includeThoughts: true
         }
       }
@@ -204,7 +199,7 @@ Generate a high-quality architectural floor plan visualization that clearly comm
 
     const firstCandidate = candidates[0];
     const responseParts = firstCandidate?.content?.parts;
-    const imagePart = responseParts?.find(part => part.inlineData);
+    const imagePart = responseParts?.find((part: Part) => part.inlineData);
     
     if (!imagePart || !imagePart.inlineData) {
       throw new Error("No image data found in floor plan response");

@@ -516,7 +516,7 @@ export default function StudioPage() {
               </Button>
             ) : currentTab === 'exterior' ? (
               <Button
-                onClick={handleGenerateRender}
+                onClick={handleGenerateExterior}
                 isLoading={isLoading}
                 size="lg"
                 className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"

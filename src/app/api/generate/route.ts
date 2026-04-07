@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI, Part } from '@google/genai';
+import { GoogleGenAI, Part, ThinkingLevel } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 import { generateFloorPlan } from '@/lib/floor-plan-engine';
 
@@ -365,12 +365,7 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
         config: {
           tools: [
             {
-              googleSearch: {
-                searchTypes: {
-                  webSearch: {},
-                  imageSearch: {}
-                }
-              }
+              googleSearch: {}
             }
           ],
           imageConfig: {
@@ -378,7 +373,7 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
             imageSize: params.renderOutputResolution || "4K"
           },
           thinkingConfig: {
-            thinkingLevel: params.thinkingLevel || "Minimal",
+            thinkingLevel: params.thinkingLevel === "High" ? ThinkingLevel.HIGH : ThinkingLevel.LOW,
             includeThoughts: true
           }
         }
@@ -386,7 +381,7 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
 
       const candidates = generationResponse.candidates;
       if (!candidates || candidates.length === 0) throw new Error("No image candidates returned");
-      const imagePart = candidates[0]?.content?.parts?.find(part => part.inlineData);
+      const imagePart = candidates[0]?.content?.parts?.find((part: Part) => part.inlineData);
       if (!imagePart || !imagePart.inlineData) throw new Error("No image data found");
 
       return NextResponse.json({ 
@@ -541,12 +536,7 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
       config: {
         tools: [
           {
-            googleSearch: {
-              searchTypes: {
-                webSearch: {},
-                imageSearch: {}
-              }
-            }
+            googleSearch: {}
           }
         ],
         imageConfig: {
@@ -554,7 +544,7 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
           imageSize: params.renderOutputResolution || "4K"
         },
         thinkingConfig: {
-          thinkingLevel: params.thinkingLevel || "Minimal",
+          thinkingLevel: params.thinkingLevel === "High" ? ThinkingLevel.HIGH : ThinkingLevel.LOW,
           includeThoughts: true
         }
       }
@@ -568,7 +558,7 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
 
     const firstCandidate = candidates[0];
     const parts = firstCandidate?.content?.parts;
-    const imagePart = parts?.find(part => part.inlineData);
+    const imagePart = parts?.find((part: Part) => part.inlineData);
     
     if (!imagePart || !imagePart.inlineData) {
       throw new Error("No image data found in response");
