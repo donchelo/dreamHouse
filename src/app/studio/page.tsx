@@ -1,44 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
 import FloorPlanUploader from '@/components/FloorPlanUploader';
-import RoomUploader from '@/components/RoomUploader';
-import InspirationCanvas from '@/components/InspirationCanvas';
 import ParameterForm from '@/components/ParameterForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2, AlertCircle, ArrowRight, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
+import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import * as C from '@/app/constants';
-import clsx from 'clsx';
 
 export default function StudioPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
-  const [roomFile, setRoomFile] = useState<File | null>(null);
-  const [inspirationFile, setInspirationFile] = useState<File | null>(null);
   const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [interiorImageUrl, setInteriorImageUrl] = useState<string | null>(null);
-  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  
-  // Tab state
-  const [currentTab, setCurrentTab] = useState<'basics' | 'exterior' | 'interior'>('basics');
-  
-  const handleTabChange = (tab: 'basics' | 'exterior' | 'interior') => {
-    setCurrentTab(tab);
-    setActiveSection(null); // Reset active accordion section when switching tabs
-  };
-  
+
   // Accordion state - null means all closed by default
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -52,10 +37,10 @@ export default function StudioPage() {
   };
 
   const handleReset = () => {
-    setParams({ 
-      ...DEFAULT_PARAMS, 
-      city: "", 
-      technicalNotes: "", 
+    setParams({
+      ...DEFAULT_PARAMS,
+      city: "",
+      technicalNotes: "",
       artDirection: "",
       negativePrompt: ""
     });
@@ -101,144 +86,18 @@ export default function StudioPage() {
       season: pick(C.SEASONS),
       lighting: pick(C.LIGHTING_TYPES),
       humanContext: pick(C.HUMAN_CONTEXT),
-      fpOutputResolution: pick(C.OUTPUT_RESOLUTIONS),
-      fpAspectRatio: pick(C.ASPECT_RATIOS),
       renderOutputResolution: pick(C.OUTPUT_RESOLUTIONS),
       renderAspectRatio: pick(C.ASPECT_RATIOS),
       city: params.city,
       technicalNotes: params.technicalNotes,
       artDirection: params.artDirection,
-      // Interior Design parameters
-      roomType: pick(C.ROOM_TYPES),
-      interiorStyle: pickMulti(C.INTERIOR_STYLES, 2),
-      furnitureStyle: pick(C.FURNITURE_STYLES),
-      interiorLighting: pick(C.INTERIOR_LIGHTING),
-      wallMaterial: pickMulti(C.WALL_MATERIALS, 2),
-      floorMaterial: pick(C.FLOOR_MATERIALS)
     };
 
     setParams(randomParams);
     showToast("Random design generated!");
   };
 
-  const handleGenerateFloorPlan = async () => {
-    setIsLoading(true);
-    setError(null);
-    setFloorPlanImageUrl(null);
-
-    try {
-      const apiKey = localStorage.getItem('GEMINI_API_KEY');
-      if (!apiKey) {
-        throw new Error('Por favor, configura tu GEMINI_API_KEY en el encabezado.');
-      }
-
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
-      if (lotFile) {
-        formData.append('lotImage', lotFile);
-      }
-      if (inspirationFile) {
-        formData.append('inspirationImage', inspirationFile);
-      }
-      formData.append('params', JSON.stringify(params));
-      formData.append('mode', 'floor-plan');
-
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error generating floor plan');
-      }
-
-      const data = await response.json();
-      setFloorPlanImageUrl(data.imageUrl);
-      showToast("Floor plan generated successfully!");
-      
-      setTimeout(() => {
-        document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-      
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Ocurrió un error inesperado.');
-      }
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateInterior = async () => {
-    setIsLoading(true);
-    setError(null);
-    setInteriorImageUrl(null);
-
-    try {
-      // Validate: if room image is provided, room type must be specified
-      if (roomFile && (!params.roomType || params.roomType === "")) {
-        throw new Error('Si subes una foto de habitación, debes indicar obligatoriamente qué tipo de habitación es. Por favor, selecciona el tipo de habitación.');
-      }
-
-      const apiKey = localStorage.getItem('GEMINI_API_KEY');
-      if (!apiKey) {
-        throw new Error('Por favor, configura tu GEMINI_API_KEY en el encabezado.');
-      }
-
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
-      // Room image is optional - only append if provided
-      if (roomFile) {
-        formData.append('roomImage', roomFile);
-      }
-      formData.append('params', JSON.stringify(params));
-      formData.append('mode', 'interior');
-
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error generating interior design');
-      }
-
-      const data = await response.json();
-      setInteriorImageUrl(data.imageUrl);
-      showToast("Interior design generated successfully!");
-      
-      setTimeout(() => {
-        document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-      
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Ocurrió un error inesperado.');
-      }
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateExterior = async () => {
+  const handleGenerate = async () => {
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
@@ -256,21 +115,10 @@ export default function StudioPage() {
       if (lotFile) {
         formData.append('lotImage', lotFile);
       }
-      if (inspirationFile) {
-        formData.append('inspirationImage', inspirationFile);
-      }
-      // Priority: uploaded floor plan file > generated floor plan image
       if (floorPlanFile) {
         formData.append('floorPlanImage', floorPlanFile);
-      } else if (floorPlanImageUrl) {
-        // Convert data URL to blob and append as file
-        const response = await fetch(floorPlanImageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'floor-plan.png', { type: blob.type });
-        formData.append('floorPlanImage', file);
       }
       formData.append('params', JSON.stringify(params));
-      formData.append('mode', 'exterior');
 
       const apiResponse = await fetch('/api/generate', {
         method: 'POST',
@@ -288,11 +136,11 @@ export default function StudioPage() {
       const data = await apiResponse.json();
       setImageUrl(data.imageUrl);
       showToast("Render generated successfully!");
-      
+
       setTimeout(() => {
         document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
-      
+
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -308,15 +156,15 @@ export default function StudioPage() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <Header />
-      
+
       <main id="studio" className="relative px-6 sm:px-8 lg:px-12 pb-32 bg-background">
         {/* Main Form Area */}
         <div id="form" className="max-w-[1400px] mx-auto pt-32 space-y-12">
             <div className="flex flex-col gap-4 mb-12">
                 <h2 className="text-sm font-mono text-primary uppercase tracking-[0.4em] font-bold">El Estudio</h2>
                 <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Diseña tu <span className="text-outline">Propia</span> Obra Maestra.</h3>
-            </div>          
-           {/* Global Actions - Reset & Randomize - Now at the top */}
+            </div>
+           {/* Global Actions - Reset & Randomize */}
            <div className="flex justify-end gap-3 sticky top-20 z-20 pointer-events-none mb-8">
             <div className="pointer-events-auto flex gap-0 border border-border bg-background shadow-lg">
                 <button
@@ -355,140 +203,44 @@ export default function StudioPage() {
             </div>
           )}
 
-          {/* Tab Switcher */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-border pb-6">
-            <div className="flex bg-card border border-border p-1 rounded-none w-full md:w-auto">
-              <button
-                onClick={() => handleTabChange('basics')}
-                className={clsx(
-                  "flex-1 md:flex-none px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all",
-                  currentTab === 'basics' 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                01. Floor Plan
-              </button>
-              <button
-                onClick={() => handleTabChange('exterior')}
-                className={clsx(
-                  "flex-1 md:flex-none px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all",
-                  currentTab === 'exterior' 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                02. Exterior
-              </button>
-              <button
-                onClick={() => handleTabChange('interior')}
-                className={clsx(
-                  "flex-1 md:flex-none px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all",
-                  currentTab === 'interior' 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                03. Interior
-              </button>
-            </div>
-            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-tighter">
-              Current Step: <span className="text-foreground font-bold">
-                {currentTab === 'basics' ? 'Architecture & Layout' : currentTab === 'exterior' ? 'Visuals & Photography' : 'Interior Design & Decor'}
-              </span>
-            </p>
-          </div>
-          
-          {/* Inspiration Canvas Section - Only in Basics */}
-          {currentTab === 'basics' && (
-            <Section 
-              title="Inspiración de Forma" 
-              number="01" 
-              isOpen={activeSection === 'inspiration'}
-              onToggle={() => toggleSection('inspiration')}
-            >
-              <InspirationCanvas file={inspirationFile} onFileChange={setInspirationFile} />
-            </Section>
-          )}
+          {/* Reference Images */}
+          <Section
+            title="Referentes Visuales"
+            number="01"
+            isOpen={activeSection === 'references'}
+            onToggle={() => toggleSection('references')}
+          >
+            <ReferenceUploader files={files} onFilesChange={setFiles} />
+          </Section>
 
-          {/* Lot Uploader Section - Only in Basics */}
-          {currentTab === 'basics' && (
-            <Section 
-              title="Lote" 
-              number="02" 
-              isOpen={activeSection === 'lot'}
-              onToggle={() => toggleSection('lot')}
-            >
-              <LotUploader file={lotFile} onFileChange={setLotFile} />
-            </Section>
-          )}
+          {/* Lot */}
+          <Section
+            title="Lote"
+            number="02"
+            isOpen={activeSection === 'lot'}
+            onToggle={() => toggleSection('lot')}
+          >
+            <LotUploader file={lotFile} onFileChange={setLotFile} />
+          </Section>
 
-          {/* Reference Uploader Section - Only in Exterior or Interior */}
-          {(currentTab === 'exterior' || currentTab === 'interior') && (
-            <Section 
-              title="Referentes Visuales" 
-              number="01" 
-              isOpen={activeSection === 'references'}
-              onToggle={() => toggleSection('references')}
-            >
-              <ReferenceUploader files={files} onFilesChange={setFiles} />
-            </Section>
-          )}
+          {/* Floor Plan */}
+          <Section
+            title="Plano de Planta"
+            number="03"
+            isOpen={activeSection === 'floorplan'}
+            onToggle={() => toggleSection('floorplan')}
+          >
+            <FloorPlanUploader file={floorPlanFile} onFileChange={setFloorPlanFile} />
+          </Section>
 
-          {/* Room Uploader Section - Only in Interior */}
-          {currentTab === 'interior' && (
-            <Section 
-              title="Habitación Existente" 
-              number="02" 
-              isOpen={activeSection === 'room'}
-              onToggle={() => toggleSection('room')}
-            >
-              <RoomUploader 
-                file={roomFile} 
-                onFileChange={setRoomFile}
-                roomType={params.roomType}
-                onRoomTypeChange={(roomType) => setParams({ ...params, roomType })}
-              />
-            </Section>
-          )}
-
-          {/* Floor Plan Uploader Section - Only in Exterior */}
-          {currentTab === 'exterior' && (
-            <Section 
-              title="Plano de Planta" 
-              number="02" 
-              isOpen={activeSection === 'floorplan'}
-              onToggle={() => toggleSection('floorplan')}
-            >
-              <FloorPlanUploader file={floorPlanFile} onFileChange={setFloorPlanFile} />
-            </Section>
-          )}
-          
-          {/* Parameters Section */}
-          <ParameterForm 
-            params={params} 
-            onChange={setParams} 
+          {/* Parameters */}
+          <ParameterForm
+            params={params}
+            onChange={setParams}
             disabled={isLoading}
             activeSection={activeSection}
             onSectionChange={toggleSection}
-            currentTab={currentTab}
           />
-
-          {/* Tab Navigation Button */}
-          {currentTab === 'basics' && floorPlanImageUrl && (
-            <div className="flex justify-center pt-8">
-              <button
-                onClick={() => {
-                  handleTabChange('exterior');
-                  window.scrollTo({ top: document.getElementById('form')?.offsetTop || 0, behavior: 'smooth' });
-                }}
-                className="group flex items-center gap-3 px-10 py-5 bg-card border border-border hover:border-primary transition-all text-sm font-bold uppercase tracking-widest"
-              >
-                Continue to Exterior
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-          )}
 
           {/* Error Message */}
           {error && (
@@ -501,49 +253,18 @@ export default function StudioPage() {
             </div>
           )}
 
-          {/* Floating Generate Button (FAB Style) */}
+          {/* Floating Generate Button */}
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
-            {currentTab === 'basics' ? (
-              <Button
-                onClick={handleGenerateFloorPlan}
-                isLoading={isLoading}
-                size="lg"
-                className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
-                aria-label="Generate floor plan"
-              >
-                {isLoading ? 'Generating Plan...' : 'Generate Floor Plan'}
-                {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
-              </Button>
-            ) : currentTab === 'exterior' ? (
-              <Button
-                onClick={handleGenerateExterior}
-                isLoading={isLoading}
-                size="lg"
-                className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
-                aria-label="Generate exterior"
-              >
-                {isLoading ? 'Generating Exterior...' : 'Generate Exterior'}
-                {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
-              </Button>
-            ) : (
-              <Button
-                onClick={handleGenerateInterior}
-                isLoading={isLoading}
-                disabled={(roomFile && !params.roomType) || isLoading}
-                size="lg"
-                className={clsx(
-                  "rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none",
-                  (roomFile && !params.roomType)
-                    ? "bg-muted text-muted-foreground cursor-not-allowed opacity-50" 
-                    : "bg-primary text-primary-foreground"
-                )}
-                aria-label="Generate interior design"
-                title={(roomFile && !params.roomType) ? "Si subiste una foto, debes seleccionar el tipo de habitación" : "Generar diseño de interiores"}
-              >
-                {isLoading ? 'Designing...' : (roomFile && !params.roomType) ? 'Selecciona tipo de habitación' : 'Generate Interior'}
-                {!isLoading && !(roomFile && !params.roomType) && <Wand2 className="ml-3 w-5 h-5" />}
-              </Button>
-            )}
+            <Button
+              onClick={handleGenerate}
+              isLoading={isLoading}
+              size="lg"
+              className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
+              aria-label="Generate exterior render"
+            >
+              {isLoading ? 'Generating...' : 'Generate Exterior'}
+              {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
+            </Button>
           </div>
 
           {/* Result Section with Prompt Preview */}
@@ -558,38 +279,20 @@ export default function StudioPage() {
 
               {/* Right Column: Result Image */}
               <div className="lg:col-span-9 lg:order-2 order-1">
-                {currentTab === 'basics' ? (
-                  <ResultDisplay 
-                    imageUrl={floorPlanImageUrl} 
-                    isLoading={isLoading} 
-                    onRegenerate={handleGenerateFloorPlan}
-                    title="Floor Plan"
-                    subtitle="Architectural layout visualization"
-                  />
-                ) : currentTab === 'exterior' ? (
-                  <ResultDisplay 
-                    imageUrl={imageUrl} 
-                    isLoading={isLoading} 
-                    onRegenerate={handleGenerateExterior}
-                    title="Final Exterior"
-                    subtitle="Photorealistic architectural visualization"
-                  />
-                ) : (
-                  <ResultDisplay 
-                    imageUrl={interiorImageUrl} 
-                    isLoading={isLoading} 
-                    onRegenerate={handleGenerateInterior}
-                    title="Interior Design"
-                    subtitle="Photorealistic interior visualization"
-                  />
-                )}
+                <ResultDisplay
+                  imageUrl={imageUrl}
+                  isLoading={isLoading}
+                  onRegenerate={handleGenerate}
+                  title="Final Exterior"
+                  subtitle="Photorealistic architectural visualization"
+                />
               </div>
             </div>
           </div>
-          
+
         </div>
       </main>
-      
+
       {/* Footer */}
       <footer className="border-t border-border py-20 bg-foreground text-background">
         <div className="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-10">

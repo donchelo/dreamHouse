@@ -26,10 +26,7 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       icon: <Sparkles className="w-3.5 h-3.5" />,
       items: [
         { label: "TYPE", value: params.projectType },
-        { label: "ROOM", value: params.roomType },
         { label: "STYLE", value: params.architecturalStyles },
-        { label: "INT STYLE", value: params.interiorStyle },
-        { label: "FURNITURE", value: params.furnitureStyle },
         { label: "ARCHITECT", value: params.architect },
         { label: "MOOD", value: params.mood },
       ]
@@ -42,16 +39,13 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
         { label: "ENV", value: params.environment },
         { label: "CLIMATE", value: params.climate },
         { label: "TIME", value: params.timeOfDay },
-        { label: "INT LIGHT", value: params.interiorLighting },
       ]
     },
     {
       title: "Specifications",
       icon: <Building2 className="w-3.5 h-3.5" />,
       items: [
-        { label: "EXT MAT", value: params.materials },
-        { label: "WALL MAT", value: params.wallMaterial },
-        { label: "FLOOR MAT", value: params.floorMaterial },
+        { label: "MATERIALS", value: params.materials },
         { label: "SIZE", value: params.size },
         { label: "LEVELS", value: `${params.levels}` },
         { label: "FINISH", value: params.finishLevel },

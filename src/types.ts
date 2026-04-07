@@ -8,14 +8,14 @@ export interface DreamHouseParams {
   architecturalStyles: string[];
   architect: string[];
   mood: string;
-  
+
   // Section 2: Context & Location
   city: string;
   climate: string;
   environment: string;
   waterBody: string;
   weatherCondition: string;
-  
+
   // Section 3: Physical Specifications
   size: string;
   levels: number;
@@ -30,12 +30,12 @@ export interface DreamHouseParams {
   materials: string[];
   finishLevel: string;
   architecturalDetails: string[];
-  
+
   // Section 4: Aesthetics & Details
   colorPalette: string[];
   exteriorElements: string[];
   vegetation: string[];
-  
+
   // Section 5: Camera Configuration
   cameraAngle: string;
   composition: string;
@@ -43,31 +43,18 @@ export interface DreamHouseParams {
   season: string;
   lighting: string;
   humanContext: string;
-  
-  // Section 6: Floor Plan Output Configuration
-  fpOutputResolution: string;
-  fpAspectRatio: string;
-  
-  // Section 7: Exterior Output Configuration
+
+  // Section 6: Output Configuration
   renderOutputResolution: string;
   renderAspectRatio: string;
-  
-  // Section 8: Technical Notes (for Floor Plan)
+
+  // Section 7: Technical Notes
   technicalNotes: string;
-  
-  // Section 9: Art Direction (for Exterior)
+
+  // Section 8: Creative Direction
   artDirection: string;
   negativePrompt: string;
   thinkingLevel: "Minimal" | "High";
-
-  // Section 10: Interior Design
-  roomType: string;
-  interiorStyle: string[];
-  interiorDesigner: string[];
-  furnitureStyle: string;
-  interiorLighting: string;
-  wallMaterial: string[];
-  floorMaterial: string;
 }
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
@@ -112,28 +99,15 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   lighting: "",
   humanContext: "",
 
-  // Section 6: Floor Plan Output Configuration
-  fpOutputResolution: "",
-  fpAspectRatio: "",
-
-  // Section 7: Exterior Output Configuration
+  // Section 6: Output Configuration
   renderOutputResolution: "",
   renderAspectRatio: "",
 
-  // Section 8: Technical Notes (for Floor Plan)
+  // Section 7: Technical Notes
   technicalNotes: "",
 
-  // Section 9: Art Direction (for Exterior)
+  // Section 8: Creative Direction
   artDirection: "",
   negativePrompt: "",
   thinkingLevel: "Minimal",
-
-  // Section 10: Interior Design
-  roomType: "",
-  interiorStyle: [],
-  interiorDesigner: [],
-  furnitureStyle: "",
-  interiorLighting: "",
-  wallMaterial: [],
-  floorMaterial: ""
 };
