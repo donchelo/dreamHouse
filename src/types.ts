@@ -58,6 +58,7 @@ export interface DreamHouseParams {
   // Section 9: Art Direction (for Exterior)
   artDirection: string;
   negativePrompt: string;
+  thinkingLevel: "Minimal" | "High";
 
   // Section 10: Interior Design
   roomType: string;
@@ -125,6 +126,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   // Section 9: Art Direction (for Exterior)
   artDirection: "",
   negativePrompt: "",
+  thinkingLevel: "Minimal",
 
   // Section 10: Interior Design
   roomType: "Sala de estar (Living Room)",

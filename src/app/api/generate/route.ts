@@ -10,7 +10,7 @@ export const maxDuration = 60; // 60 seconds for Pro plan (or use 10 for Hobby)
 // Constants for validation
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
 const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total (Vercel limit is 4.5MB, we use 4MB for safety)
-const MAX_REFERENCE_IMAGES = 5;
+const MAX_REFERENCE_IMAGES = 14; // Nano Banana 2 support up to 14
 
 // Helper to map project types to English for better AI understanding
 const PROJECT_TYPE_MAP: Record<string, string> = {
@@ -360,13 +360,26 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
       }
 
       const generationResponse = await ai.models.generateContent({
-        model: "gemini-3-pro-image-preview",
+        model: "gemini-3.1-flash-image-preview",
         contents: [{ parts: interiorParts }],
         config: {
-          tools: [{ googleSearch: {} }],
+          tools: [
+            {
+              googleSearch: {
+                searchTypes: {
+                  webSearch: {},
+                  imageSearch: {}
+                }
+              }
+            }
+          ],
           imageConfig: {
             aspectRatio: params.renderAspectRatio || "16:9",
             imageSize: params.renderOutputResolution || "4K"
+          },
+          thinkingConfig: {
+            thinkingLevel: params.thinkingLevel || "Minimal",
+            includeThoughts: true
           }
         }
       });
@@ -523,13 +536,26 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
     }
 
     const generationResponse = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: "gemini-3.1-flash-image-preview",
       contents: [{ parts: imageGenerationParts }],
       config: {
-        tools: [{ googleSearch: {} }],
+        tools: [
+          {
+            googleSearch: {
+              searchTypes: {
+                webSearch: {},
+                imageSearch: {}
+              }
+            }
+          }
+        ],
         imageConfig: {
           aspectRatio: params.renderAspectRatio || "16:9",
           imageSize: params.renderOutputResolution || "4K"
+        },
+        thinkingConfig: {
+          thinkingLevel: params.thinkingLevel || "Minimal",
+          includeThoughts: true
         }
       }
     });

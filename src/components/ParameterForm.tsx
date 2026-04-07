@@ -385,6 +385,15 @@ export default function ParameterForm({
                   disabled={disabled}
                 />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Select
+                  label="Nivel de Pensamiento (AI)"
+                  value={params.thinkingLevel}
+                  onChange={(e) => handleChange("thinkingLevel", e.target.value as "Minimal" | "High")}
+                  options={C.THINKING_LEVELS}
+                  disabled={disabled}
+                />
+              </div>
               <div className="p-4 bg-primary/5 border border-primary flex gap-3 items-start rounded-none" role="note">
                  <div className="p-1.5 bg-primary text-primary-foreground shrink-0" aria-hidden="true">
                    <Sparkles className="w-4 h-4" />
@@ -610,6 +619,15 @@ export default function ParameterForm({
                   disabled={disabled}
                 />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Select
+                  label="Nivel de Pensamiento (AI)"
+                  value={params.thinkingLevel}
+                  onChange={(e) => handleChange("thinkingLevel", e.target.value as "Minimal" | "High")}
+                  options={C.THINKING_LEVELS}
+                  disabled={disabled}
+                />
+              </div>
               <div className="p-4 bg-primary/5 border border-primary flex gap-3 items-start rounded-none" role="note">
                  <div className="p-1.5 bg-primary text-primary-foreground shrink-0" aria-hidden="true">
                    <Sparkles className="w-4 h-4" />
@@ -831,6 +849,15 @@ export default function ParameterForm({
                 options={C.OUTPUT_RESOLUTIONS}
                 disabled={disabled}
               />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
+                <Select
+                  label="Nivel de Pensamiento (AI)"
+                  value={params.thinkingLevel}
+                  onChange={(e) => handleChange("thinkingLevel", e.target.value as "Minimal" | "High")}
+                  options={C.THINKING_LEVELS}
+                  disabled={disabled}
+                />
+              </div>
             </div>
           </Section>
 

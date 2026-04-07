@@ -172,13 +172,26 @@ Generate a high-quality architectural floor plan visualization that clearly comm
     parts.push(...imageParts);
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: "gemini-3.1-flash-image-preview",
       contents: [{ parts }],
       config: {
-        tools: [{ googleSearch: {} }],
+        tools: [
+          {
+            googleSearch: {
+              searchTypes: {
+                webSearch: {},
+                imageSearch: {}
+              }
+            }
+          }
+        ],
         imageConfig: {
           aspectRatio: params.fpAspectRatio || "16:9",
           imageSize: params.fpOutputResolution || "2K"
+        },
+        thinkingConfig: {
+          thinkingLevel: params.thinkingLevel || "Minimal",
+          includeThoughts: true
         }
       }
     });

@@ -336,6 +336,7 @@ export const HUMAN_CONTEXT = [
 // ------------------------------------------
 
 export const OUTPUT_RESOLUTIONS = [
+  "512",  // 0.5K (Nano Banana 2)
   "1K",   // ~1024px
   "2K",   // ~2048px 
   "4K"    // ~4096px (máxima calidad)
@@ -346,7 +347,16 @@ export const ASPECT_RATIOS = [
   "4:3",    // Tradicional
   "1:1",    // Cuadrado
   "9:16",   // Vertical/Portrait
-  "3:4"     // Vertical tradicional
+  "3:4",    // Vertical tradicional
+  "1:4",    // Altamente vertical (Nano Banana 2)
+  "4:1",    // Altamente panorámico (Nano Banana 2)
+  "1:8",    // Extremo vertical (Nano Banana 2)
+  "8:1"     // Extremo panorámico (Nano Banana 2)
+];
+
+export const THINKING_LEVELS = [
+  "Minimal",
+  "High"
 ];
 
 // ------------------------------------------
