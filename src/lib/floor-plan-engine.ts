@@ -81,19 +81,19 @@ The inspiration image defines the building's FORM. Your task is to organize the 
 ` : ''}
 
 **PROJECT CONTEXT:**
-- **Project Type:** ${projectType}
-- **Size:** ${params.size} (approximately ${avgSize}m² total)
-- **Levels:** ${params.levels} floor(s)
-- **Layout Type:** ${params.layoutType}
-- **Bedrooms:** ${params.bedrooms} (must include exactly this number)
-- **Bathrooms:** ${params.bathrooms} (must include exactly this number)
-- **Parking Spots:** ${params.parkingSpots} ${params.parkingSpots > 0 ? `(include ${params.parkingSpots} parking space(s) in the design)` : '(no parking required)'}
-- **Kitchen Type:** ${params.kitchenType}
-- **Living Area Type:** ${params.livingAreaType}
-- **Social Areas:** ${params.socialAreas.length > 0 ? params.socialAreas.join(", ") : "Standard layout"}
-- **Architectural Style:** ${archStyle}${architects ? ` (inspired by ${architects})` : ''}
-- **Materials:** ${params.materials.join(", ") || "Not specified"}
-- **Environment:** ${params.environment}, ${params.climate}
+${projectType ? `- **Project Type:** ${projectType}` : ''}
+${params.size ? `- **Size:** ${params.size}${avgSize ? ` (approximately ${avgSize}m² total)` : ''}` : ''}
+${params.levels > 0 ? `- **Levels:** ${params.levels} floor(s)` : ''}
+${params.layoutType ? `- **Layout Type:** ${params.layoutType}` : ''}
+${params.bedrooms > 0 ? `- **Bedrooms:** EXACTLY ${params.bedrooms}` : ''}
+${params.bathrooms > 0 ? `- **Bathrooms:** EXACTLY ${params.bathrooms}` : ''}
+${params.parkingSpots > 0 ? `- **Parking Spots:** EXACTLY ${params.parkingSpots}` : ''}
+${params.kitchenType ? `- **Kitchen Type:** ${params.kitchenType}` : ''}
+${params.livingAreaType ? `- **Living Area Type:** ${params.livingAreaType}` : ''}
+${params.socialAreas.length > 0 ? `- **Social Areas:** ${params.socialAreas.join(", ")}` : ''}
+${archStyle ? `- **Architectural Style:** ${archStyle}${architects ? ` (inspired by ${architects})` : ''}` : architects ? `- **Inspired by:** ${architects}` : ''}
+${params.materials.length > 0 ? `- **Materials:** ${params.materials.join(", ")}` : ''}
+${[params.environment, params.climate].filter(Boolean).join(", ") ? `- **Environment:** ${[params.environment, params.climate].filter(Boolean).join(", ")}` : ''}
 ${params.city ? `- **Location:** ${params.city}` : ''}
 ${params.exteriorElements.length > 0 ? `- **Exterior Elements:** ${params.exteriorElements.join(", ")}` : ''}
 ${params.architecturalDetails && params.architecturalDetails.length > 0 ? `- **Architectural Details:** ${params.architecturalDetails.join(", ")}` : ''}
@@ -102,6 +102,17 @@ ${imageParts.length > 1 ? `- **Additional Visual Context:** Additional reference
 ${imageParts.length === 1 && !hasInspirationImage ? `- **Visual Context:** Reference images are attached. Use these images to inform the design: analyze the terrain, context, and architectural style references to create a floor plan that integrates with the site and follows the visual language of the reference images.` : ''}
 
 **DESIGN REQUIREMENTS:**
+
+${(params.bedrooms > 0 || params.bathrooms > 0 || params.parkingSpots > 0 || params.levels > 0) ? `
+**ROOM COUNT (NON-NEGOTIABLE — READ BEFORE DRAWING):**
+The following counts are ABSOLUTE. The final floor plan MUST contain EXACTLY these numbers — not one more, not one fewer:
+${params.levels > 0 ? `- FLOORS: **${params.levels}** — show each floor as a separate labeled plan view` : ''}
+${params.bedrooms > 0 ? `- BEDROOMS: **${params.bedrooms}** — label each one ("Bedroom 1", "Bedroom 2", ...)` : ''}
+${params.bathrooms > 0 ? `- BATHROOMS: **${params.bathrooms}** — label each one ("Bathroom 1", "Bathroom 2", ...)` : ''}
+${params.parkingSpots > 0 ? `- PARKING SPACES: **${params.parkingSpots}** — clearly shown and labeled in the plan` : ''}
+
+Before generating, count your rooms: if the total does not match exactly, redesign the layout until it does.
+` : ''}
 ${hasInspirationImage ? `
 **GEOMETRIC CONSTRAINT (HIGHEST PRIORITY):**
 The inspiration image attached as the FIRST image defines the EXACT shape and footprint of the building. This is NON-NEGOTIABLE.
@@ -113,7 +124,7 @@ The inspiration image attached as the FIRST image defines the EXACT shape and fo
 4. Adapt room sizes and arrangements to fit within the traced contour while maintaining functionality and accessibility standards.
 
 The floor plan MUST match the inspiration image's shape exactly. All interior spaces must be organized within that fixed geometric boundary.
-` : `Design a functional and architecturally coherent floor plan following a ${params.layoutType} layout approach.`}
+` : params.layoutType ? `Design a functional and architecturally coherent floor plan following a ${params.layoutType} layout approach.` : 'Design a functional and architecturally coherent floor plan.'}
 
 **FUNDAMENTAL DESIGN PRINCIPLES (MANDATORY):**
 
@@ -160,8 +171,18 @@ ${params.technicalNotes ? `\n\n**CRITICAL TECHNICAL REQUIREMENTS:**\n${params.te
 - Color scheme: Professional blueprints style (white/light background with dark lines) OR modern 3D visualization with subtle colors
 - Include scale reference and north arrow if applicable
 - Make it clear and readable, suitable for architectural presentation
-- Show all ${params.levels} level(s) if multi-story (use separate views or stacked layout)
+${params.levels > 0 ? `- Show all ${params.levels} floor(s) as separate labeled plan views` : ''}
 - The floor plan should clearly show the spatial organization, circulation flow, and key features
+
+${(params.bedrooms > 0 || params.bathrooms > 0 || params.parkingSpots > 0 || params.levels > 0) ? `
+**FINAL VERIFICATION (BEFORE RENDERING):**
+Count every labeled room in your plan. The image is only correct if it shows:
+${params.levels > 0 ? `- Exactly ${params.levels} floor plan view(s)` : ''}
+${params.bedrooms > 0 ? `- Exactly ${params.bedrooms} labeled bedroom(s)` : ''}
+${params.bathrooms > 0 ? `- Exactly ${params.bathrooms} labeled bathroom(s)` : ''}
+${params.parkingSpots > 0 ? `- Exactly ${params.parkingSpots} labeled parking space(s)` : ''}
+If any count is off, adjust the layout — do not generate an incorrect plan.
+` : ''}
 
 **OUTPUT:**
 Generate a high-quality architectural floor plan visualization that clearly communicates the spatial organization, circulation flow, and key features described above.

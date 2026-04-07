@@ -475,6 +475,7 @@ ${[params.bedrooms > 0 ? `${params.bedrooms} bedroom(s)` : '', params.bathrooms 
 ${params.kitchenType ? `- **Kitchen Type:** ${params.kitchenType}` : ''}
 ${params.livingAreaType ? `- **Living Area:** ${params.livingAreaType}` : ''}
 ${params.socialAreas.length > 0 ? `- **Social Areas:** ${params.socialAreas.join(', ')}` : ''}
+${params.layoutType ? `- **Layout Type:** ${params.layoutType}` : ''}
 ${materialsList ? `- **Materials:** ${materialsList}` : ''}
 ${colors ? `- **Color Palette:** ${colors}` : ''}
 ${finish ? `- **Finish:** ${finish}` : ''}
@@ -495,6 +496,8 @@ ${params.humanContext ? `- **Human Scale:** ${params.humanContext}` : ''}
 3. **VISUAL REFERENCE IMAGES (STYLE REFERENCE):** If VISUAL REFERENCE IMAGES are attached, use them as the PRIMARY source for architectural style, material selection, color palette, and aesthetic details. Incorporate their visual language directly into the final image, working within the geometric framework defined by the floor plan (~80% fidelity).
 4. **PARAMETERS (AESTHETIC LAYER):** Apply the architectural style and materials specified in the parameters as an aesthetic layer over the structural geometry defined by the floor plan. These parameters inform HOW the building looks, while the floor plan provides the foundational shape (~80%) with room for refinement (~20%).
 5. **OUTPUT REQUIREMENT:** Generate ONLY EXTERIOR VIEWS. Photorealistic quality, cinematic lighting. The exterior should be a faithful 3D representation of the floor plan's geometry (~80% fidelity) with intelligent architectural refinements (~20%).
+
+${params.technicalNotes ? `\n**TECHNICAL REQUIREMENTS:**\n${params.technicalNotes}` : ''}
 
 ${params.negativePrompt ? `\n**NEGATIVE PROMPT / AVOID:**\nThe following elements MUST NOT appear in the generated image:\n${params.negativePrompt}\n\nStrictly avoid these elements. If any of these are present in the generated image, it will be considered incorrect.` : ''}
 
