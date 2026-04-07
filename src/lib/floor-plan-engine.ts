@@ -184,10 +184,12 @@ Generate a high-quality architectural floor plan visualization that clearly comm
           aspectRatio: params.fpAspectRatio || "16:9",
           imageSize: params.fpOutputResolution || "2K"
         },
-        thinkingConfig: {
-          thinkingLevel: params.thinkingLevel === "High" ? ThinkingLevel.HIGH : ThinkingLevel.LOW,
-          includeThoughts: true
-        }
+        ...(params.thinkingLevel === "High" ? {
+          thinkingConfig: {
+            thinkingLevel: ThinkingLevel.HIGH,
+            includeThoughts: true
+          }
+        } : {})
       }
     });
 

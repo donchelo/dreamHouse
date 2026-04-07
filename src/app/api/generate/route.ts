@@ -372,10 +372,12 @@ ${params.artDirection ? `**ARTISTIC DIRECTION:** ${params.artDirection}` : ''}
             aspectRatio: params.renderAspectRatio || "16:9",
             imageSize: params.renderOutputResolution || "4K"
           },
-          thinkingConfig: {
-            thinkingLevel: params.thinkingLevel === "High" ? ThinkingLevel.HIGH : ThinkingLevel.LOW,
-            includeThoughts: true
-          }
+          ...(params.thinkingLevel === "High" ? {
+            thinkingConfig: {
+              thinkingLevel: ThinkingLevel.HIGH,
+              includeThoughts: true
+            }
+          } : {})
         }
       });
 
@@ -543,10 +545,12 @@ ${params.artDirection ? `\n**ART DIRECTION:**\n${params.artDirection}` : ''}
           aspectRatio: params.renderAspectRatio || "16:9",
           imageSize: params.renderOutputResolution || "4K"
         },
-        thinkingConfig: {
-          thinkingLevel: params.thinkingLevel === "High" ? ThinkingLevel.HIGH : ThinkingLevel.LOW,
-          includeThoughts: true
-        }
+        ...(params.thinkingLevel === "High" ? {
+          thinkingConfig: {
+            thinkingLevel: ThinkingLevel.HIGH,
+            includeThoughts: true
+          }
+        } : {})
       }
     });
 
