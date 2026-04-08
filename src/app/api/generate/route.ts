@@ -4,7 +4,7 @@ import { DreamHouseParams } from '@/types';
 
 // Vercel configuration: maxDuration only works on Pro plan, but it's the correct way to declare it
 // Hobby plan has 10s limit, Pro plan allows up to 300s
-export const maxDuration = 60; // 60 seconds for Pro plan (or use 10 for Hobby)
+export const maxDuration = 120; // Increased to 120s to allow for image generation and thinking time
 
 // Constants for validation
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
@@ -85,7 +85,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Initialize Gemini Client with provided key
-    const ai = new GoogleGenAI({ apiKey });
+    // Initialize Gemini Client with provided key and increased timeout (120s)
+    const ai = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: { timeout: 120000 }
+    });
 
     const formData = await req.formData();
     const paramsJson = formData.get('params') as string;
@@ -379,36 +383,45 @@ ${verificationBlock}`.trim();
     return NextResponse.json({ imageUrl });
 
   } catch (error: unknown) {
-    console.error("API Error:", error);
+    console.error("API Error Detailed:", error);
+
+    let errorMessage = "Ocurrió un error inesperado al generar el render.";
+    let statusCode = 500;
+    let errorCode = "UNKNOWN_ERROR";
 
     if (error instanceof Error) {
-      if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
-        return NextResponse.json(
-          { message: 'Request timeout. The generation took too long. Consider using Vercel Pro plan for longer execution times, or reduce image complexity.', code: 'TIMEOUT' },
-          { status: 504 }
-        );
+      errorMessage = error.message;
+
+      // Handle common gRPC/API error strings
+      if (errorMessage.includes('Deadline expired') || errorMessage.includes('timeout') || errorMessage.includes('TIMEOUT')) {
+        errorMessage = "El tiempo de espera ha expirado (timeout). La generación está tomando más tiempo de lo esperado en los servidores de Google. Por favor, intenta de nuevo.";
+        statusCode = 504;
+        errorCode = "TIMEOUT";
+      } else if (errorMessage.includes('payload') || errorMessage.includes('too large')) {
+        errorMessage = "El tamaño de los archivos es demasiado grande. Por favor, reduce el tamaño o la cantidad de imágenes.";
+        statusCode = 413;
+        errorCode = "PAYLOAD_TOO_LARGE";
+      } else if (errorMessage.includes('API_KEY') || errorMessage.includes('authentication') || errorMessage.includes('401')) {
+        errorMessage = "Error de autenticación: la GEMINI_API_KEY no es válida o falta.";
+        statusCode = 401;
+        errorCode = "AUTH_ERROR";
+      } else if (errorMessage.includes('503') || errorMessage.includes('Service Unavailable')) {
+        errorMessage = "El servicio de Google AI no está disponible temporalmente (503). Por favor, intenta de nuevo en unos momentos.";
+        statusCode = 503;
+        errorCode = "SERVICE_UNAVAILABLE";
       }
-      if (error.message.includes('payload') || error.message.includes('too large')) {
-        return NextResponse.json(
-          { message: 'Payload too large. Please reduce image sizes or number of images.', code: 'PAYLOAD_TOO_LARGE' },
-          { status: 413 }
-        );
+
+      // If it's a specific SDK ApiError, it should have a status code
+      // We check for 'status' property which exists on Google AI SDK errors
+      const sdkError = error as { status?: number; code?: number };
+      if (sdkError.status) {
+        statusCode = sdkError.status;
       }
-      if (error.message.includes('API_KEY') || error.message.includes('authentication')) {
-        return NextResponse.json(
-          { message: 'Invalid or missing GEMINI_API_KEY. Please check your Vercel environment variables.', code: 'AUTH_ERROR' },
-          { status: 500 }
-        );
-      }
-      return NextResponse.json(
-        { message: error.message, code: 'INTERNAL_ERROR' },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json(
-      { message: 'Internal Server Error', code: 'UNKNOWN_ERROR' },
-      { status: 500 }
+      { message: errorMessage, code: errorCode },
+      { status: statusCode }
     );
   }
 }
