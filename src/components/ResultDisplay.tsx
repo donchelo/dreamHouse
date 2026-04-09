@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Download, RefreshCw, Sparkles, Maximize2, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, RefreshCw, Sparkles, Maximize2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from './ui/Button';
 import clsx from 'clsx';

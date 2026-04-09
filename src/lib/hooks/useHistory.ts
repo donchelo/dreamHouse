@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db, GenerationRecord } from '../db';
-import { DreamHouseParams } from '../../types';
 
 export function useHistory() {
   const [history, setHistory] = useState<GenerationRecord[]>([]);

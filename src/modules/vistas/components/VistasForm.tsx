@@ -1,11 +1,9 @@
 import React from 'react';
 import { DreamHouseParams } from '@/types';
 import * as VC from '../constants';
-import * as SC from '../../shared/constants';
 import clsx from 'clsx';
-import { Sparkles, MapPin, Layers, Palette, Camera, ImageIcon, PenLine, LayoutGrid } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
-import { Select } from '@/components/ui/Select';
 import { Chip } from '@/components/ui/Chip';
 
 interface VistasFormProps {

@@ -18,7 +18,6 @@ import { Section } from '@/components/ui/Section';
 import * as SC from '@/modules/shared/constants';
 import * as EC from '@/modules/exterior/constants';
 import * as IC from '@/modules/interior/constants';
-import * as VC from '@/modules/vistas/constants';
 import clsx from 'clsx';
 import { useHistory } from '@/lib/hooks/useHistory';
 import HistoryGallery from '@/components/HistoryGallery';
@@ -239,7 +238,7 @@ function StudioContent() {
           try {
             const errorData = await apiResponse.json();
             errorMessage = errorData.message || errorMessage;
-          } catch (jsonErr) {
+          } catch {
             // If response is not JSON (e.g. HTML 500 error), get the text
             const errorText = await apiResponse.text();
             console.error("Non-JSON error response:", errorText);
@@ -251,7 +250,7 @@ function StudioContent() {
         let data;
         try {
           data = await apiResponse.json();
-        } catch (jsonErr) {
+        } catch {
           const errorText = await apiResponse.text();
           console.error("Non-JSON success response (unexpected):", errorText);
           throw new Error("Failed to parse generation result. The server returned an invalid format.");
@@ -261,7 +260,7 @@ function StudioContent() {
         // Save to local history
         try {
           await saveToHistory({
-            mode: params.mode as any,
+            mode: params.mode as 'exterior' | 'interior' | 'edit' | 'vistas',
             params: params,
             imageUrl: data.imageUrl
           });

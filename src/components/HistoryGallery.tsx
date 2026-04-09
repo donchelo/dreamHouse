@@ -29,7 +29,7 @@ export default function HistoryGallery({
         hour: '2-digit', 
         minute: '2-digit' 
       }).format(new Date(timestamp));
-    } catch (e) {
+    } catch {
       return new Date(timestamp).toLocaleDateString();
     }
   };

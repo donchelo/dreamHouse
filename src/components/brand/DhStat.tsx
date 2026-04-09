@@ -3,7 +3,6 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { DhDivider } from './DhDivider';
 import { palette, typography as t } from '@/lib/theme/tokens';
 
 export interface DhStatProps {
