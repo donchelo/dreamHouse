@@ -12,6 +12,7 @@ interface LotUploaderProps {
   title?: string;
   description?: string;
   icon?: React.ReactNode;
+  skipSizeValidation?: boolean;
 }
 
 export default function LotUploader({ 
@@ -19,7 +20,8 @@ export default function LotUploader({
   onFileChange, 
   title = "Foto del Lote / Terreno",
   description = "Sube una foto real del lugar donde se construirá. La IA adaptará el diseño al entorno.",
-  icon = <Map className="w-5 h-5 text-green-500" />
+  icon = <Map className="w-5 h-5 text-green-500" />,
+  skipSizeValidation = false
 }: LotUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function LotUploader({
     );
     
     if (droppedFile) {
-      const validation = validateImageFile(droppedFile, 'Imagen del lote');
+      const validation = validateImageFile(droppedFile, 'Imagen del lote', skipSizeValidation);
       if (!validation.valid) {
         setError(validation.error || 'Error al validar imagen');
         return;
@@ -59,7 +61,7 @@ export default function LotUploader({
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type.startsWith('image/')) {
-        const validation = validateImageFile(selectedFile, 'Imagen del lote');
+        const validation = validateImageFile(selectedFile, 'Imagen del lote', skipSizeValidation);
         if (!validation.valid) {
           setError(validation.error || 'Error al validar imagen');
           return;
@@ -125,7 +127,7 @@ export default function LotUploader({
               <span className="text-green-500 font-semibold">Haz clic para subir</span> o arrastra la foto aquí
             </p>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Máx. {formatFileSize(MAX_IMAGE_SIZE)}
+              {skipSizeValidation ? "Sin límite de tamaño" : `Máx. ${formatFileSize(MAX_IMAGE_SIZE)}`}
             </p>
           </div>
         ) : (

@@ -13,7 +13,7 @@ export interface ValidationResult {
 /**
  * Validates an image file size and type
  */
-export function validateImageFile(file: File, fieldName: string = 'Image'): ValidationResult {
+export function validateImageFile(file: File, fieldName: string = 'Image', skipSizeLimit: boolean = false): ValidationResult {
   if (!file.type.startsWith('image/')) {
     return {
       valid: false,
@@ -21,7 +21,7 @@ export function validateImageFile(file: File, fieldName: string = 'Image'): Vali
     };
   }
 
-  if (file.size > MAX_IMAGE_SIZE) {
+  if (!skipSizeLimit && file.size > MAX_IMAGE_SIZE) {
     return {
       valid: false,
       error: `${fieldName} excede el tamaño máximo de ${MAX_IMAGE_SIZE / 1024 / 1024}MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(2)}MB`

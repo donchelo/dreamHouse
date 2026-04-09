@@ -285,6 +285,7 @@ export default function StudioPage() {
           )}
 
           {/* 03: Contexto (Mode-specific: Lote vs Espacio) */}
+          {params.mode !== 'edit' && (
           <Section
             title={params.mode === 'edit' ? "Imagen a Editar" : (params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual")}
             number="03"
@@ -304,8 +305,10 @@ export default function StudioPage() {
                   : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño.")
               }
               icon={params.mode === 'exterior' ? undefined : <Armchair className="w-5 h-5 text-primary" />}
+              skipSizeValidation={params.mode === 'edit'}
             />
           </Section>
+          )}
 
           {/* 04: Estructura (Mode-specific: Plano vs Layout) */}
           {params.mode !== 'edit' && (
@@ -354,6 +357,7 @@ export default function StudioPage() {
               activeSection={activeSection}
               onSectionChange={toggleSection}
               baseImage={lotFile}
+              onBaseImageUpdate={setLotFile}
               onCompositeImageUpdate={setEditCompositeFile}
             />
           )}

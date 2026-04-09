@@ -14,8 +14,8 @@ const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total (Vercel limit is 4.
 const MAX_REFERENCE_IMAGES = 14; // Nano Banana 2 support up to 14
 
 // Helper function to validate image size
-function validateImageSize(file: File, fieldName: string): { valid: boolean; error?: string } {
-  if (file.size > MAX_IMAGE_SIZE) {
+function validateImageSize(file: File, fieldName: string, skipSizeLimit: boolean = false): { valid: boolean; error?: string } {
+  if (!skipSizeLimit && file.size > MAX_IMAGE_SIZE) {
     return {
       valid: false,
       error: `${fieldName} exceeds maximum size of ${MAX_IMAGE_SIZE / 1024 / 1024}MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`
@@ -69,6 +69,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
     }
 
+    const params: DreamHouseParams = JSON.parse(paramsJson);
+
     // Validate number of reference images
     if (files.length > MAX_REFERENCE_IMAGES) {
       return NextResponse.json(
@@ -85,22 +87,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const isEditMode = params.mode === 'edit';
+
     if (lotImage) {
-      const validation = validateImageSize(lotImage, 'Lot image');
+      const validation = validateImageSize(lotImage, 'Lot image', isEditMode);
       if (!validation.valid) {
         return NextResponse.json({ message: validation.error }, { status: 400 });
       }
     }
 
     if (floorPlanImage) {
-      const validation = validateImageSize(floorPlanImage, 'Floor plan image');
+      const validation = validateImageSize(floorPlanImage, 'Floor plan image', isEditMode);
       if (!validation.valid) {
         return NextResponse.json({ message: validation.error }, { status: 400 });
       }
     }
 
     if (editCompositeFile) {
-      const validation = validateImageSize(editCompositeFile, 'Edit Composite image');
+      const validation = validateImageSize(editCompositeFile, 'Edit Composite image', true);
       if (!validation.valid) {
         return NextResponse.json({ message: validation.error }, { status: 400 });
       }
@@ -108,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     // Validate total payload size
     const totalPayloadSize = calculatePayloadSize(files, lotImage, floorPlanImage, editCompositeFile, paramsJson);
-    if (totalPayloadSize > MAX_TOTAL_PAYLOAD_SIZE) {
+    if (!isEditMode && totalPayloadSize > MAX_TOTAL_PAYLOAD_SIZE) {
       return NextResponse.json(
         {
           message: `Total payload size (${(totalPayloadSize / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size of ${MAX_TOTAL_PAYLOAD_SIZE / 1024 / 1024}MB. Please reduce image sizes or number of images.`
@@ -116,8 +120,6 @@ export async function POST(req: NextRequest) {
         { status: 413 }
       );
     }
-
-    const params: DreamHouseParams = JSON.parse(paramsJson);
 
     // Process images to base64 for multimodal generation
     let lotImageBase64 = "";
