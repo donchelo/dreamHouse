@@ -1,62 +1,57 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { darkTheme, lightTheme } from '@/lib/theme';
 
-type Theme = "light" | "dark";
+type Mode = 'light' | 'dark';
 
 interface ThemeContextType {
-  theme: Theme;
+  theme: Mode;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark"); // Default to dark
+  const [mode, setMode] = useState<Mode>('dark');
 
   useEffect(() => {
-    // Check for saved theme or system preference
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute("data-theme", savedTheme);
-      if (savedTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    } else {
-        // Default
-        document.documentElement.setAttribute("data-theme", "dark");
-        document.documentElement.classList.add("dark");
-    }
+    const saved = localStorage.getItem('dh-theme') as Mode | null;
+    const initial = saved ?? 'dark';
+    setMode(initial);
+    document.documentElement.setAttribute('data-theme', initial);
+    if (initial === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    const next: Mode = mode === 'light' ? 'dark' : 'light';
+    setMode(next);
+    localStorage.setItem('dh-theme', next);
+    document.documentElement.setAttribute('data-theme', next);
+    if (next === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   };
 
+  const muiTheme = useMemo(
+    () => (mode === 'dark' ? darkTheme : lightTheme),
+    [mode],
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+    <ThemeContext.Provider value={{ theme: mode, toggleTheme }}>
+      <MuiThemeProvider theme={muiTheme}>
+        <CssBaseline />
+        {children}
+      </MuiThemeProvider>
     </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
 }
-

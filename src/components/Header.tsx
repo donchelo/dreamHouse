@@ -1,249 +1,355 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Drawer from '@mui/material/Drawer';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
+import OutlinedInput from '@mui/material/OutlinedInput';
 import Link from 'next/link';
-import { Menu, X, Sun, Moon, Key, CheckCircle, AlertCircle } from 'lucide-react';
-import { clsx } from 'clsx';
-import { useTheme } from './ThemeProvider';
 import { usePathname } from 'next/navigation';
 
-export default function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const { theme, toggleTheme } = useTheme();
-  const [apiKey, setApiKey] = useState('');
-  const [isKeyVisible, setIsKeyVisible] = useState(false);
-  const pathname = usePathname();
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import KeyIcon from '@mui/icons-material/KeyOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 
-  // Load API key from localStorage on mount
+import { DhButton, DhLogo, DhBadge } from '@/components/brand';
+import { useTheme } from '@/components/ThemeProvider';
+import { palette, typography as t } from '@/lib/theme/tokens';
+
+const NAV_LINKS = [
+  { label: 'Vision',  href: '/#vision' },
+  { label: 'Process', href: '/#process' },
+  { label: 'Studio',  href: '/studio' },
+  { label: 'Brand',   href: '/brand' },
+];
+
+export default function Header() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [scrolled, setScrolled]     = useState(false);
+  const [apiKey, setApiKey]         = useState('');
+  const [keyVisible, setKeyVisible] = useState(false);
+  const { theme, toggleTheme }      = useTheme();
+  const pathname                    = usePathname();
+
   useEffect(() => {
-    const savedKey = localStorage.getItem('GEMINI_API_KEY');
-    if (savedKey) {
-      setApiKey(savedKey);
-    }
+    const saved = localStorage.getItem('GEMINI_API_KEY');
+    if (saved) setApiKey(saved);
   }, []);
 
-  // Save API key to localStorage when it changes
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newKey = e.target.value;
-    setApiKey(newKey);
-    localStorage.setItem('GEMINI_API_KEY', newKey);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const handleApiKey = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setApiKey(v);
+    localStorage.setItem('GEMINI_API_KEY', v);
   };
 
-  // Detect scroll for header background change
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleNavClick = (id: string) => {
-    if (pathname === '/') {
-      const element = document.getElementById(id.toLowerCase());
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+  const handleNavClick = (href: string) => {
+    setDrawerOpen(false);
+    if (href.startsWith('/#') && pathname === '/') {
+      const id = href.slice(2);
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     }
-    setIsMobileMenuOpen(false);
   };
 
   return (
-    <header className={clsx(
-      "sticky top-0 z-50 w-full transition-all duration-300",
-      scrolled 
-        ? "bg-background border-b border-border" 
-        : "bg-transparent"
-    )}>
-      <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
-        {/* Logo */}
-        <Link 
-          href="/"
-          className="flex items-center gap-3 group cursor-pointer text-left"
+    <>
+      <AppBar
+        position="sticky"
+        sx={{
+          backgroundColor: scrolled
+            ? (theme === 'dark' ? 'rgba(5,5,5,0.92)' : 'rgba(247,246,244,0.92)')
+            : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+          borderBottom: scrolled
+            ? `1px solid ${theme === 'dark' ? palette.stone800 : palette.stone200}`
+            : '1px solid transparent',
+          transition: 'all 300ms cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        <Toolbar
+          sx={{
+            maxWidth: 1440,
+            width: '100%',
+            mx: 'auto',
+            px: { xs: 3, md: 6 },
+            height: 72,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            minHeight: '72px !important',
+          }}
         >
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-bold tracking-tighter uppercase">
-              DreamHouse
-            </h1>
-            <span className="text-[10px] uppercase tracking-[0.2em] font-medium border-t border-foreground/20 pt-1 mt-1 inline-block w-full text-center group-hover:border-primary transition-colors">
-              Architecture
-            </span>
-          </div>
-        </Link>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-8">
-          <ul className="flex items-center gap-8">
-            {['Vision', 'Process'].map((item) => (
-              <li key={item}>
-                <Link 
-                  href={`/#${item.toLowerCase()}`}
-                  onClick={(e) => {
-                    if (pathname === '/') {
-                      e.preventDefault();
-                      handleNavClick(item.toLowerCase());
-                    }
-                  }}
-                  className="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-primary transition-colors"
-                >
-                  {item}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link 
-                href="/studio"
-                className={clsx(
-                  "text-[10px] font-bold uppercase tracking-[0.2em] hover:text-primary transition-colors",
-                  pathname === '/studio' && "text-primary"
-                )}
-              >
-                Studio
-              </Link>
-            </li>
-          </ul>
-          
-          <div className="h-6 w-px bg-border mx-2" />
+          {/* Logo */}
+          <DhLogo size="sm" />
 
-          {/* API Key Input */}
-          <div className="flex items-center gap-2 bg-card border border-border px-3 py-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all">
-            <div className="flex items-center gap-1.5 mr-2">
+          {/* Desktop nav */}
+          <Box
+            component="nav"
+            sx={{
+              display: { xs: 'none', lg: 'flex' },
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            {NAV_LINKS.map(({ label, href }) => (
+              <Link
+                key={label}
+                href={href}
+                onClick={() => handleNavClick(href)}
+                style={{ textDecoration: 'none' }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: t.fontMono,
+                    fontSize: t.size['2xs'],
+                    fontWeight: t.weight.bold,
+                    letterSpacing: t.tracking.caps,
+                    textTransform: 'uppercase',
+                    color:
+                      (href === '/studio' && pathname === '/studio') ||
+                      (href === '/brand' && pathname === '/brand')
+                        ? palette.lime
+                        : 'text.secondary',
+                    transition: 'color 200ms ease',
+                    '&:hover': { color: 'text.primary' },
+                  }}
+                >
+                  {label}
+                </Typography>
+              </Link>
+            ))}
+          </Box>
+
+          {/* Desktop actions */}
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center' }}
+          >
+            {/* API Key */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2,
+                py: 1,
+                border: `1px solid ${palette.stone800}`,
+                backgroundColor: theme === 'dark' ? palette.stone900 : '#FFFFFF',
+              }}
+            >
               {apiKey ? (
-                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                <CheckCircleOutlineIcon sx={{ fontSize: 14, color: palette.success }} />
               ) : (
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                <ErrorOutlineIcon sx={{ fontSize: 14, color: palette.warning }} />
               )}
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <Typography
+                sx={{
+                  fontFamily: t.fontMono,
+                  fontSize: '9px',
+                  fontWeight: t.weight.bold,
+                  letterSpacing: t.tracking.caps,
+                  textTransform: 'uppercase',
+                  color: palette.stone500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {apiKey ? 'API Active' : 'API Required'}
-              </span>
-            </div>
-            <div className="relative flex items-center">
-              <Key className="absolute left-0 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-              <input
-                type={isKeyVisible ? "text" : "password"}
+              </Typography>
+              <OutlinedInput
+                type={keyVisible ? 'text' : 'password'}
                 value={apiKey}
-                onChange={handleApiKeyChange}
-                placeholder="Gemini API Key..."
-                className="bg-transparent border-none text-xs font-mono pl-5 pr-2 focus:ring-0 w-32 md:w-48 placeholder:text-muted-foreground/50"
+                onChange={handleApiKey}
+                placeholder="Gemini key..."
+                size="small"
+                startAdornment={
+                  <InputAdornment position="start">
+                    <KeyIcon sx={{ fontSize: 12, color: palette.stone500 }} />
+                  </InputAdornment>
+                }
+                sx={{
+                  width: 160,
+                  height: 28,
+                  fontFamily: t.fontMono,
+                  fontSize: t.size.xs,
+                  border: 'none',
+                  outline: 'none',
+                  '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                  '& input': { p: '0 4px', color: 'text.primary' },
+                  '& input::placeholder': { color: palette.stone600, opacity: 1 },
+                }}
               />
-              <button 
-                onClick={() => setIsKeyVisible(!isKeyVisible)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                title={isKeyVisible ? "Hide key" : "Show key"}
+              <Typography
+                component="button"
+                onClick={() => setKeyVisible(!keyVisible)}
+                sx={{
+                  fontFamily: t.fontMono,
+                  fontSize: '9px',
+                  fontWeight: t.weight.bold,
+                  letterSpacing: t.tracking.wide,
+                  textTransform: 'uppercase',
+                  color: palette.stone500,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  p: 0,
+                  '&:hover': { color: 'text.primary' },
+                }}
               >
-                <span className="text-[10px] font-bold uppercase px-1">{isKeyVisible ? 'Hide' : 'Show'}</span>
-              </button>
-            </div>
-          </div>
+                {keyVisible ? 'Hide' : 'Show'}
+              </Typography>
+            </Box>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-muted transition-colors border border-transparent hover:border-border"
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
+            {/* Theme toggle */}
+            <IconButton onClick={toggleTheme} size="small" aria-label="Toggle theme">
+              {theme === 'light'
+                ? <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+                : <LightModeOutlinedIcon sx={{ fontSize: 18 }} />
+              }
+            </IconButton>
 
-          {/* CTA Button */}
-          <Link href="/studio">
-            <button className="relative bg-primary text-primary-foreground px-6 py-2 text-sm font-bold uppercase tracking-wider border border-transparent hover:bg-foreground hover:text-background transition-colors">
-              Start Project
-            </button>
-          </Link>
-        </nav>
-
-        {/* Mobile Menu Button */}
-        <div className="flex items-center gap-4 lg:hidden">
-           <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-muted transition-colors"
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
-          
-          <button 
-            className="p-2 hover:bg-muted transition-colors"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div className={clsx(
-        "lg:hidden fixed inset-0 top-20 bg-background z-40 transition-transform duration-300 ease-in-out border-t border-border",
-        isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-      )}>
-        <nav className="flex flex-col p-8 gap-10">
-          <ul className="flex flex-col gap-6">
-            {['Vision', 'Process'].map((item) => (
-              <li key={item}>
-                <Link 
-                  href={`/#${item.toLowerCase()}`}
-                  onClick={(e) => {
-                    if (pathname === '/') {
-                      e.preventDefault();
-                      handleNavClick(item.toLowerCase());
-                    } else {
-                      setIsMobileMenuOpen(false);
-                    }
-                  }}
-                  className="text-2xl font-black uppercase tracking-tighter hover:text-primary transition-colors"
-                >
-                  {item}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link 
-                href="/studio"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={clsx(
-                  "text-2xl font-black uppercase tracking-tighter hover:text-primary transition-colors",
-                  pathname === '/studio' && "text-primary"
-                )}
-              >
-                Studio
-              </Link>
-            </li>
-          </ul>
-
-          <div className="w-full h-px bg-border" />
-
-          {/* Mobile API Key Input */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Gemini API Key
-            </label>
-            <div className="flex items-center gap-2 bg-card border border-border p-3">
-              <Key className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="password"
-                value={apiKey}
-                onChange={handleApiKeyChange}
-                placeholder="Enter your key..."
-                className="bg-transparent border-none text-sm font-mono focus:ring-0 flex-1"
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground italic">
-              Key is stored locally in your browser.
-            </p>
-          </div>
-          
-          <div className="pt-8 mt-4 border-t border-border">
-            <Link href="/studio" onClick={() => setIsMobileMenuOpen(false)}>
-              <button 
-                className="w-full bg-primary text-primary-foreground px-6 py-4 text-lg font-bold uppercase tracking-wider hover:bg-foreground hover:text-background transition-colors"
-              >
+            {/* CTA */}
+            <Link href="/studio" style={{ textDecoration: 'none' }}>
+              <DhButton variant="contained" color="primary" size="small">
                 Start Project
-              </button>
+              </DhButton>
             </Link>
-          </div>
-        </nav>
-      </div>
-    </header>
+          </Stack>
+
+          {/* Mobile actions */}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ display: { xs: 'flex', lg: 'none' }, alignItems: 'center' }}
+          >
+            <IconButton onClick={toggleTheme} size="small">
+              {theme === 'light'
+                ? <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+                : <LightModeOutlinedIcon sx={{ fontSize: 18 }} />
+              }
+            </IconButton>
+            <IconButton onClick={() => setDrawerOpen(!drawerOpen)} size="small">
+              {drawerOpen ? <CloseIcon /> : <MenuIcon />}
+            </IconButton>
+          </Stack>
+        </Toolbar>
+      </AppBar>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: '100vw',
+              maxWidth: 400,
+              backgroundColor: theme === 'dark' ? palette.ink : palette.chalk,
+              borderLeft: `1px solid ${palette.stone800}`,
+              px: 4,
+              py: 8,
+            },
+          },
+        }}
+      >
+        <Stack spacing={6}>
+          <DhLogo size="md" />
+
+          <Stack component="nav" spacing={4}>
+            {NAV_LINKS.map(({ label, href }) => (
+              <Link
+                key={label}
+                href={href}
+                onClick={() => handleNavClick(href)}
+                style={{ textDecoration: 'none' }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: t.fontSans,
+                    fontSize: t.size['2xl'],
+                    fontWeight: t.weight.black,
+                    letterSpacing: t.tracking.tightest,
+                    textTransform: 'uppercase',
+                    color:
+                      (href === '/studio' && pathname === '/studio') ||
+                      (href === '/brand' && pathname === '/brand')
+                        ? palette.lime
+                        : 'text.primary',
+                    '&:hover': { color: palette.lime },
+                    transition: 'color 200ms ease',
+                  }}
+                >
+                  {label}
+                </Typography>
+              </Link>
+            ))}
+          </Stack>
+
+          <Box sx={{ borderTop: `1px solid ${palette.stone800}`, pt: 4 }}>
+            <Typography
+              sx={{
+                fontFamily: t.fontMono,
+                fontSize: t.size.xs,
+                fontWeight: t.weight.bold,
+                letterSpacing: t.tracking.caps,
+                textTransform: 'uppercase',
+                color: palette.stone500,
+                mb: 2,
+              }}
+            >
+              Gemini API Key
+            </Typography>
+            <OutlinedInput
+              type="password"
+              value={apiKey}
+              onChange={handleApiKey}
+              placeholder="Enter your key..."
+              fullWidth
+              startAdornment={
+                <InputAdornment position="start">
+                  <KeyIcon sx={{ fontSize: 14 }} />
+                </InputAdornment>
+              }
+              sx={{ fontFamily: t.fontMono, fontSize: t.size.sm }}
+            />
+            <Typography
+              sx={{
+                fontFamily: t.fontMono,
+                fontSize: '10px',
+                color: palette.stone600,
+                mt: 1,
+              }}
+            >
+              Stored locally in your browser.
+            </Typography>
+          </Box>
+
+          <Link href="/studio" onClick={() => setDrawerOpen(false)} style={{ textDecoration: 'none' }}>
+            <DhButton variant="contained" color="primary" size="large" fullWidth>
+              Start Project
+            </DhButton>
+          </Link>
+
+          <Box sx={{ mt: 'auto' }}>
+            <DhBadge variant="stone" dot>Colombia · 2025</DhBadge>
+          </Box>
+        </Stack>
+      </Drawer>
+    </>
   );
 }
