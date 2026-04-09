@@ -1,4 +1,4 @@
-export type GenerationMode = "exterior" | "interior" | "edit";
+export type GenerationMode = "exterior" | "interior" | "edit" | "vistas";
 
 export interface SharedParams {
   mode: GenerationMode;
@@ -68,7 +68,12 @@ export interface InteriorSpecificParams {
   livingAreaType: string;
 }
 
-export type DreamHouseParams = SharedParams & ExteriorSpecificParams & InteriorSpecificParams;
+export interface VistasSpecificParams {
+  selectedVistas: string[];
+  viewType?: string; // Current view being generated in the batch
+}
+
+export type DreamHouseParams = SharedParams & ExteriorSpecificParams & InteriorSpecificParams & VistasSpecificParams;
 
 export const DEFAULT_PARAMS: DreamHouseParams = {
   // Shared
@@ -127,4 +132,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   bathrooms: 0,
   kitchenType: "",
   livingAreaType: "",
+
+  // Vistas
+  selectedVistas: [],
 };

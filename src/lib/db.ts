@@ -1,9 +1,9 @@
-import { DreamHouseParams } from '../types';
+import { DreamHouseParams, GenerationMode } from '../types';
 
 export interface GenerationRecord {
   id: string;
   timestamp: number;
-  mode: 'exterior' | 'interior' | 'edit';
+  mode: GenerationMode;
   params: DreamHouseParams;
   imageUrl: string; // base64
   prompt?: string;

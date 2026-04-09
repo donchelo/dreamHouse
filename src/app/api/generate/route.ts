@@ -3,6 +3,7 @@ import { GoogleGenAI, Part } from '@google/genai';
 import { DreamHouseParams } from '@/types';
 import { buildExteriorPrompt } from '@/modules/exterior/lib/prompt-builder';
 import { buildInteriorPrompt } from '@/modules/interior/lib/prompt-builder';
+import { buildVistasPrompt } from '@/modules/vistas/lib/prompt-builder';
 
 // Vercel configuration: maxDuration only works on Pro plan, but it's the correct way to declare it
 // Hobby plan has 10s limit, Pro plan allows up to 300s
@@ -163,6 +164,8 @@ export async function POST(req: NextRequest) {
       narrativePrompt = buildInteriorPrompt(params);
     } else if (params.mode === 'exterior') {
       narrativePrompt = buildExteriorPrompt(params);
+    } else if (params.mode === 'vistas') {
+      narrativePrompt = buildVistasPrompt(params, params.viewType || 'Perspectiva Principal (Hero Shot)');
     } else {
       narrativePrompt = `USER EDIT PROMPT: ${params.editPrompt}`;
     }
@@ -180,6 +183,11 @@ export async function POST(req: NextRequest) {
 - Preserve the geometry of the provided floor plan if applicable.
 - Integrate the building perfectly into the terrain/lot if provided.
 - If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.`;
+    } else if (params.mode === "vistas") {
+      mandate = `ARCHITECTURAL PORTFOLIO MANDATE:
+- This is a consistent architectural portfolio generation.
+- The reference image is the ABSOLUTE TRUTH for materials, geometry, and style.
+- Change the camera angle and perspective according to the request, but DO NOT change the house design.`;
     } else {
       mandate = `IMAGE EDITING MANDATE:
 - Using the provided image (which may include user sketches/notes as a guide), perform the requested edits.

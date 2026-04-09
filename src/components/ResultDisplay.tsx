@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Download, RefreshCw, Sparkles, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from './ui/Button';
+import clsx from 'clsx';
 
 // Mensajes divertidos para el estado de carga
 const LOADING_MESSAGES = [
@@ -33,6 +34,8 @@ interface ResultDisplayProps {
   onRegenerate: () => void;
   title?: string;
   subtitle?: string;
+  vistasImages?: { type: string; url: string | null; loading?: boolean }[];
+  activeVistaIndex?: number;
 }
 
 // Lightbox Modal Component
@@ -129,7 +132,9 @@ export default function ResultDisplay({
   isLoading, 
   onRegenerate,
   title = "Resultado Final",
-  subtitle = "Generado con inteligencia artificial"
+  subtitle = "Generado con inteligencia artificial",
+  vistasImages,
+  activeVistaIndex = 0
 }: ResultDisplayProps) {
   const [messageIndex, setMessageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -166,8 +171,8 @@ export default function ResultDisplay({
   return (
     <>
       {/* Lightbox Modal */}
-      {showLightbox && imageUrl && (
-        <ImageLightbox imageUrl={imageUrl} onClose={closeLightbox} />
+      {showLightbox && (imageUrl || (vistasImages && vistasImages[activeVistaIndex]?.url)) && (
+        <ImageLightbox imageUrl={imageUrl || vistasImages![activeVistaIndex]!.url!} onClose={closeLightbox} />
       )}
 
       <div className="space-y-6 animate-fade-in-up">
@@ -186,10 +191,53 @@ export default function ResultDisplay({
               </p>
             </div>
           </div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground px-3 py-1.5 bg-card rounded-full border border-border">
-            {isLoading ? 'Generando...' : 'Completado'}
-          </span>
+          <div className="flex items-center gap-3">
+            {vistasImages && (
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {vistasImages.filter(v => v.url).length} / {vistasImages.length} Vistas
+              </span>
+            )}
+            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground px-3 py-1.5 bg-card rounded-full border border-border">
+              {isLoading ? 'Generando...' : 'Completado'}
+            </span>
+          </div>
         </div>
+
+        {/* Vistas Gallery Grid */}
+        {vistasImages && vistasImages.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
+            {vistasImages.map((vista, idx) => (
+              <div 
+                key={vista.type}
+                className={clsx(
+                  "relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer group",
+                  vista.url ? "border-border hover:border-primary" : "border-dashed border-border bg-card/50",
+                  activeVistaIndex === idx && vista.url && "border-primary ring-2 ring-primary/20"
+                )}
+                onClick={() => vista.url && !vista.loading && onRegenerate()} // Placeholder logic or just selection
+              >
+                {vista.loading ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2 text-center">
+                    <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground leading-tight">Generando {vista.type}</span>
+                  </div>
+                ) : vista.url ? (
+                  <>
+                    <Image src={vista.url} alt={vista.type} fill className="object-cover" unoptimized />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 backdrop-blur-sm">
+                      <p className="text-[9px] text-white font-bold uppercase truncate">{vista.type}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2 text-center opacity-40">
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground leading-tight">{vista.type}</span>
+                    <span className="text-[8px] text-muted-foreground">En espera</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         
         {/* Image Container with gradient border */}
         <div className="relative gradient-border p-[1px] rounded-2xl">

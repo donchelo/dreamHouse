@@ -8,15 +8,17 @@ import FloorPlanUploader from '@/components/FloorPlanUploader';
 import ExteriorForm from '@/modules/exterior/components/ExteriorForm';
 import InteriorForm from '@/modules/interior/components/InteriorForm';
 import EditForm from '@/modules/edit/components/EditForm';
+import VistasForm from '@/modules/vistas/components/VistasForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2, Home, Armchair, Maximize2, Camera, PenLine, Wand } from 'lucide-react';
+import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2, Home, Armchair, Maximize2, Camera, PenLine, Wand, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import * as SC from '@/modules/shared/constants';
 import * as EC from '@/modules/exterior/constants';
 import * as IC from '@/modules/interior/constants';
+import * as VC from '@/modules/vistas/constants';
 import clsx from 'clsx';
 import { useHistory } from '@/lib/hooks/useHistory';
 import HistoryGallery from '@/components/HistoryGallery';
@@ -33,6 +35,8 @@ export default function StudioPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [vistasResults, setVistasResults] = useState<{ type: string, url: string | null, loading: boolean }[]>([]);
+  const [activeVistaIndex, setActiveVistaIndex] = useState(0);
 
   // History hook
   const { history, saveToHistory, deleteFromHistory, clearHistory, isLoading: isHistoryLoading } = useHistory();
@@ -131,76 +135,137 @@ export default function StudioPage() {
     setError(null);
     setImageUrl(null);
 
+    const isVistasMode = params.mode === 'vistas';
+
     try {
       const apiKey = localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
         throw new Error('Por favor, configura tu GEMINI_API_KEY en el encabezado.');
       }
 
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
-      if (lotFile) {
-        formData.append('lotImage', lotFile);
-      }
-      if (floorPlanFile) {
-        formData.append('floorPlanImage', floorPlanFile);
-      }
-      if (params.mode === 'edit' && editCompositeFile) {
-        formData.append('editCompositeFile', editCompositeFile);
-      }
-      formData.append('params', JSON.stringify(params));
-
-      const apiResponse = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-        },
-        body: formData,
-      });
-
-      if (!apiResponse.ok) {
-        let errorMessage = 'Error generating architecture';
-        try {
-          const errorData = await apiResponse.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (jsonErr) {
-          // If response is not JSON (e.g. HTML 500 error), get the text
-          const errorText = await apiResponse.text();
-          console.error("Non-JSON error response:", errorText);
-          errorMessage = `Server Error (${apiResponse.status}): The server returned an unexpected response format.`;
+      if (isVistasMode) {
+        if (params.selectedVistas.length === 0) {
+          throw new Error('Por favor, selecciona al menos una vista para generar.');
         }
-        throw new Error(errorMessage);
-      }
+        
+        // Initialize results with loading state
+        const initialResults = params.selectedVistas.map(v => ({ type: v, url: null, loading: true }));
+        setVistasResults(initialResults);
+        
+        // Generate one by one
+        for (let i = 0; i < params.selectedVistas.length; i++) {
+          const viewType = params.selectedVistas[i];
+          setActiveVistaIndex(i);
+          
+          try {
+            const formData = new FormData();
+            files.forEach((file) => formData.append('files', file));
+            if (lotFile) formData.append('lotImage', lotFile);
+            if (floorPlanFile) formData.append('floorPlanImage', floorPlanFile);
+            
+            // Add viewType to params for the API
+            const currentParams = { ...params, viewType };
+            formData.append('params', JSON.stringify(currentParams));
 
-      let data;
-      try {
-        data = await apiResponse.json();
-      } catch (jsonErr) {
-        const errorText = await apiResponse.text();
-        console.error("Non-JSON success response (unexpected):", errorText);
-        throw new Error("Failed to parse generation result. The server returned an invalid format.");
-      }
-      setImageUrl(data.imageUrl);
-      
-      // Save to local history
-      try {
-        await saveToHistory({
-          mode: params.mode,
-          params: params,
-          imageUrl: data.imageUrl
+            const apiResponse = await fetch('/api/generate', {
+              method: 'POST',
+              headers: { 'x-api-key': apiKey },
+              body: formData,
+            });
+
+            if (!apiResponse.ok) throw new Error(`Error en vista ${viewType}`);
+
+            const data = await apiResponse.json();
+            
+            // Update individual result
+            setVistasResults(prev => prev.map((v, idx) => 
+              idx === i ? { ...v, url: data.imageUrl, loading: false } : v
+            ));
+            
+            // Also set as main image for the preview
+            setImageUrl(data.imageUrl);
+
+            // Save to history
+            await saveToHistory({
+              mode: 'vistas',
+              params: currentParams,
+              imageUrl: data.imageUrl
+            });
+
+          } catch (err) {
+            console.error(`Error generating vista ${viewType}:`, err);
+            setVistasResults(prev => prev.map((v, idx) => 
+              idx === i ? { ...v, loading: false } : v
+            ));
+          }
+        }
+        
+        showToast("Portafolio generado con éxito");
+      } else {
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append('files', file);
         });
-      } catch (historyErr) {
-        console.error("Failed to save to history:", historyErr);
-      }
+        if (lotFile) {
+          formData.append('lotImage', lotFile);
+        }
+        if (floorPlanFile) {
+          formData.append('floorPlanImage', floorPlanFile);
+        }
+        if (params.mode === 'edit' && editCompositeFile) {
+          formData.append('editCompositeFile', editCompositeFile);
+        }
+        formData.append('params', JSON.stringify(params));
 
-      showToast("Render generated successfully!");
+        const apiResponse = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+          },
+          body: formData,
+        });
+
+        if (!apiResponse.ok) {
+          let errorMessage = 'Error generating architecture';
+          try {
+            const errorData = await apiResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (jsonErr) {
+            // If response is not JSON (e.g. HTML 500 error), get the text
+            const errorText = await apiResponse.text();
+            console.error("Non-JSON error response:", errorText);
+            errorMessage = `Server Error (${apiResponse.status}): The server returned an unexpected response format.`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        let data;
+        try {
+          data = await apiResponse.json();
+        } catch (jsonErr) {
+          const errorText = await apiResponse.text();
+          console.error("Non-JSON success response (unexpected):", errorText);
+          throw new Error("Failed to parse generation result. The server returned an invalid format.");
+        }
+        setImageUrl(data.imageUrl);
+        
+        // Save to local history
+        try {
+          await saveToHistory({
+            mode: params.mode as any,
+            params: params,
+            imageUrl: data.imageUrl
+          });
+        } catch (historyErr) {
+          console.error("Failed to save to history:", historyErr);
+        }
+
+        showToast("Render generated successfully!");
+      }
 
       setTimeout(() => {
         document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
-
 
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -292,7 +357,10 @@ export default function StudioPage() {
           >
             <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setParams({ ...params, mode: 'exterior' })}
+                onClick={() => {
+                  setParams({ ...params, mode: 'exterior' });
+                  setActiveSection('context');
+                }}
                 className={clsx(
                   "flex flex-col items-center gap-3 p-6 border transition-all",
                   params.mode === "exterior" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
@@ -302,7 +370,10 @@ export default function StudioPage() {
                 <span className="text-xs font-bold uppercase tracking-widest">Arquitectura Exterior</span>
               </button>
               <button
-                onClick={() => setParams({ ...params, mode: 'interior' })}
+                onClick={() => {
+                  setParams({ ...params, mode: 'interior' });
+                  setActiveSection('context');
+                }}
                 className={clsx(
                   "flex flex-col items-center gap-3 p-6 border transition-all",
                   params.mode === "interior" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
@@ -321,11 +392,24 @@ export default function StudioPage() {
                 <Wand className="w-8 h-8" />
                 <span className="text-xs font-bold uppercase tracking-widest">Editar Imagen con IA</span>
               </button>
+              <button
+                onClick={() => {
+                  setParams({ ...params, mode: 'vistas' });
+                  setActiveSection('context');
+                }}
+                className={clsx(
+                  "flex flex-col items-center gap-3 p-6 border transition-all col-span-2 sm:col-span-1",
+                  params.mode === "vistas" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+                )}
+              >
+                <ImageIcon className="w-8 h-8" />
+                <span className="text-xs font-bold uppercase tracking-widest">Portafolio de Vistas</span>
+              </button>
             </div>
           </Section>
 
           {/* 02: Referencias Visuales (Shared) */}
-          {params.mode !== 'edit' && (
+          {params.mode !== 'edit' && params.mode !== 'vistas' && (
           <Section
             title="Referencias Visuales"
             number="02"
@@ -338,10 +422,14 @@ export default function StudioPage() {
           </Section>
           )}
 
-          {/* 03: Contexto (Mode-specific: Lote vs Espacio) */}
+          {/* 03: Contexto (Mode-specific: Lote vs Espacio vs Base) */}
           {params.mode !== 'edit' && (
           <Section
-            title={params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual"}
+            title={
+                params.mode === 'exterior' ? "Foto del Lote / Terreno" : 
+                params.mode === 'interior' ? "Foto del Espacio Actual" : 
+                "Imagen Base de la Casa"
+            }
             number="03"
             icon={<Camera className="w-5 h-5" />}
             badge="BASE"
@@ -351,18 +439,23 @@ export default function StudioPage() {
             <LotUploader 
               file={lotFile} 
               onFileChange={setLotFile} 
-              title={params.mode === 'exterior' ? "Lote / Emplazamiento" : "Espacio Principal (Foto Actual)"}
-              description={params.mode === 'exterior' 
-                  ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." 
-                  : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño."
+              title={
+                  params.mode === 'exterior' ? "Lote / Emplazamiento" : 
+                  params.mode === 'interior' ? "Espacio Principal (Foto Actual)" :
+                  "Cargar Foto de la Casa"
               }
-              icon={params.mode === 'exterior' ? undefined : <Armchair className="w-5 h-5 text-primary" />}
+              description={
+                  params.mode === 'exterior' ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." : 
+                  params.mode === 'interior' ? "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño." :
+                  "Sube la foto principal de la casa. Generaremos el portafolio de vistas basado en este diseño."
+              }
+              icon={params.mode === 'vistas' ? <ImageIcon className="w-5 h-5 text-primary" /> : params.mode === 'interior' ? <Armchair className="w-5 h-5 text-primary" /> : undefined}
             />
           </Section>
           )}
 
           {/* 04: Estructura (Mode-specific: Plano vs Layout) */}
-          {params.mode !== 'edit' && (
+          {params.mode !== 'edit' && params.mode !== 'vistas' && (
           <Section
             title={params.mode === 'exterior' ? "Plano de Planta" : "Distribución / Layout"}
             number="04"
@@ -392,15 +485,7 @@ export default function StudioPage() {
               activeSection={activeSection}
               onSectionChange={toggleSection}
             />
-          ) : params.mode === 'interior' ? (
-            <InteriorForm
-              params={params}
-              onChange={setParams}
-              disabled={isLoading}
-              activeSection={activeSection}
-              onSectionChange={toggleSection}
-            />
-          ) : (
+          ) : params.mode === 'edit' ? (
             <EditForm
               params={params}
               onChange={setParams}
@@ -410,6 +495,14 @@ export default function StudioPage() {
               baseImage={lotFile}
               onBaseImageUpdate={setLotFile}
               onCompositeImageUpdate={setEditCompositeFile}
+            />
+          ) : (
+            <VistasForm
+              params={params}
+              onChange={setParams}
+              disabled={isLoading}
+              activeSection={activeSection}
+              onSectionChange={toggleSection}
             />
           )}
 
@@ -454,8 +547,10 @@ export default function StudioPage() {
                   imageUrl={imageUrl}
                   isLoading={isLoading}
                   onRegenerate={handleGenerate}
-                  title={`Final ${params.mode}`}
-                  subtitle={`Photorealistic ${params.mode} visualization`}
+                  title={params.mode === 'vistas' ? "Portafolio de Vistas" : `Final ${params.mode}`}
+                  subtitle={params.mode === 'vistas' ? "Set de visualizaciones arquitectónicas" : `Photorealistic ${params.mode} visualization`}
+                  vistasImages={params.mode === 'vistas' ? vistasResults : undefined}
+                  activeVistaIndex={activeVistaIndex}
                 />
               </div>
             </div>
