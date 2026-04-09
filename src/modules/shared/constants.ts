@@ -7,6 +7,7 @@ export const STYLES = [
   "Alpino/Chalet",
   "Andaluz",
   "Antebellum",
+  "Árabe contemporáneo",
   "Art Deco",
   "Art Nouveau",
   "Australiano contemporáneo",
@@ -82,13 +83,13 @@ export const STYLES = [
   "Underground/Tierra",
   "Victoriano",
   "Wabi-sabi",
-  "Wine Country",
-  "Árabe contemporáneo"
+  "Wine Country"
 ];
 
 export const ARCHITECTS = [
   "Alberto Campo Baeza",
   "Alejandro Aravena",
+  "Álvaro Siza",
   "Antoni Gaudí",
   "Arata Isozaki",
   "Balkrishna Doshi",
@@ -147,8 +148,7 @@ export const ARCHITECTS = [
   "UNStudio",
   "Wang Shu",
   "WOHA",
-  "Zaha Hadid",
-  "Álvaro Siza"
+  "Zaha Hadid"
 ];
 
 export const MOODS = [

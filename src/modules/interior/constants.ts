@@ -35,18 +35,18 @@ export const INTERIOR_LIGHTING_TYPES = [
   "Candelabro/Lámpara colgante",
   "Iluminación de riel (Track lighting)",
   "Iluminación indirecta (Cove lighting)",
+  "Lámparas de pie/diseño",
   "LED empotrados (Recessed)",
   "Luz natural cenital (Skylight)",
-  "Luz natural lateral (Grandes ventanales)",
-  "Lámparas de pie/diseño"
+  "Luz natural lateral (Grandes ventanales)"
 ];
 
 export const FLOORING_MATERIALS = [
   "Concreto pulido",
   "Madera de nogal oscuro",
   "Madera de roble claro",
-  "Microcemento",
   "Mármol de Carrara",
+  "Microcemento",
   "Piedra natural",
   "Terrazzo"
 ];
@@ -69,4 +69,10 @@ export const KITCHEN_TYPES = [
   "Gourmet exterior"
 ];
 
-export const LIVING_AREA_TYPES = ["Con mezzanine", "Concepto abierto", "Conexión directa jardín", "Doble altura", "Zonificado/Dividido"];
+export const LIVING_AREA_TYPES = [
+  "Concepto abierto",
+  "Conexión directa jardín",
+  "Con mezzanine",
+  "Doble altura",
+  "Zonificado/Dividido"
+];

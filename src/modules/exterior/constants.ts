@@ -24,14 +24,14 @@ export const PROJECT_TYPES = [
 ];
 
 export const CLIMATES = [
+  "Árido",
   "Continental",
   "Desértico",
   "Frío/Nórdico",
   "Mediterráneo",
   "Montañoso",
   "Oceánico",
-  "Tropical",
-  "Árido"
+  "Tropical"
 ];
 
 export const ENVIRONMENTS = [

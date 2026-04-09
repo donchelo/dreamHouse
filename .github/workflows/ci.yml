@@ -32,4 +32,4 @@ jobs:
         env:
           NEXT_PUBLIC_VERCEL_ENV: production
           # Se pueden agregar variables de entorno falsas para el build si es necesario
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: "${{ secrets.GEMINI_API_KEY }}"
