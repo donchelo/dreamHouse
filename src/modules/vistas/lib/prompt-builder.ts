@@ -21,6 +21,8 @@ export function buildVistasPrompt(params: DreamHouseParams, viewType: string): s
 ARCHITECTURAL PORTFOLIO GENERATION:
 Task: Generate a new ${viewType} of the house provided in the reference image.
 
+CRITICAL COMPOSITION RULE: The building is the SOLE PROTAGONIST. The background must be neutral — open sky, landscape, or vegetation. NEVER include neighboring buildings, adjacent houses, other structures, or visible neighbors. No urban density, no party walls. The subject must stand completely alone.
+
 VISUAL REQUIREMENTS:
 - View Type: ${vistaDescription}
 - Style Consistency: The building must be IDENTICAL in form, materials, and character to the one in the reference image. It is the same house, just a different camera position.

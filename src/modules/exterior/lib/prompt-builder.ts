@@ -79,5 +79,7 @@ export function buildExteriorPrompt(params: DreamHouseParams): string {
 
   prompt += `\nQuality goal: Architectural masterpiece, 8k resolution, photorealistic, sharp focus.`;
 
+  prompt += `\nCRITICAL COMPOSITION RULE: The building is the SOLE PROTAGONIST of this image. The background must be neutral — open sky, landscape, vegetation, or abstract environment. NEVER include neighboring buildings, adjacent houses, other structures, or visible neighbors in the background. No urban density, no party walls, no competing architecture. The subject must stand alone.`;
+
   return prompt.trim();
 }
