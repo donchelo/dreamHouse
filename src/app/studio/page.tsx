@@ -18,6 +18,10 @@ import * as SC from '@/modules/shared/constants';
 import * as EC from '@/modules/exterior/constants';
 import * as IC from '@/modules/interior/constants';
 import clsx from 'clsx';
+import { useHistory } from '@/lib/hooks/useHistory';
+import HistoryGallery from '@/components/HistoryGallery';
+import { GenerationRecord } from '@/lib/db';
+
 
 export default function StudioPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -29,6 +33,10 @@ export default function StudioPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // History hook
+  const { history, saveToHistory, deleteFromHistory, clearHistory, isLoading: isHistoryLoading } = useHistory();
+
 
   // Accordion state - 'mode' open by default to guide new users
   const [activeSection, setActiveSection] = useState<string | null>('mode');
@@ -153,17 +161,46 @@ export default function StudioPage() {
       });
 
       if (!apiResponse.ok) {
-        const errorData = await apiResponse.json();
-        throw new Error(errorData.message || 'Error generating exterior');
+        let errorMessage = 'Error generating architecture';
+        try {
+          const errorData = await apiResponse.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (jsonErr) {
+          // If response is not JSON (e.g. HTML 500 error), get the text
+          const errorText = await apiResponse.text();
+          console.error("Non-JSON error response:", errorText);
+          errorMessage = `Server Error (${apiResponse.status}): The server returned an unexpected response format.`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = await apiResponse.json();
+      let data;
+      try {
+        data = await apiResponse.json();
+      } catch (jsonErr) {
+        const errorText = await apiResponse.text();
+        console.error("Non-JSON success response (unexpected):", errorText);
+        throw new Error("Failed to parse generation result. The server returned an invalid format.");
+      }
       setImageUrl(data.imageUrl);
+      
+      // Save to local history
+      try {
+        await saveToHistory({
+          mode: params.mode,
+          params: params,
+          imageUrl: data.imageUrl
+        });
+      } catch (historyErr) {
+        console.error("Failed to save to history:", historyErr);
+      }
+
       showToast("Render generated successfully!");
 
       setTimeout(() => {
         document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
+
 
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -176,6 +213,23 @@ export default function StudioPage() {
       setIsLoading(false);
     }
   };
+
+  const handleLoadHistory = (record: GenerationRecord) => {
+    setParams(record.params);
+    setImageUrl(record.imageUrl);
+    // Reset files since we don't store them in history (only the params)
+    setFiles([]);
+    setLotFile(null);
+    setFloorPlanFile(null);
+    setEditCompositeFile(null);
+    
+    showToast(`Cargado diseño ${record.mode} de ${new Date(record.timestamp).toLocaleDateString()}`);
+    
+    setTimeout(() => {
+      document.getElementById('studio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -407,8 +461,20 @@ export default function StudioPage() {
             </div>
           </div>
 
+          {/* History Section */}
+          <div id="history" className="pt-20 border-t border-border/50">
+            <HistoryGallery
+              history={history}
+              isLoading={isHistoryLoading}
+              onLoad={handleLoadHistory}
+              onDelete={deleteFromHistory}
+              onClear={clearHistory}
+            />
+          </div>
+
         </div>
       </main>
+
 
       {/* Footer */}
       <footer className="border-t border-border py-20 bg-foreground text-background">

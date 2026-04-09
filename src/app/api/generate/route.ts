@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Initialize Gemini Client with provided key and increased timeout (120s)
+    console.log("Initializing Gemini SDK with API Key (truncated):", apiKey.substring(0, 5) + "...");
     const ai = new GoogleGenAI({ 
       apiKey,
       httpOptions: { timeout: 120000 }
@@ -248,9 +249,9 @@ VERIFICATION STEPS:
           ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
           ...(params.renderOutputResolution ? { imageSize: params.renderOutputResolution } : {})
         },
-        // Enhanced Thinking Configuration for Nano Banana 2
+        // Enhanced Thinking Configuration
         thinkingConfig: {
-          thinkingLevel: params.thinkingLevel === "High" ? "High" : "Minimal",
+          thinkingLevel: params.thinkingLevel === "High" ? "HIGH" : "MINIMAL",
           includeThoughts: true
         } as any // eslint-disable-line @typescript-eslint/no-explicit-any
       }
