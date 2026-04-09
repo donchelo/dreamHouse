@@ -23,9 +23,18 @@ import clsx from 'clsx';
 import { useHistory } from '@/lib/hooks/useHistory';
 import HistoryGallery from '@/components/HistoryGallery';
 import { GenerationRecord } from '@/lib/db';
+import { LightboxProvider } from '@/context/LightboxContext';
 
 
 export default function StudioPage() {
+  return (
+    <LightboxProvider>
+      <StudioContent />
+    </LightboxProvider>
+  );
+}
+
+function StudioContent() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
   const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);

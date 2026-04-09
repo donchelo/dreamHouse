@@ -5,6 +5,7 @@ import { Upload, Layout, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
 import clsx from 'clsx';
 import Image from 'next/image';
 import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { useLightbox } from '@/context/LightboxContext';
 
 interface FloorPlanUploaderProps {
   file: File | null;
@@ -22,6 +23,7 @@ export default function FloorPlanUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const { openLightbox } = useLightbox();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -127,12 +129,20 @@ export default function FloorPlanUploader({
             </p>
           </div>
         ) : (
-          <div className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-blue-500/50 hover:shadow-lg">
+          <div 
+            className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-blue-500/50 hover:shadow-lg cursor-zoom-in"
+            onClick={() => {
+              if (file) {
+                const url = URL.createObjectURL(file);
+                openLightbox([{ url, type: title }]);
+              }
+            }}
+          >
             <Image
               src={URL.createObjectURL(file)}
               alt="Vista previa del plano de planta"
               fill
-              className="object-contain bg-card-elevated"
+              className="object-contain bg-card-elevated group-hover:scale-105 transition-transform duration-700"
               unoptimized
             />
             

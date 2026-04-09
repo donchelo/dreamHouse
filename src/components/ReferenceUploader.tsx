@@ -5,6 +5,7 @@ import { Upload, Image as ImageIcon, Plus, Sparkles, Trash2, AlertCircle } from 
 import clsx from 'clsx';
 import Image from 'next/image';
 import { validateImageFiles, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { useLightbox } from '@/context/LightboxContext';
 
 interface ReferenceUploaderProps {
   files: File[];
@@ -16,6 +17,7 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const { openLightbox } = useLightbox();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -131,6 +133,10 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
             style={{ 
               animationDelay: `${index * 80}ms`,
               animation: 'fade-in-up 0.5s ease-out forwards'
+            }}
+            onClick={() => {
+              const imageUrls = files.map(f => ({ url: URL.createObjectURL(f), type: 'Referencia' }));
+              openLightbox(imageUrls, index);
             }}
           >
             <Image

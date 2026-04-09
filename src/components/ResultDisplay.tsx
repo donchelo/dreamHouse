@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Download, RefreshCw, Sparkles, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, RefreshCw, Sparkles, Maximize2, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from './ui/Button';
 import clsx from 'clsx';
+import { useLightbox } from '@/context/LightboxContext';
 
 // Mensajes divertidos para el estado de carga
 const LOADING_MESSAGES = [
@@ -38,94 +39,7 @@ interface ResultDisplayProps {
   activeVistaIndex?: number;
 }
 
-// Lightbox Modal Component
-function ImageLightbox({ 
-  imageUrl, 
-  onClose 
-}: { 
-  imageUrl: string; 
-  onClose: () => void;
-}) {
-  const [zoom, setZoom] = useState(1);
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === '+' || e.key === '=') setZoom(z => Math.min(z + 0.25, 3));
-      if (e.key === '-') setZoom(z => Math.max(z - 0.25, 0.5));
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
-  return (
-    <div 
-      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-fade-in-up"
-      onClick={onClose}
-    >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all"
-        title="Cerrar (Esc)"
-      >
-        <X className="w-6 h-6" />
-      </button>
-
-      {/* Zoom controls */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2 border border-white/10">
-        <button
-          onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(z - 0.25, 0.5)); }}
-          className="p-2 text-white/70 hover:text-white transition-colors"
-          title="Alejar (-)"
-        >
-          <ZoomOut className="w-5 h-5" />
-        </button>
-        <span className="text-white/70 text-sm font-mono min-w-[4ch] text-center">
-          {Math.round(zoom * 100)}%
-        </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(z + 0.25, 3)); }}
-          className="p-2 text-white/70 hover:text-white transition-colors"
-          title="Acercar (+)"
-        >
-          <ZoomIn className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Image container */}
-      <div 
-        className="max-w-[95vw] max-h-[90vh] overflow-auto relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Image
-          src={imageUrl}
-          alt="DreamHouse Exterior - Pantalla Completa"
-          width={1920}
-          height={1080}
-          className="transition-transform duration-200 cursor-move"
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
-          draggable={false}
-          unoptimized
-        />
-      </div>
-
-      {/* Instructions */}
-      <div className="absolute bottom-6 right-6 text-white/40 text-xs font-mono hidden sm:block">
-        ESC para cerrar · +/- para zoom
-      </div>
-    </div>
-  );
-}
 
 export default function ResultDisplay({ 
   imageUrl, 
@@ -137,7 +51,7 @@ export default function ResultDisplay({
   activeVistaIndex = 0
 }: ResultDisplayProps) {
   const [messageIndex, setMessageIndex] = useState(0);
-  const [showLightbox, setShowLightbox] = useState(false);
+  const { openLightbox } = useLightbox();
 
   // Rotate messages while loading
   useEffect(() => {
@@ -156,27 +70,17 @@ export default function ResultDisplay({
     return () => clearInterval(interval);
   }, [isLoading]);
 
-  const openLightbox = useCallback(() => {
-    setShowLightbox(true);
-  }, []);
-
-  const closeLightbox = useCallback(() => {
-    setShowLightbox(false);
-  }, []);
-
-  if (!imageUrl && !isLoading) return null;
+  if (!imageUrl && !isLoading && (!vistasImages || vistasImages.length === 0)) return null;
 
   const currentMessage = LOADING_MESSAGES[messageIndex];
 
-  return (
-    <>
-      {/* Lightbox Modal */}
-      {showLightbox && (imageUrl || (vistasImages && vistasImages[activeVistaIndex]?.url)) && (
-        <ImageLightbox imageUrl={imageUrl || vistasImages![activeVistaIndex]!.url!} onClose={closeLightbox} />
-      )}
+  // Prepare images for lightbox
+  const imagesForLightbox = vistasImages?.length 
+    ? vistasImages.filter(v => v.url).map(v => ({ url: v.url!, type: v.type }))
+    : imageUrl ? [{ url: imageUrl, type: title }] : [];
 
-      <div className="space-y-6 animate-fade-in-up">
-        {/* Header */}
+  return (
+    <div className="space-y-6 animate-fade-in-up">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -211,10 +115,15 @@ export default function ResultDisplay({
                 key={vista.type}
                 className={clsx(
                   "relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer group",
-                  vista.url ? "border-border hover:border-primary" : "border-dashed border-border bg-card/50",
+                  vista.url ? "border-border hover:border-primary shadow-sm hover:shadow-md" : "border-dashed border-border bg-card/50",
                   activeVistaIndex === idx && vista.url && "border-primary ring-2 ring-primary/20"
                 )}
-                onClick={() => vista.url && !vista.loading && onRegenerate()} // Placeholder logic or just selection
+                onClick={() => {
+                   if (vista.url && !vista.loading) {
+                     const urlIndex = vistasImages.filter(v => v.url).findIndex(v => v.url === vista.url);
+                     openLightbox(imagesForLightbox, urlIndex >= 0 ? urlIndex : 0);
+                   }
+                }}
               >
                 {vista.loading ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2 text-center">
@@ -223,9 +132,12 @@ export default function ResultDisplay({
                   </div>
                 ) : vista.url ? (
                   <>
-                    <Image src={vista.url} alt={vista.type} fill className="object-cover" unoptimized />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 backdrop-blur-sm">
+                    <Image src={vista.url} alt={vista.type} fill className="object-cover transition-transform duration-500 group-hover:scale-110" unoptimized />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 backdrop-blur-sm transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                       <p className="text-[9px] text-white font-bold uppercase truncate">{vista.type}</p>
+                    </div>
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <Maximize2 className="w-6 h-6 text-white drop-shadow-lg" />
                     </div>
                   </>
                 ) : (
@@ -239,77 +151,55 @@ export default function ResultDisplay({
           </div>
         )}
         
-        {/* Image Container with gradient border */}
-        <div className="relative gradient-border p-[1px] rounded-2xl">
-          <div className="relative aspect-video w-full bg-card rounded-2xl overflow-hidden group">
+        {/* Main Result Display (Loading or Image) */}
+        <div className="relative gradient-border p-[1px] rounded-2xl group overflow-hidden">
+          <div className="relative aspect-video w-full bg-card rounded-2xl overflow-hidden">
             {isLoading ? (
-              /* Loading State */
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-card">
-                {/* Animated Loader */}
                 <div className="relative">
-                  {/* Outer ring */}
                   <div className="w-20 h-20 rounded-full border-2 border-border" />
-                  {/* Spinning gradient ring */}
                   <div className="absolute inset-0 w-20 h-20 rounded-full border-2 border-transparent border-t-primary border-r-primary/50 animate-spin" />
-                  {/* Center icon - emoji dinámico según el mensaje */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <span key={messageIndex} className="text-2xl animate-fade-in-up">{currentMessage.emoji}</span>
                     </div>
                   </div>
                 </div>
-                
-                {/* Loading Messages - Animated */}
                 <div className="flex flex-col items-center gap-2 min-h-[60px] text-center px-4">
-                  <p 
-                    key={messageIndex} 
-                    className="text-foreground font-medium text-lg animate-fade-in-up"
-                  >
-                    {currentMessage.main}
-                  </p>
-                  <p 
-                    className="text-muted-foreground text-sm max-w-md"
-                  >
-                    {currentMessage.sub}
-                  </p>
+                  <p key={messageIndex} className="text-foreground font-medium text-lg animate-fade-in-up">{currentMessage.main}</p>
+                  <p className="text-muted-foreground text-sm max-w-md">{currentMessage.sub}</p>
                 </div>
-                
-                {/* Progress bar shimmer */}
                 <div className="w-48 h-1 bg-border rounded-full overflow-hidden">
                   <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent shimmer" />
                 </div>
-                
-                {/* Tip */}
-                <p className="text-[10px] text-muted uppercase tracking-wider mt-2">
-                  Esto puede tomar 30-60 segundos
-                </p>
+                <p className="text-[10px] text-muted uppercase tracking-wider mt-2">Esto puede tomar 30-60 segundos</p>
               </div>
-            ) : imageUrl ? (
-              /* Result Image */
+            ) : imageUrl || (vistasImages && vistasImages[activeVistaIndex]?.url) ? (
               <>
                 <Image 
-                  src={imageUrl} 
+                  src={imageUrl || vistasImages![activeVistaIndex]!.url!} 
                   alt={title} 
                   fill
-                  className="w-full h-full object-contain bg-black/40 transition-transform duration-700 group-hover:scale-[1.01] cursor-pointer" 
-                  onClick={openLightbox}
+                  className="w-full h-full object-contain bg-black/40 transition-transform duration-700 group-hover:scale-[1.01] cursor-zoom-in" 
+                  onClick={() => {
+                    if (vistasImages?.length) {
+                      const url = vistasImages![activeVistaIndex]!.url;
+                      const urlIndex = vistasImages.filter(v => v.url).findIndex(v => v.url === url);
+                      openLightbox(imagesForLightbox, urlIndex >= 0 ? urlIndex : 0);
+                    } else {
+                      openLightbox(imagesForLightbox, 0);
+                    }
+                  }}
                   unoptimized
                 />
-                
-                {/* Gradient overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                
-                {/* Click to expand hint */}
                 <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span className="text-[10px] font-medium text-white/80 flex items-center gap-1.5">
                     <Maximize2 className="w-3 h-3" />
                     Clic para ampliar
                   </span>
                 </div>
-                
-                {/* Action buttons */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-end gap-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 sm:translate-y-2 sm:group-hover:translate-y-0">
-                  {/* Left: Regenerate */}
                   <Button
                     onClick={onRegenerate}
                     variant="outline"
@@ -319,21 +209,26 @@ export default function ResultDisplay({
                     <RefreshCw className="w-4 h-4" />
                     Regenerar
                   </Button>
-                  
-                  {/* Right: Actions */}
                   <div className="flex gap-2 justify-end">
                     <Button
-                      onClick={openLightbox}
+                      onClick={() => {
+                        if (vistasImages?.length) {
+                          const url = vistasImages![activeVistaIndex]!.url;
+                          const urlIndex = vistasImages.filter(v => v.url).findIndex(v => v.url === url);
+                          openLightbox(imagesForLightbox, urlIndex >= 0 ? urlIndex : 0);
+                        } else {
+                          openLightbox(imagesForLightbox, 0);
+                        }
+                      }}
                       variant="outline"
                       size="icon"
                       className="bg-black/50 backdrop-blur-md border-white/20 text-white hover:bg-white/20 w-10 h-10 rounded-full"
-                      title="Ver a pantalla completa"
                     >
                       <Maximize2 className="w-4 h-4" />
                     </Button>
                     <a
-                      href={imageUrl}
-                      download="dreamhouse-exterior.png"
+                      href={imageUrl || vistasImages![activeVistaIndex]!.url!}
+                      download="dreamhouse-render.png"
                       className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105"
                     >
                       <Download className="w-4 h-4" />
@@ -341,18 +236,10 @@ export default function ResultDisplay({
                     </a>
                   </div>
                 </div>
-                
-                {/* Corner badge */}
-                <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-white/80">
-                    AI Generated
-                  </span>
-                </div>
               </>
             ) : null}
           </div>
         </div>
       </div>
-    </>
   );
 }
