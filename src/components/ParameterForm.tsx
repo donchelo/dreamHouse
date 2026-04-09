@@ -104,6 +104,9 @@ export default function ParameterForm({
     );
   };
 
+  const selectedCamera = C.CAMERA_PRESETS.find(c => c.name === params.cameraPreset) ?? null;
+  const filmSims = selectedCamera?.isFujifilm ? C.FUJIFILM_FILM_SIMULATIONS : C.UNIVERSAL_FILM_LOOKS;
+
   return (
     <div className="space-y-0" role="form" aria-label="Formulario de parámetros de diseño arquitectónico">
 
@@ -453,9 +456,92 @@ export default function ParameterForm({
         onToggle={() => onSectionChange('photography')}
       >
         <SectionDescription>
-          El encuadre, la luz y el momento del día determinan la calidad fotográfica del resultado. Estos parámetros controlan la narrativa visual: desde un amanecer sereno hasta un anochecer dramático con interiores iluminados.
+          El cuerpo de cámara, el objetivo y la simulación de película definen el ADN visual de la imagen. Combínalos con el encuadre, la luz y el momento del día para construir una narrativa fotográfica arquitectónica de nivel editorial.
         </SectionDescription>
         <div className="space-y-6">
+
+          {/* ── Preset de Cámara ── */}
+          <Select
+            label="Preset de Cámara"
+            value={params.cameraPreset}
+            onChange={(e) => {
+              const newPreset = e.target.value;
+              const newCam = C.CAMERA_PRESETS.find(c => c.name === newPreset);
+              const currentIsFuji = C.CAMERA_PRESETS.find(c => c.name === params.cameraPreset)?.isFujifilm;
+              const nextIsFuji = newCam?.isFujifilm;
+              if (currentIsFuji !== nextIsFuji) {
+                handleChange("filmSimulation", nextIsFuji ? "Classic Chrome" : "Neutral / Natural");
+              }
+              handleChange("cameraPreset", newPreset);
+            }}
+            options={C.CAMERA_PRESET_NAMES}
+            disabled={disabled}
+          />
+
+          {/* ── Camera Info Card ── */}
+          {params.cameraPreset && selectedCamera && (
+            <div className="p-4 border border-primary/30 bg-primary/5 flex gap-3 items-start" role="note" aria-label="Especificaciones de cámara seleccionada">
+              <div className="p-2 border border-primary/40 text-primary shrink-0 mt-0.5" aria-hidden="true">
+                <Camera className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-primary border border-primary/50 px-1.5 py-0.5">
+                    {selectedCamera.brand}
+                  </span>
+                  {selectedCamera.isFujifilm && (
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 border border-amber-400/50 px-1.5 py-0.5">
+                      Film Simulation
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm font-bold text-foreground tracking-tight">{selectedCamera.name}</p>
+                <p className="text-[11px] text-muted-foreground font-mono">{selectedCamera.sensor}</p>
+                <p className="text-[11px] text-muted-foreground font-mono">{selectedCamera.lens}</p>
+                <p className="text-[11px] text-primary/70 italic mt-2 leading-relaxed">{selectedCamera.character}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Focal Length + Aperture ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Select
+              label="Distancia Focal"
+              value={params.focalLength}
+              onChange={(e) => handleChange("focalLength", e.target.value)}
+              options={C.FOCAL_LENGTHS}
+              disabled={disabled}
+            />
+            <Select
+              label="Apertura"
+              value={params.aperture}
+              onChange={(e) => handleChange("aperture", e.target.value)}
+              options={C.APERTURES}
+              disabled={disabled}
+            />
+          </div>
+
+          {/* ── Film Simulation / Color Look + Depth of Field ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Select
+              label={selectedCamera?.isFujifilm ? "Simulación de Película" : "Look Cinematográfico"}
+              value={params.filmSimulation}
+              onChange={(e) => handleChange("filmSimulation", e.target.value)}
+              options={filmSims}
+              disabled={disabled}
+            />
+            <Select
+              label="Profundidad de Campo"
+              value={params.depthOfField}
+              onChange={(e) => handleChange("depthOfField", e.target.value)}
+              options={C.DEPTH_OF_FIELD_OPTIONS}
+              disabled={disabled}
+            />
+          </div>
+
+          <div className="border-t border-border/50" role="separator" aria-hidden="true" />
+
+          {/* ── Encuadre y Composición ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
               label="Ángulo de Cámara"
@@ -472,6 +558,8 @@ export default function ParameterForm({
               disabled={disabled}
             />
           </div>
+
+          {/* ── Tiempo y Estación ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
               label="Hora del Día"
@@ -488,6 +576,8 @@ export default function ParameterForm({
               disabled={disabled}
             />
           </div>
+
+          {/* ── Iluminación y Contexto ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select
               label="Tipo de Iluminación"

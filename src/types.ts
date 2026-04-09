@@ -48,6 +48,11 @@ export interface DreamHouseParams {
   season: string;
   lighting: string;
   humanContext: string;
+  cameraPreset: string;
+  focalLength: string;
+  aperture: string;
+  filmSimulation: string;
+  depthOfField: string;
 
   // Section 11: Configuración de Salida
   renderStyle: string;
@@ -107,10 +112,15 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   season: "",
   lighting: "",
   humanContext: "",
+  cameraPreset: "Fujifilm X100 VI",
+  focalLength: "35mm (documental natural)",
+  aperture: "f/5.6 (punto dulce arquitectónico)",
+  filmSimulation: "Classic Chrome",
+  depthOfField: "Total (f/8–f/11, todo nítido)",
 
   // Section 11: Configuración de Salida
   renderStyle: "",
-  renderAspectRatio: "",
+  renderAspectRatio: "16:9",
   renderOutputResolution: "",
   thinkingLevel: "Minimal",
 

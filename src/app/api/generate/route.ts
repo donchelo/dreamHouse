@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI, Part, ThinkingLevel } from '@google/genai';
+import { GoogleGenAI, Part } from '@google/genai';
 import { DreamHouseParams } from '@/types';
+import { buildNarrativePrompt } from '@/lib/prompt-builder';
 
 // Vercel configuration: maxDuration only works on Pro plan, but it's the correct way to declare it
 // Hobby plan has 10s limit, Pro plan allows up to 300s
@@ -10,41 +11,6 @@ export const maxDuration = 120; // Increased to 120s to allow for image generati
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
 const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total (Vercel limit is 4.5MB, we use 4MB for safety)
 const MAX_REFERENCE_IMAGES = 14; // Nano Banana 2 support up to 14
-
-// Helper to map project types to English for better AI understanding
-const PROJECT_TYPE_MAP: Record<string, string> = {
-  "Casa unifamiliar": "single-family house",
-  "Villa de lujo": "luxury villa",
-  "Apartamento/Penthouse": "penthouse apartment",
-  "Edificio residencial": "residential building",
-  "Oficinas corporativas": "corporate office building",
-  "Retail/Tienda": "retail store",
-  "Restaurante/Bar": "restaurant",
-  "Hotel boutique": "boutique hotel",
-  "Hotel resort": "resort hotel",
-  "Museo/Galería": "museum",
-  "Centro cultural": "cultural center",
-  "Biblioteca": "library",
-  "Teatro/Auditorio": "theater",
-  "Edificio educativo": "educational building",
-  "Clínica/Hospital": "medical clinic",
-  "Spa/Wellness": "wellness spa",
-  "Mixed-use": "mixed-use building"
-};
-
-// Helper to map mood to English descriptors
-const MOOD_MAP: Record<string, string> = {
-  "Elegante y sofisticado": "elegant and sophisticated atmosphere",
-  "Acogedor y cálido": "cozy and warm atmosphere",
-  "Dramático e impactante": "dramatic and striking atmosphere",
-  "Sereno y zen": "serene and zen atmosphere",
-  "Futurista y vanguardista": "futuristic and avant-garde atmosphere",
-  "Rústico y orgánico": "rustic and organic atmosphere",
-  "Lujoso y opulento": "luxurious and opulent atmosphere",
-  "Industrial y raw": "industrial and raw atmosphere",
-  "Minimalista y puro": "minimalist and pure atmosphere",
-  "Romántico y nostálgico": "romantic and nostalgic atmosphere"
-};
 
 // Helper function to validate image size
 function validateImageSize(file: File, fieldName: string): { valid: boolean; error?: string } {
@@ -84,7 +50,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Initialize Gemini Client with provided key
     // Initialize Gemini Client with provided key and increased timeout (120s)
     const ai = new GoogleGenAI({ 
       apiKey,
@@ -171,157 +136,26 @@ export async function POST(req: NextRequest) {
       floorPlanImageMimeType = floorPlanImage.type;
     }
 
-    // --- Construct Exterior Generation Prompt (JSON context) ---
+    // --- NEW: Narrative Prompt Building ---
+    const narrativePrompt = buildNarrativePrompt(params);
 
-    const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
-    const validArchitects = Array.isArray(params.architect)
-      ? params.architect.filter(a => a !== "Sin arquitecto específico")
-      : [];
-    const moodDesc = MOOD_MAP[params.mood] || params.mood;
+    // Construction of the final prompt with verification meta-instructions
+    const fullPrompt = `${narrativePrompt}
 
-    // Build the structured JSON context object — only include fields with actual values
-    const ctx: Record<string, unknown> = {};
+ARCHITECTURAL MANDATE:
+- This image is part of a professional architectural portfolio. Every constraint is absolute.
+- Preserve the geometry of the provided floor plan (~80% fidelity).
+- Integrate the building perfectly into the terrain of the lot image if provided.
+- If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.
+- QUALITY: Award-winning architectural photography style, realistic textures, and cinematic lighting.
 
-    ctx.task = "generate_exterior_architectural_render";
-    ctx.output_type = "exterior_view_only";
+VERIFICATION STEPS:
+1. Review the generated composition against the text description.
+2. Verify that all requested materials (${params.materials.join(', ')}) are clearly visible.
+3. Confirm that no forbidden elements appear (Negative Prompt: ${params.negativePrompt || 'None'}).
+4. If the result is incorrect, reasoning should correct the composition before final output.`.trim();
 
-    // ── CRITICAL ABSOLUTE CONSTRAINTS (always first, highest model weight) ──
-    const mandatory: Record<string, unknown> = {
-      WARNING: "ALL values in this block are NON-NEGOTIABLE. Violating any constraint means the image is INCORRECT.",
-    };
-    if (projectType) mandatory.project_type = projectType;
-    if (params.city) mandatory.location = params.city;
-    if (params.architecturalStyles.length > 0) mandatory.architectural_style = params.architecturalStyles;
-    if (validArchitects.length > 0) mandatory.architect_reference = validArchitects;
-    if (moodDesc) mandatory.mood_atmosphere = moodDesc;
-    if (params.levels > 0) {
-      mandatory.levels = params.levels;
-      mandatory.levels_mandate = `The building MUST show EXACTLY ${params.levels} floor(s) in the exterior. Count the stories before finalizing. If incorrect, regenerate.`;
-    }
-    if (params.bedrooms > 0) mandatory.bedrooms = params.bedrooms;
-    if (params.bathrooms > 0) mandatory.bathrooms = params.bathrooms;
-    if (params.parkingSpots > 0) mandatory.parking_spots = params.parkingSpots;
-    if (params.parkingType) mandatory.parking_type = params.parkingType;
-    ctx.CRITICAL_ABSOLUTE_CONSTRAINTS = mandatory;
-
-    // ── IMAGE REFERENCES (floor plan → lot → style references) ──
-    const imgRefs: Record<string, unknown> = {};
-    if (floorPlanImageBase64) {
-      imgRefs.floor_plan = {
-        provided: true,
-        fidelity: "~80% geometric fidelity required",
-        mandate: "Trace the floor plan's footprint and perimeter as the building's 3D form. 20% creative freedom for structural coherence, proportion refinement, and 3D translation. Preserve all essential angles, curves, protrusions, and recesses.",
-      };
-    }
-    if (lotImageBase64) {
-      imgRefs.lot_image = {
-        provided: true,
-        mandate: "Integrate the building PERFECTLY into the terrain, topography, and vegetation shown. Match the site's lighting conditions exactly.",
-      };
-    }
-    if (referenceImagesBase64.length > 0) {
-      imgRefs.visual_references = {
-        count: referenceImagesBase64.length,
-        mandate: "Use as PRIMARY source for architectural style, materials, colors, textures, and aesthetic atmosphere. Incorporate their visual language directly.",
-      };
-    }
-    if (Object.keys(imgRefs).length > 0) ctx.image_references = imgRefs;
-
-    // ── VOLUMETRY ──
-    const volumetry: Record<string, unknown> = {};
-    if (params.size) volumetry.size = params.size;
-    if (params.levels > 0) volumetry.levels = params.levels; // repeated — critical for 3D form
-    if (params.roofType) volumetry.roof_type = params.roofType;
-    if (params.layoutType) volumetry.spatial_layout = params.layoutType;
-    if (Object.keys(volumetry).length > 0) ctx.volumetry = volumetry;
-
-    // ── BUILDING PROGRAM ──
-    const program: Record<string, unknown> = {};
-    if (params.bedrooms > 0) program.bedrooms = params.bedrooms;
-    if (params.bathrooms > 0) program.bathrooms = params.bathrooms;
-    if (params.parkingSpots > 0) program.parking_spots = params.parkingSpots;
-    if (params.parkingType) program.parking_type = params.parkingType;
-    if (params.kitchenType) program.kitchen_type = params.kitchenType;
-    if (params.livingAreaType) program.living_area_type = params.livingAreaType;
-    if (params.socialAreas.length > 0) program.social_areas = params.socialAreas;
-    if (Object.keys(program).length > 0) ctx.building_program = program;
-
-    // ── MATERIALITY ──
-    const mat: Record<string, unknown> = {};
-    if (params.materials.length > 0) mat.facade_materials = params.materials;
-    if (params.finishLevel) mat.finish_level = params.finishLevel;
-    if (params.architecturalDetails && params.architecturalDetails.length > 0) mat.architectural_details = params.architecturalDetails;
-    if (Object.keys(mat).length > 0) ctx.materiality = mat;
-
-    // ── SITE & ENVIRONMENT ──
-    const site: Record<string, unknown> = {};
-    if (params.environment) site.urban_context = params.environment;
-    if (params.climate) site.climate = params.climate;
-    if (params.waterBody) site.water_body = params.waterBody;
-    if (params.weatherCondition) site.weather_condition = params.weatherCondition;
-    if (Object.keys(site).length > 0) ctx.site_and_environment = site;
-
-    // ── COLOR & LANDSCAPE ──
-    const colorLandscape: Record<string, unknown> = {};
-    if (params.colorPalette.length > 0) colorLandscape.color_palette = params.colorPalette;
-    if (params.exteriorElements.length > 0) colorLandscape.exterior_elements = params.exteriorElements;
-    if (params.vegetation.length > 0) colorLandscape.vegetation = params.vegetation;
-    if (Object.keys(colorLandscape).length > 0) ctx.color_and_landscape = colorLandscape;
-
-    // ── PHOTOGRAPHY ──
-    const photo: Record<string, unknown> = {};
-    if (params.renderStyle) photo.render_style = params.renderStyle;
-    if (params.cameraAngle) photo.camera_angle = params.cameraAngle;
-    if (params.composition) photo.composition = params.composition;
-    if (params.timeOfDay) photo.time_of_day = params.timeOfDay;
-    if (params.season) photo.season = params.season;
-    if (params.lighting) photo.lighting = params.lighting;
-    if (params.humanContext) photo.human_context = params.humanContext;
-    if (Object.keys(photo).length > 0) ctx.photography = photo;
-
-    // ── CREATIVE DIRECTION ──
-    const creative: Record<string, unknown> = {};
-    if (params.technicalNotes) creative.technical_notes = params.technicalNotes;
-    if (params.artDirection) creative.art_direction = params.artDirection;
-    if (Object.keys(creative).length > 0) ctx.creative_direction = creative;
-
-    // ── NEGATIVE PROMPT (last — explicit exclusions) ──
-    if (params.negativePrompt) {
-      ctx.negative_prompt = {
-        STRICTLY_FORBIDDEN: "The following elements MUST NOT appear in the generated image under any circumstances.",
-        avoid: params.negativePrompt,
-      };
-    }
-
-    // Build verification checklist for mandatory numeric params
-    const checks: string[] = [];
-    if (params.levels > 0) checks.push(`- [ ] LEVELS: exactly ${params.levels} floor(s) clearly visible in the exterior view`);
-    if (projectType) checks.push(`- [ ] PROJECT TYPE: building is architecturally recognizable as a ${projectType}`);
-    if (params.architecturalStyles.length > 0) checks.push(`- [ ] STYLE: ${params.architecturalStyles.join(", ")} clearly expressed in the design`);
-    if (params.bedrooms > 0) checks.push(`- [ ] BEDROOMS: ${params.bedrooms} bedroom-scale volumes implied by the building massing`);
-    if (params.parkingSpots > 0 || params.parkingType) checks.push(`- [ ] PARKING: ${[params.parkingType, params.parkingSpots > 0 ? `${params.parkingSpots} space(s)` : ''].filter(Boolean).join(', ')} visible`);
-    if (params.negativePrompt) checks.push(`- [ ] NEGATIVE PROMPT: none of the forbidden elements appear in the image`);
-
-    const verificationBlock = checks.length > 0
-      ? `\nFINAL VERIFICATION — check every item before outputting:\n${checks.join('\n')}\nIf any check fails, correct and regenerate. Do not output an incorrect image.`
-      : '';
-
-    const fullPrompt = `You are a world-class architectural visualization AI. Generate a photorealistic exterior architectural render that EXACTLY matches ALL parameters in the JSON context below.
-
-FUNDAMENTAL RULE: This is a professional architectural concept design tool. Every parameter is a MANDATORY design requirement — not a suggestion. Deviating from any value means the output is incorrect.
-
-=== ARCHITECTURAL DESIGN CONTEXT ===
-${JSON.stringify(ctx, null, 2)}
-=== END CONTEXT ===
-
-OUTPUT REQUIREMENTS:
-- Generate EXTERIOR VIEW ONLY — no interiors, no sections, no floor plans
-- ${params.renderStyle || 'Photorealistic'} quality, cinematic lighting
-- Apply ALL parameters from the context above without exception
-- Image priority order: floor plan geometry (~80%) > lot terrain > visual references > parameters
-${verificationBlock}`.trim();
-
-    console.log("Generated Exterior Prompt:", fullPrompt);
+    console.log("Generated Narrative Prompt:", fullPrompt);
 
     // --- Generate Exterior Image ---
     const imageGenerationParts: Part[] = [{ text: fullPrompt }];
@@ -349,17 +183,27 @@ ${verificationBlock}`.trim();
       model: "gemini-3.1-flash-image-preview",
       contents: [{ parts: imageGenerationParts }],
       config: {
-        tools: [{ googleSearch: {} }],
+        responseModalities: ["TEXT", "IMAGE"],
+        // NEW: Enabled both web and image search for superior grounding
+        tools: [
+          { 
+            googleSearch: { 
+              searchTypes: {
+                webSearch: {},
+                imageSearch: {}
+              }
+            } as any
+          }
+        ],
         imageConfig: {
           ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
           ...(params.renderOutputResolution ? { imageSize: params.renderOutputResolution } : {})
         },
-        ...(params.thinkingLevel === "High" ? {
-          thinkingConfig: {
-            thinkingLevel: ThinkingLevel.HIGH,
-            includeThoughts: true
-          }
-        } : {})
+        // Enhanced Thinking Configuration for Nano Banana 2
+        thinkingConfig: {
+          thinkingLevel: params.thinkingLevel === "High" ? "High" : "Minimal",
+          includeThoughts: true
+        } as any
       }
     });
 
@@ -379,8 +223,9 @@ ${verificationBlock}`.trim();
     const imageBase64 = imagePart.inlineData.data;
     const mimeType = imagePart.inlineData.mimeType || "image/png";
     const imageUrl = `data:${mimeType};base64,${imageBase64}`;
+    const groundingMetadata = firstCandidate.groundingMetadata;
 
-    return NextResponse.json({ imageUrl });
+    return NextResponse.json({ imageUrl, groundingMetadata });
 
   } catch (error: unknown) {
     console.error("API Error Detailed:", error);
@@ -412,7 +257,6 @@ ${verificationBlock}`.trim();
       }
 
       // If it's a specific SDK ApiError, it should have a status code
-      // We check for 'status' property which exists on Google AI SDK errors
       const sdkError = error as { status?: number; code?: number };
       if (sdkError.status) {
         statusCode = sdkError.status;
@@ -425,3 +269,4 @@ ${verificationBlock}`.trim();
     );
   }
 }
+
