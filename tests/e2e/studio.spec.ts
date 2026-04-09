@@ -31,7 +31,7 @@ test.describe('DreamHouse Studio E2E', () => {
     await page.getByPlaceholder('Ej: Kyoto, Oslo, Atacama...').fill('Medellin');
     
     // Click Surprise Me (Randomize)
-    await page.getByRole('button', { name: 'Surprise Me' }).click();
+    await page.getByText('Surprise Me').click();
     
     // Generate
     await page.getByRole('button', { name: 'Generate exterior' }).click();
