@@ -58,6 +58,7 @@ export interface ExteriorSpecificParams {
 
 export interface InteriorSpecificParams {
   roomType: string;
+  roomSizeM2: number;
   furnitureStyle: string[];
   interiorLighting: string[];
   flooringMaterial: string;
@@ -124,6 +125,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
 
   // Interior
   roomType: "",
+  roomSizeM2: 0,
   furnitureStyle: [],
   interiorLighting: [],
   flooringMaterial: "",

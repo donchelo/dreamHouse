@@ -72,6 +72,24 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
             <Select label="Espacio / Habitación" value={params.roomType} onChange={(e) => handleChange("roomType", e.target.value)} options={IC.ROOM_TYPES} disabled={disabled} />
             <Select label="Atmósfera / Mood" value={params.mood} onChange={(e) => handleChange("mood", e.target.value)} options={SC.MOODS} disabled={disabled} />
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-1">Superficie del espacio</label>
+              <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight px-1">m² aproximados — define la escala y proporción de la escena</p>
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  value={params.roomSizeM2 || ""}
+                  onChange={(e) => handleChange("roomSizeM2", parseFloat(e.target.value) || 0)}
+                  placeholder="ej: 35"
+                  disabled={disabled}
+                  className="w-full bg-card border border-border py-3 pl-4 pr-12"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">m²</span>
+              </div>
+            </div>
+          </div>
           {renderChipsGroup("Estilo Decorativo", "architecturalStyles", SC.STYLES, "Lenguaje estético interior.", true)}
         </div>
       </Section>

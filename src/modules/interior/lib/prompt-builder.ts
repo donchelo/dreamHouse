@@ -39,10 +39,21 @@ const INTERIOR_LIGHTING_MAP: Record<string, string> = {
   "Luz natural lateral (Grandes ventanales)": "flooded with natural light through floor-to-ceiling windows"
 };
 
+function getRoomScaleDesc(m2: number): string {
+  if (!m2 || m2 <= 0) return "";
+  if (m2 < 10) return `an intimate ${m2}m² micro-space`;
+  if (m2 < 20) return `a compact ${m2}m² room`;
+  if (m2 < 35) return `a well-proportioned ${m2}m² room`;
+  if (m2 < 60) return `a generous ${m2}m² space`;
+  if (m2 < 100) return `a spacious ${m2}m² living area`;
+  return `a grand ${m2}m² expansive space`;
+}
+
 export function buildInteriorPrompt(params: DreamHouseParams): string {
   const roomDesc = ROOM_MAP[params.roomType] || "a beautifully designed interior space";
-  
-  let prompt = `A professional architectural interior photography of ${roomDesc}. `;
+  const scaleDesc = getRoomScaleDesc(params.roomSizeM2);
+
+  let prompt = `A professional architectural interior photography of ${roomDesc}${scaleDesc ? `, ${scaleDesc}` : ""}. `;
 
   prompt += `The space exhibits a ${params.architecturalStyles.join(' and ')} aesthetic, `;
   
