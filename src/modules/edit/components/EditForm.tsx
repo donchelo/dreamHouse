@@ -3,8 +3,9 @@ import { DreamHouseParams } from '@/types';
 import * as SC from '../../shared/constants';
 import { Section } from '@/components/ui/Section';
 import { Select } from '@/components/ui/Select';
-import { PenLine, ImageIcon, Sparkles } from 'lucide-react';
+import { PenLine, ImageIcon, Sparkles, Trash2 } from 'lucide-react';
 import SketchCanvas from '@/components/SketchCanvas';
+import LotUploader from '@/components/LotUploader';
 
 interface EditFormProps {
   params: DreamHouseParams;
@@ -13,6 +14,7 @@ interface EditFormProps {
   activeSection: string | null;
   onSectionChange: (id: string) => void;
   baseImage: File | null;
+  onBaseImageUpdate: (file: File | null) => void;
   onCompositeImageUpdate: (file: File | null) => void;
 }
 
@@ -31,6 +33,7 @@ export default function EditForm({
   activeSection, 
   onSectionChange,
   baseImage,
+  onBaseImageUpdate,
   onCompositeImageUpdate
 }: EditFormProps) {
   const handleChange = (key: keyof DreamHouseParams, value: any) => {
@@ -56,7 +59,28 @@ export default function EditForm({
             />
           </div>
 
-          <SketchCanvas baseImage={baseImage} onCompositeImageUpdate={onCompositeImageUpdate} />
+          {!baseImage ? (
+            <LotUploader 
+              file={baseImage} 
+              onFileChange={onBaseImageUpdate} 
+              title="Sube la imagen a editar" 
+              description="Sube la base sobre la que harás los trazos."
+              skipSizeValidation={true}
+            />
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-end">
+                <button 
+                  onClick={() => onBaseImageUpdate(null)} 
+                  className="text-xs text-destructive hover:underline flex items-center gap-1"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Quitar imagen base
+                </button>
+              </div>
+              <SketchCanvas baseImage={baseImage} onCompositeImageUpdate={onCompositeImageUpdate} />
+            </div>
+          )}
         </div>
       </Section>
 

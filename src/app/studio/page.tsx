@@ -287,7 +287,7 @@ export default function StudioPage() {
           {/* 03: Contexto (Mode-specific: Lote vs Espacio) */}
           {params.mode !== 'edit' && (
           <Section
-            title={params.mode === 'edit' ? "Imagen a Editar" : (params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual")}
+            title={params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual"}
             number="03"
             icon={<Camera className="w-5 h-5" />}
             badge="BASE"
@@ -297,15 +297,12 @@ export default function StudioPage() {
             <LotUploader 
               file={lotFile} 
               onFileChange={setLotFile} 
-              title={params.mode === 'edit' ? "Imagen Base para Edición" : (params.mode === 'exterior' ? "Lote / Emplazamiento" : "Espacio Principal (Foto Actual)")}
-              description={params.mode === 'edit' 
-                ? "Sube la imagen que deseas modificar. Luego, en Sketch Canvas podrás dar más contexto."
-                : (params.mode === 'exterior' 
+              title={params.mode === 'exterior' ? "Lote / Emplazamiento" : "Espacio Principal (Foto Actual)"}
+              description={params.mode === 'exterior' 
                   ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." 
-                  : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño.")
+                  : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño."
               }
               icon={params.mode === 'exterior' ? undefined : <Armchair className="w-5 h-5 text-primary" />}
-              skipSizeValidation={params.mode === 'edit'}
             />
           </Section>
           )}
