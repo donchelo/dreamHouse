@@ -38,6 +38,7 @@ function StudioContent() {
   const [lotFile, setLotFile] = useState<File | null>(null);
   const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
   const [editCompositeFile, setEditCompositeFile] = useState<File | null>(null);
+  const [objectFiles, setObjectFiles] = useState<File[]>([]);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -223,6 +224,9 @@ function StudioContent() {
         if (params.mode === 'edit' && editCompositeFile) {
           formData.append('editCompositeFile', editCompositeFile);
         }
+        if (params.mode === 'interior') {
+          objectFiles.forEach((file) => formData.append('objectImages', file));
+        }
         formData.append('params', JSON.stringify(params));
 
         const apiResponse = await fetch('/api/generate', {
@@ -295,6 +299,7 @@ function StudioContent() {
     setLotFile(null);
     setFloorPlanFile(null);
     setEditCompositeFile(null);
+    setObjectFiles([]);
     
     showToast(`Cargado diseño ${record.mode} de ${new Date(record.timestamp).toLocaleDateString()}`);
     
@@ -500,6 +505,8 @@ function StudioContent() {
               disabled={isLoading}
               activeSection={activeSection}
               onSectionChange={toggleSection}
+              objectFiles={objectFiles}
+              onObjectFilesChange={setObjectFiles}
             />
           ) : params.mode === 'edit' ? (
             <EditForm

@@ -4,10 +4,11 @@ import * as IC from '../constants';
 import * as EC from '../../exterior/constants';
 import * as SC from '../../shared/constants';
 import clsx from 'clsx';
-import { Sparkles, Armchair, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine } from 'lucide-react';
+import { Sparkles, Armchair, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine, ScanSearch } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { Select } from '@/components/ui/Select';
 import { Chip } from '@/components/ui/Chip';
+import ObjectUploader from '@/components/ObjectUploader';
 
 interface InteriorFormProps {
   params: DreamHouseParams;
@@ -15,6 +16,8 @@ interface InteriorFormProps {
   disabled?: boolean;
   activeSection: string | null;
   onSectionChange: (id: string) => void;
+  objectFiles: File[];
+  onObjectFilesChange: (files: File[]) => void;
 }
 
 function SectionDescription({ children }: { children: React.ReactNode }) {
@@ -25,7 +28,7 @@ function SectionDescription({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function InteriorForm({ params, onChange, disabled, activeSection, onSectionChange }: InteriorFormProps) {
+export default function InteriorForm({ params, onChange, disabled, activeSection, onSectionChange, objectFiles, onObjectFilesChange }: InteriorFormProps) {
   const handleChange = <K extends keyof DreamHouseParams>(key: K, value: DreamHouseParams[K]) => {
     onChange({ ...params, [key]: value });
   };
@@ -82,8 +85,14 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
         </div>
       </Section>
 
-      {/* ── 03 PROGRAMA ─────────────────────────────────────────── */}
-      <Section title="Detalle Funcional" number="07" icon={<LayoutGrid className="w-5 h-5" />} isOpen={activeSection === 'program'} onToggle={() => onSectionChange('program')}>
+      {/* ── 03 OBJETOS ──────────────────────────────────────────── */}
+      <Section title="Piezas & Objetos" number="07" icon={<ScanSearch className="w-5 h-5" />} isOpen={activeSection === 'interior-objects'} onToggle={() => onSectionChange('interior-objects')}>
+        <SectionDescription>Sube fotos de muebles u objetos específicos que quieres incluir: sillas, camas, lámparas, mesas… Gemini los integrará fielmente en la escena.</SectionDescription>
+        <ObjectUploader files={objectFiles} onFilesChange={onObjectFilesChange} disabled={disabled} />
+      </Section>
+
+      {/* ── 04 PROGRAMA ─────────────────────────────────────────── */}
+      <Section title="Detalle Funcional" number="08" icon={<LayoutGrid className="w-5 h-5" />} isOpen={activeSection === 'program'} onToggle={() => onSectionChange('program')}>
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select label="Tipo de Cocina" value={params.kitchenType} onChange={(e) => handleChange("kitchenType", e.target.value)} options={IC.KITCHEN_TYPES} disabled={disabled} />
@@ -102,8 +111,8 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
         </div>
       </Section>
 
-      {/* ── 04 ACABADOS ─────────────────────────────────────────── */}
-      <Section title="Materialidad y Superficies" number="08" icon={<Layers className="w-5 h-5" />} isOpen={activeSection === 'materials'} onToggle={() => onSectionChange('materials')}>
+      {/* ── 05 ACABADOS ─────────────────────────────────────────── */}
+      <Section title="Materialidad y Superficies" number="09" icon={<Layers className="w-5 h-5" />} isOpen={activeSection === 'materials'} onToggle={() => onSectionChange('materials')}>
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select label="Suelo / Pavimento" value={params.flooringMaterial} onChange={(e) => handleChange("flooringMaterial", e.target.value)} options={IC.FLOORING_MATERIALS} disabled={disabled} />
@@ -114,13 +123,13 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
         </div>
       </Section>
 
-      {/* ── 05 ESTÉTICA ─────────────────────────────────────────── */}
-      <Section title="Paleta de Color" number="09" icon={<Palette className="w-5 h-5" />} isOpen={activeSection === 'landscape'} onToggle={() => onSectionChange('landscape')}>
+      {/* ── 06 ESTÉTICA ─────────────────────────────────────────── */}
+      <Section title="Paleta de Color" number="10" icon={<Palette className="w-5 h-5" />} isOpen={activeSection === 'landscape'} onToggle={() => onSectionChange('landscape')}>
         {renderChipsGroup("Colores Dominantes", "colorPalette", SC.COLORS, "Gama cromática interior.")}
       </Section>
 
-      {/* ── 06 FOTOGRAFÍA ───────────────────────────────────────── */}
-      <Section title="Configuración de Cámara" number="10" icon={<Camera className="w-5 h-5" />} isOpen={activeSection === 'photography'} onToggle={() => onSectionChange('photography')}>
+      {/* ── 07 FOTOGRAFÍA ───────────────────────────────────────── */}
+      <Section title="Configuración de Cámara" number="11" icon={<Camera className="w-5 h-5" />} isOpen={activeSection === 'photography'} onToggle={() => onSectionChange('photography')}>
         <div className="space-y-6">
           <Select label="Dirección de Fotografía" value={params.cameraPreset} onChange={(e) => handleChange("cameraPreset", e.target.value)} options={SC.CAMERA_PRESET_NAMES} disabled={disabled} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -134,8 +143,8 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
         </div>
       </Section>
 
-      {/* ── 07 SALIDA ──────────────────────────────────────────── */}
-      <Section title="Output Final" number="11" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
+      {/* ── 08 SALIDA ──────────────────────────────────────────── */}
+      <Section title="Output Final" number="12" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <Select label="Estilo de Imagen" value={params.renderStyle} onChange={(e) => handleChange("renderStyle", e.target.value)} options={SC.RENDER_STYLES} disabled={disabled} />
           <Select label="Aspect Ratio" value={params.renderAspectRatio} onChange={(e) => handleChange("renderAspectRatio", e.target.value)} options={SC.ASPECT_RATIOS} disabled={disabled} />
@@ -143,8 +152,8 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
         </div>
       </Section>
 
-      {/* ── 08 DIRECCIÓN ───────────────────────────────────────── */}
-      <Section title="Dirección Creativa" number="12" icon={<PenLine className="w-5 h-5" />} isOpen={activeSection === 'creative'} onToggle={() => onSectionChange('creative')}>
+      {/* ── 09 DIRECCIÓN ───────────────────────────────────────── */}
+      <Section title="Dirección Creativa" number="13" icon={<PenLine className="w-5 h-5" />} isOpen={activeSection === 'creative'} onToggle={() => onSectionChange('creative')}>
         <textarea value={params.artDirection} onChange={(e) => handleChange("artDirection", e.target.value)} placeholder="Notas sobre el estilismo o la luz..." className="w-full h-32 bg-card border border-border p-4 text-sm" />
       </Section>
     </div>

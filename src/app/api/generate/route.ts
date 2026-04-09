@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
     const lotImage = formData.get('lotImage') as File | null;
     const floorPlanImage = formData.get('floorPlanImage') as File | null;
     const editCompositeFile = formData.get('editCompositeFile') as File | null;
+    const objectImages = formData.getAll('objectImages') as File[];
 
     if (!paramsJson) {
       return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
@@ -112,6 +113,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (objectImages.length > 13) {
+      return NextResponse.json({ message: 'Maximum 13 object images allowed.' }, { status: 400 });
+    }
+    for (const file of objectImages) {
+      const validation = validateImageSize(file, 'Object image');
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
+
     // Validate total payload size
     const totalPayloadSize = calculatePayloadSize(files, lotImage, floorPlanImage, editCompositeFile, paramsJson);
     if (!isEditMode && totalPayloadSize > MAX_TOTAL_PAYLOAD_SIZE) {
@@ -131,6 +142,7 @@ export async function POST(req: NextRequest) {
     let editCompositeBase64 = "";
     let editCompositeMimeType = "";
     const referenceImagesBase64: Array<{ mimeType: string; data: string }> = [];
+    const objectImagesBase64: Array<{ mimeType: string; data: string }> = [];
 
     if (lotImage) {
       const buffer = await lotImage.arrayBuffer();
@@ -156,6 +168,13 @@ export async function POST(req: NextRequest) {
       const buffer = await editCompositeFile.arrayBuffer();
       editCompositeBase64 = Buffer.from(buffer).toString('base64');
       editCompositeMimeType = editCompositeFile.type;
+    }
+
+    if (objectImages.length > 0) {
+      for (const file of objectImages) {
+        const buffer = await file.arrayBuffer();
+        objectImagesBase64.push({ mimeType: file.type, data: Buffer.from(buffer).toString('base64') });
+      }
     }
 
     // --- NEW: Narrative Prompt Building ---
@@ -228,6 +247,15 @@ VERIFICATION STEPS:
         imageGenerationParts.push({
           inlineData: { mimeType: lotImageMimeType, data: lotImageBase64 }
         });
+      }
+
+      if (objectImagesBase64.length > 0) {
+        imageGenerationParts.push({
+          text: `OBJECT REFERENCES (${objectImagesBase64.length} piece${objectImagesBase64.length > 1 ? 's' : ''}): The following images are specific furniture pieces, fixtures, or decorative objects that MUST appear in the final interior design. Incorporate each one faithfully — preserve its exact shape, color, material, and design. Place them naturally within the space according to the room layout and style.`
+        });
+        for (const obj of objectImagesBase64) {
+          imageGenerationParts.push({ inlineData: { mimeType: obj.mimeType, data: obj.data } });
+        }
       }
 
       for (const refImage of referenceImagesBase64) {
