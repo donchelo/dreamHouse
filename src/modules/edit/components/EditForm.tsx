@@ -44,7 +44,7 @@ export default function EditForm({
     <div className="space-y-0" role="form" aria-label="Módulo de Edición de Imagen">
 
       {/* ── 04 SKETCH CANVAS ─────────────────────────────────────── */}
-      <Section title="Modo Sketch / Edición Visual" number="04" icon={<PenLine className="w-5 h-5" />} isOpen={activeSection === 'sketch'} onToggle={() => onSectionChange('sketch')}>
+      <Section title="Modo Sketch / Edición Visual" number="02" icon={<PenLine className="w-5 h-5" />} isOpen={activeSection === 'sketch'} onToggle={() => onSectionChange('sketch')}>
         <SectionDescription>Dibuja sobre la imagen base para indicar las zonas que deseas modificar y escribe tu instrucción de edición.</SectionDescription>
         
         <div className="space-y-8">
@@ -85,7 +85,7 @@ export default function EditForm({
       </Section>
 
       {/* ── 05 PROCESO ─────────────────────────────────────────── */}
-      <Section title="Configuración de Salida" number="05" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
+      <Section title="Configuración de Salida" number="03" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <Select label="Estilo Render" value={params.renderStyle} onChange={(e) => handleChange("renderStyle", e.target.value)} options={SC.RENDER_STYLES} disabled={disabled} />
           <Select label="Ratio de Aspecto" value={params.renderAspectRatio} onChange={(e) => handleChange("renderAspectRatio", e.target.value)} options={SC.ASPECT_RATIOS} disabled={disabled} />

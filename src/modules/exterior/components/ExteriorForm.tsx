@@ -60,7 +60,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
   return (
     <div className="space-y-0" role="form" aria-label="Módulo de Arquitectura Exterior">
       {/* ── 01 IDENTIDAD ────────────────────────────────────────── */}
-      <Section title="Identidad del Proyecto" number="01" icon={<Sparkles className="w-5 h-5" />} isOpen={activeSection === 'identity'} onToggle={() => onSectionChange('identity')}>
+      <Section title="Identidad del Proyecto" number="05" icon={<Sparkles className="w-5 h-5" />} isOpen={activeSection === 'identity'} onToggle={() => onSectionChange('identity')}>
         <SectionDescription>Define la esencia y el carácter arquitectónico del edificio exterior.</SectionDescription>
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -75,7 +75,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 02 CONTEXTO ─────────────────────────────────────────── */}
-      <Section title="Ubicación y Paisaje" number="02" icon={<MapPin className="w-5 h-5" />} isOpen={activeSection === 'location'} onToggle={() => onSectionChange('location')}>
+      <Section title="Ubicación y Paisaje" number="06" icon={<MapPin className="w-5 h-5" />} isOpen={activeSection === 'location'} onToggle={() => onSectionChange('location')}>
         <SectionDescription>El emplazamiento físico y las condiciones climáticas del sitio.</SectionDescription>
         <div className="space-y-6">
           <div className="flex flex-col gap-2">
@@ -94,7 +94,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 03 FORMA ────────────────────────────────────────────── */}
-      <Section title="Volumetría y Estructura" number="03" icon={<Box className="w-5 h-5" />} isOpen={activeSection === 'volumetry'} onToggle={() => onSectionChange('volumetry')}>
+      <Section title="Volumetría y Estructura" number="07" icon={<Box className="w-5 h-5" />} isOpen={activeSection === 'volumetry'} onToggle={() => onSectionChange('volumetry')}>
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select label="Escala / Tamaño" value={params.size} onChange={(e) => handleChange("size", e.target.value)} options={EC.SIZES} disabled={disabled} />
@@ -111,7 +111,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 04 PROGRAMA ─────────────────────────────────────────── */}
-      <Section title="Programa Exterior" number="04" icon={<LayoutGrid className="w-5 h-5" />} isOpen={activeSection === 'program'} onToggle={() => onSectionChange('program')}>
+      <Section title="Programa Exterior" number="08" icon={<LayoutGrid className="w-5 h-5" />} isOpen={activeSection === 'program'} onToggle={() => onSectionChange('program')}>
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Select label="Estacionamiento" value={params.parkingType} onChange={(e) => handleChange("parkingType", e.target.value)} options={EC.PARKING_TYPES} disabled={disabled} />
@@ -121,7 +121,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 05 MATERIALES ───────────────────────────────────────── */}
-      <Section title="Piel y Materialidad" number="05" icon={<Layers className="w-5 h-5" />} isOpen={activeSection === 'materials'} onToggle={() => onSectionChange('materials')}>
+      <Section title="Piel y Materialidad" number="09" icon={<Layers className="w-5 h-5" />} isOpen={activeSection === 'materials'} onToggle={() => onSectionChange('materials')}>
         <div className="space-y-8">
           {renderChipsGroup("Materiales Dominantes", "materials", EC.MATERIALS, "Paleta constructiva exterior.", true)}
           <Select label="Calidad de Ejecución" value={params.finishLevel} onChange={(e) => handleChange("finishLevel", e.target.value)} options={EC.FINISH_LEVELS} disabled={disabled} />
@@ -130,7 +130,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 06 LANDSCAPE ────────────────────────────────────────── */}
-      <Section title="Paisajismo y Color" number="06" icon={<Palette className="w-5 h-5" />} isOpen={activeSection === 'landscape'} onToggle={() => onSectionChange('landscape')}>
+      <Section title="Paisajismo y Color" number="10" icon={<Palette className="w-5 h-5" />} isOpen={activeSection === 'landscape'} onToggle={() => onSectionChange('landscape')}>
         <div className="space-y-8">
           {renderChipsGroup("Paleta de Color", "colorPalette", SC.COLORS, "Tonos cromáticos de la fachada.")}
           {renderChipsGroup("Elementos de Sitio", "exteriorElements", EC.EXTERIOR_ELEMENTS, "Infraestructura exterior.", true)}
@@ -139,7 +139,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 07 FOTOGRAFÍA ───────────────────────────────────────── */}
-      <Section title="Dirección de Cámara" number="07" icon={<Camera className="w-5 h-5" />} isOpen={activeSection === 'photography'} onToggle={() => onSectionChange('photography')}>
+      <Section title="Dirección de Cámara" number="11" icon={<Camera className="w-5 h-5" />} isOpen={activeSection === 'photography'} onToggle={() => onSectionChange('photography')}>
         <div className="space-y-6">
           <Select label="Preset de Cámara" value={params.cameraPreset} onChange={(e) => handleChange("cameraPreset", e.target.value)} options={SC.CAMERA_PRESET_NAMES} disabled={disabled} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -154,7 +154,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 08 PROCESO ─────────────────────────────────────────── */}
-      <Section title="Configuración de Salida" number="08" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
+      <Section title="Configuración de Salida" number="12" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <Select label="Estilo" value={params.renderStyle} onChange={(e) => handleChange("renderStyle", e.target.value)} options={SC.RENDER_STYLES} disabled={disabled} />
           <Select label="Ratio" value={params.renderAspectRatio} onChange={(e) => handleChange("renderAspectRatio", e.target.value)} options={SC.ASPECT_RATIOS} disabled={disabled} />
@@ -163,7 +163,7 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
       </Section>
 
       {/* ── 09 ART ─────────────────────────────────────────────── */}
-      <Section title="Dirección Creativa" number="09" icon={<PenLine className="w-5 h-5" />} isOpen={activeSection === 'creative'} onToggle={() => onSectionChange('creative')}>
+      <Section title="Dirección Creativa" number="13" icon={<PenLine className="w-5 h-5" />} isOpen={activeSection === 'creative'} onToggle={() => onSectionChange('creative')}>
         <textarea value={params.artDirection} onChange={(e) => handleChange("artDirection", e.target.value)} placeholder="Instrucciones artísticas específicas..." className="w-full h-32 bg-card border border-border p-4 text-sm" />
       </Section>
     </div>
