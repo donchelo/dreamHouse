@@ -4,7 +4,7 @@ import * as IC from '../constants';
 import * as EC from '../../exterior/constants';
 import * as SC from '../../shared/constants';
 import clsx from 'clsx';
-import { Sparkles, Armchair, LampCeiling, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine, Maximize2 } from 'lucide-react';
+import { Sparkles, Armchair, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { Select } from '@/components/ui/Select';
 import { Chip } from '@/components/ui/Chip';
@@ -26,7 +26,7 @@ function SectionDescription({ children }: { children: React.ReactNode }) {
 }
 
 export default function InteriorForm({ params, onChange, disabled, activeSection, onSectionChange }: InteriorFormProps) {
-  const handleChange = (key: keyof DreamHouseParams, value: any) => {
+  const handleChange = <K extends keyof DreamHouseParams>(key: K, value: DreamHouseParams[K]) => {
     onChange({ ...params, [key]: value });
   };
 
@@ -55,8 +55,8 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
     );
   };
 
-  const selectedCamera = SC.CAMERA_PRESETS.find(c => c.name === params.cameraPreset) ?? null;
-  const filmSims = selectedCamera?.isFujifilm ? SC.FUJIFILM_FILM_SIMULATIONS : SC.UNIVERSAL_FILM_LOOKS;
+  // const selectedCamera = SC.CAMERA_PRESETS.find(c => c.name === params.cameraPreset) ?? null;
+  // const filmSims = selectedCamera?.isFujifilm ? SC.FUJIFILM_FILM_SIMULATIONS : SC.UNIVERSAL_FILM_LOOKS;
 
   return (
     <div className="space-y-0" role="form" aria-label="Módulo de Diseño Interior">

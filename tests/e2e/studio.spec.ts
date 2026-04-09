@@ -46,7 +46,7 @@ test.describe('DreamHouse Studio E2E', () => {
     await page.getByText('Diseño Interior').click();
     
     // Verify interior specific elements (e.g., Room Type)
-    await expect(page.getByText('Tipo de Espacio')).toBeVisible();
+    await expect(page.getByText('Espacio / Habitación')).toBeVisible();
     
     // Generate
     await page.getByRole('button', { name: 'Generate interior' }).click();
@@ -62,7 +62,7 @@ test.describe('DreamHouse Studio E2E', () => {
     
     // Verify Edit specific elements (Sketch Canvas)
     // We look for the canvas or the "Upload base image" message
-    await expect(page.getByText('Sube la imagen que deseas editar')).toBeVisible();
+    await expect(page.getByText('Sube la imagen a editar')).toBeVisible();
     
     // Note: Fully testing sketch involves complex interactions, 
     // but we can verify the prompt behavior.

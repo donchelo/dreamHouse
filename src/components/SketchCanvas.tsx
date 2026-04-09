@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { Undo, Trash2, Pencil, Download, ImagePlus } from 'lucide-react';
-import Image from 'next/image';
+import { Undo, Trash2, Pencil, ImagePlus } from 'lucide-react';
 
 interface SketchCanvasProps {
   baseImage: File | null;

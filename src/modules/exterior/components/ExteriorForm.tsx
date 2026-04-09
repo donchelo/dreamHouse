@@ -3,7 +3,7 @@ import { DreamHouseParams } from '@/types';
 import * as EC from '../constants';
 import * as SC from '../../shared/constants';
 import clsx from 'clsx';
-import { Sparkles, MapPin, Box, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine, Info } from 'lucide-react';
+import { Sparkles, MapPin, Box, LayoutGrid, Layers, Palette, Camera, ImageIcon, PenLine } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { Select } from '@/components/ui/Select';
 import { Chip } from '@/components/ui/Chip';
@@ -25,7 +25,7 @@ function SectionDescription({ children }: { children: React.ReactNode }) {
 }
 
 export default function ExteriorForm({ params, onChange, disabled, activeSection, onSectionChange }: ExteriorFormProps) {
-  const handleChange = (key: keyof DreamHouseParams, value: any) => {
+  const handleChange = <K extends keyof DreamHouseParams>(key: K, value: DreamHouseParams[K]) => {
     onChange({ ...params, [key]: value });
   };
 
@@ -54,8 +54,8 @@ export default function ExteriorForm({ params, onChange, disabled, activeSection
     );
   };
 
-  const selectedCamera = SC.CAMERA_PRESETS.find(c => c.name === params.cameraPreset) ?? null;
-  const filmSims = selectedCamera?.isFujifilm ? SC.FUJIFILM_FILM_SIMULATIONS : SC.UNIVERSAL_FILM_LOOKS;
+  // const selectedCamera = SC.CAMERA_PRESETS.find(c => c.name === params.cameraPreset) ?? null;
+  // const filmSims = selectedCamera?.isFujifilm ? SC.FUJIFILM_FILM_SIMULATIONS : SC.UNIVERSAL_FILM_LOOKS;
 
   return (
     <div className="space-y-0" role="form" aria-label="Módulo de Arquitectura Exterior">

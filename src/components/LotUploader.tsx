@@ -54,7 +54,7 @@ export default function LotUploader({
       }
       onFileChange(droppedFile);
     }
-  }, [onFileChange]);
+  }, [onFileChange, skipSizeValidation]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -69,7 +69,7 @@ export default function LotUploader({
         onFileChange(selectedFile);
       }
     }
-  }, [onFileChange]);
+  }, [onFileChange, skipSizeValidation]);
 
   const removeFile = useCallback(() => {
     onFileChange(null);

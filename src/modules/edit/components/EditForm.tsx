@@ -3,7 +3,7 @@ import { DreamHouseParams } from '@/types';
 import * as SC from '../../shared/constants';
 import { Section } from '@/components/ui/Section';
 import { Select } from '@/components/ui/Select';
-import { PenLine, ImageIcon, Sparkles, Trash2 } from 'lucide-react';
+import { PenLine, ImageIcon, Trash2 } from 'lucide-react';
 import SketchCanvas from '@/components/SketchCanvas';
 import LotUploader from '@/components/LotUploader';
 
@@ -36,7 +36,7 @@ export default function EditForm({
   onBaseImageUpdate,
   onCompositeImageUpdate
 }: EditFormProps) {
-  const handleChange = (key: keyof DreamHouseParams, value: any) => {
+  const handleChange = <K extends keyof DreamHouseParams>(key: K, value: DreamHouseParams[K]) => {
     onChange({ ...params, [key]: value });
   };
 
