@@ -5,28 +5,28 @@ import { Button } from './ui/Button';
 import clsx from 'clsx';
 import { useLightbox } from '@/context/LightboxContext';
 
-// Mensajes divertidos para el estado de carga
+// Mensajes para el estado de carga
 const LOADING_MESSAGES = [
-  { emoji: "👁️", main: "Analizando tu visión...", sub: "Interpretando cada detalle arquitectónico" },
-  { emoji: "✏️", main: "Dibujando los primeros trazos...", sub: "Como Le Corbusier con su lápiz" },
-  { emoji: "📐", main: "Calculando proporciones áureas...", sub: "La matemática de la belleza" },
-  { emoji: "🧱", main: "Eligiendo los mejores materiales...", sub: "Concreto, vidrio, madera... ¡perfecto!" },
-  { emoji: "💡", main: "Jugando con la luz y las sombras...", sub: "Tadao Ando estaría orgulloso" },
-  { emoji: "🪟", main: "Colocando cada ventana estratégicamente...", sub: "Las vistas importan" },
-  { emoji: "🌬️", main: "Diseñando espacios que respiran...", sub: "El aire también necesita su lugar" },
-  { emoji: "🌿", main: "Integrando arquitectura y naturaleza...", sub: "Frank Lloyd Wright lo aprobaría" },
-  { emoji: "🏠", main: "Perfeccionando las líneas del techo...", sub: "Cada ángulo cuenta" },
-  { emoji: "✨", main: "Añadiendo ese toque de magia...", sub: "Lo que hace único tu diseño" },
-  { emoji: "🎬", main: "Creando sombras cinematográficas...", sub: "Digno de una portada de ArchDaily" },
-  { emoji: "🌱", main: "Plantando el jardín virtual...", sub: "Verde que te quiero verde" },
-  { emoji: "🎨", main: "Ajustando la paleta de colores...", sub: "Armonía cromática en proceso" },
-  { emoji: "🌅", main: "Capturando el golden hour perfecto...", sub: "La luz dorada lo cambia todo" },
-  { emoji: "🔍", main: "Refinando cada pixel...", sub: "Los detalles hacen la diferencia" },
-  { emoji: "🤖", main: "Consultando con la IA arquitecta...", sub: "Ella sabe lo que hace" },
-  { emoji: "👨‍👩‍👧", main: "Imaginando quién vivirá aquí...", sub: "Cada casa cuenta una historia" },
-  { emoji: "🏆", main: "Verificando que Zaha estaría impresionada...", sub: "El listón está alto" },
-  { emoji: "🏁", main: "Casi listo...", sub: "Tu sueño arquitectónico está tomando forma" },
-  { emoji: "🖌️", main: "Últimos retoques maestros...", sub: "La perfección está en los detalles" },
+  { emoji: "○", main: "Analizando tu visión...", sub: "Interpretando cada detalle arquitectónico" },
+  { emoji: "╱", main: "Dibujando los primeros trazos...", sub: "Como Le Corbusier con su lápiz" },
+  { emoji: "□", main: "Calculando proporciones áureas...", sub: "La matemática de la belleza" },
+  { emoji: "◼", main: "Eligiendo los mejores materiales...", sub: "Concreto, vidrio, madera" },
+  { emoji: "◉", main: "Jugando con la luz y las sombras...", sub: "Tadao Ando estaría orgulloso" },
+  { emoji: "⊡", main: "Colocando cada ventana estratégicamente...", sub: "Las vistas importan" },
+  { emoji: "◇", main: "Diseñando espacios que respiran...", sub: "El aire también necesita su lugar" },
+  { emoji: "◌", main: "Integrando arquitectura y naturaleza...", sub: "Frank Lloyd Wright lo aprobaría" },
+  { emoji: "△", main: "Perfeccionando las líneas del techo...", sub: "Cada ángulo cuenta" },
+  { emoji: "✦", main: "Añadiendo ese toque de magia...", sub: "Lo que hace único tu diseño" },
+  { emoji: "◑", main: "Creando sombras cinematográficas...", sub: "Digno de una portada de ArchDaily" },
+  { emoji: "⊙", main: "Plantando el jardín virtual...", sub: "Verde que te quiero verde" },
+  { emoji: "◈", main: "Ajustando la paleta de colores...", sub: "Armonía cromática en proceso" },
+  { emoji: "◐", main: "Capturando el golden hour perfecto...", sub: "La luz dorada lo cambia todo" },
+  { emoji: "⊕", main: "Refinando cada pixel...", sub: "Los detalles hacen la diferencia" },
+  { emoji: "⊞", main: "Consultando con la IA arquitecta...", sub: "Ella sabe lo que hace" },
+  { emoji: "◎", main: "Imaginando quién vivirá aquí...", sub: "Cada casa cuenta una historia" },
+  { emoji: "▲", main: "Verificando que Zaha estaría impresionada...", sub: "El listón está alto" },
+  { emoji: "▷", main: "Casi listo...", sub: "Tu sueño arquitectónico está tomando forma" },
+  { emoji: "◀", main: "Últimos retoques maestros...", sub: "La perfección está en los detalles" },
 ];
 
 interface ResultDisplayProps {
