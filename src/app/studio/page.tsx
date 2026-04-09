@@ -494,6 +494,14 @@ function StudioContent() {
               activeSection={activeSection}
               onSectionChange={toggleSection}
             />
+          ) : params.mode === 'interior' ? (
+            <InteriorForm
+              params={params}
+              onChange={setParams}
+              disabled={isLoading}
+              activeSection={activeSection}
+              onSectionChange={toggleSection}
+            />
           ) : params.mode === 'edit' ? (
             <EditForm
               params={params}
