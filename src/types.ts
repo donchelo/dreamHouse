@@ -1,4 +1,4 @@
-export type GenerationMode = "exterior" | "interior";
+export type GenerationMode = "exterior" | "interior" | "edit";
 
 export interface SharedParams {
   mode: GenerationMode;
@@ -34,6 +34,7 @@ export interface SharedParams {
   technicalNotes: string;
   artDirection: string;
   negativePrompt: string;
+  editPrompt: string;
 }
 
 export interface ExteriorSpecificParams {
@@ -96,6 +97,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   technicalNotes: "",
   artDirection: "",
   negativePrompt: "",
+  editPrompt: "",
 
   // Exterior
   projectType: "",

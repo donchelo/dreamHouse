@@ -7,10 +7,11 @@ import LotUploader from '@/components/LotUploader';
 import FloorPlanUploader from '@/components/FloorPlanUploader';
 import ExteriorForm from '@/modules/exterior/components/ExteriorForm';
 import InteriorForm from '@/modules/interior/components/InteriorForm';
+import EditForm from '@/modules/edit/components/EditForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2, Home, Armchair, Maximize2, Camera, PenLine } from 'lucide-react';
+import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2, Home, Armchair, Maximize2, Camera, PenLine, Wand } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import * as SC from '@/modules/shared/constants';
@@ -22,6 +23,7 @@ export default function StudioPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
   const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
+  const [editCompositeFile, setEditCompositeFile] = useState<File | null>(null);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +49,7 @@ export default function StudioPage() {
       technicalNotes: "",
       artDirection: "",
       negativePrompt: "",
+      editPrompt: "",
       mode: params.mode // Keep current mode on reset
     });
     showToast("Parameters reset to default");
@@ -104,8 +107,11 @@ export default function StudioPage() {
       ceilingDetail: !isExt ? pick(IC.CEILING_DETAILS) : params.ceilingDetail,
       bedrooms: !isExt ? Math.floor(Math.random() * 4) + 1 : params.bedrooms,
       bathrooms: !isExt ? Math.floor(Math.random() * 3) + 1 : params.bathrooms,
-      kitchenType: !isExt ? pick(IC.KITCHEN_TYPES) : params.kitchenType,
-      livingAreaType: !isExt ? pick(IC.LIVING_AREA_TYPES) : params.livingAreaType,
+      kitchenType: !isExt && params.mode !== 'edit' ? pick(IC.KITCHEN_TYPES) : params.kitchenType,
+      livingAreaType: !isExt && params.mode !== 'edit' ? pick(IC.LIVING_AREA_TYPES) : params.livingAreaType,
+      
+      // Edit mode (just randomize output settings)
+      editPrompt: params.mode === 'edit' ? "Make the sky cloudy, add modern street lamps" : params.editPrompt,
     };
 
     setParams(randomParams);
@@ -132,6 +138,9 @@ export default function StudioPage() {
       }
       if (floorPlanFile) {
         formData.append('floorPlanImage', floorPlanFile);
+      }
+      if (params.mode === 'edit' && editCompositeFile) {
+        formData.append('editCompositeFile', editCompositeFile);
       }
       formData.append('params', JSON.stringify(params));
 
@@ -248,10 +257,21 @@ export default function StudioPage() {
                 <Armchair className="w-8 h-8" />
                 <span className="text-xs font-bold uppercase tracking-widest">Diseño Interior</span>
               </button>
+              <button
+                onClick={() => setParams({ ...params, mode: 'edit' })}
+                className={clsx(
+                  "flex flex-col items-center gap-3 p-6 border transition-all col-span-2 sm:col-span-1",
+                  params.mode === "edit" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+                )}
+              >
+                <Wand className="w-8 h-8" />
+                <span className="text-xs font-bold uppercase tracking-widest">Editar Imagen con IA</span>
+              </button>
             </div>
           </Section>
 
           {/* 02: Referencias Visuales (Shared) */}
+          {params.mode !== 'edit' && (
           <Section
             title="Referencias Visuales"
             number="02"
@@ -262,10 +282,11 @@ export default function StudioPage() {
           >
             <ReferenceUploader files={files} onFilesChange={setFiles} />
           </Section>
+          )}
 
           {/* 03: Contexto (Mode-specific: Lote vs Espacio) */}
           <Section
-            title={params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual"}
+            title={params.mode === 'edit' ? "Imagen a Editar" : (params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual")}
             number="03"
             icon={<Camera className="w-5 h-5" />}
             badge="BASE"
@@ -275,16 +296,19 @@ export default function StudioPage() {
             <LotUploader 
               file={lotFile} 
               onFileChange={setLotFile} 
-              title={params.mode === 'exterior' ? "Lote / Emplazamiento" : "Espacio Principal (Foto Actual)"}
-              description={params.mode === 'exterior' 
-                ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." 
-                : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño."
+              title={params.mode === 'edit' ? "Imagen Base para Edición" : (params.mode === 'exterior' ? "Lote / Emplazamiento" : "Espacio Principal (Foto Actual)")}
+              description={params.mode === 'edit' 
+                ? "Sube la imagen que deseas modificar. Luego, en Sketch Canvas podrás dar más contexto."
+                : (params.mode === 'exterior' 
+                  ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." 
+                  : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño.")
               }
               icon={params.mode === 'exterior' ? undefined : <Armchair className="w-5 h-5 text-primary" />}
             />
           </Section>
 
           {/* 04: Estructura (Mode-specific: Plano vs Layout) */}
+          {params.mode !== 'edit' && (
           <Section
             title={params.mode === 'exterior' ? "Plano de Planta" : "Distribución / Layout"}
             number="04"
@@ -303,6 +327,7 @@ export default function StudioPage() {
               }
             />
           </Section>
+          )}
 
           {/* Dinamically Rendered Module Form */}
           {params.mode === 'exterior' ? (
@@ -313,13 +338,23 @@ export default function StudioPage() {
               activeSection={activeSection}
               onSectionChange={toggleSection}
             />
-          ) : (
+          ) : params.mode === 'interior' ? (
             <InteriorForm
               params={params}
               onChange={setParams}
               disabled={isLoading}
               activeSection={activeSection}
               onSectionChange={toggleSection}
+            />
+          ) : (
+            <EditForm
+              params={params}
+              onChange={setParams}
+              disabled={isLoading}
+              activeSection={activeSection}
+              onSectionChange={toggleSection}
+              baseImage={lotFile}
+              onCompositeImageUpdate={setEditCompositeFile}
             />
           )}
 

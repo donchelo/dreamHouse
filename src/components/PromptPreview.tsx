@@ -155,6 +155,7 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       title: 'Dirección Creativa',
       icon: <PenLine className="w-3.5 h-3.5" />,
       items: [
+        { label: 'EDITAR', value: params.editPrompt },
         { label: 'TÉCNICAS', value: params.technicalNotes },
         { label: 'ART DIR.', value: params.artDirection },
         { label: 'EXCLUIR', value: params.negativePrompt },

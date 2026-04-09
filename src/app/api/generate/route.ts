@@ -31,11 +31,12 @@ function validateImageSize(file: File, fieldName: string): { valid: boolean; err
 }
 
 // Helper function to calculate total payload size
-function calculatePayloadSize(files: File[], lotImage: File | null, floorPlanImage: File | null, paramsJson: string): number {
+function calculatePayloadSize(files: File[], lotImage: File | null, floorPlanImage: File | null, editCompositeFile: File | null, paramsJson: string): number {
   let totalSize = paramsJson.length;
   files.forEach(file => totalSize += file.size);
   if (lotImage) totalSize += lotImage.size;
   if (floorPlanImage) totalSize += floorPlanImage.size;
+  if (editCompositeFile) totalSize += editCompositeFile.size;
   return totalSize;
 }
 
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
     const files = formData.getAll('files') as File[];
     const lotImage = formData.get('lotImage') as File | null;
     const floorPlanImage = formData.get('floorPlanImage') as File | null;
+    const editCompositeFile = formData.get('editCompositeFile') as File | null;
 
     if (!paramsJson) {
       return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
@@ -97,8 +99,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (editCompositeFile) {
+      const validation = validateImageSize(editCompositeFile, 'Edit Composite image');
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
+
     // Validate total payload size
-    const totalPayloadSize = calculatePayloadSize(files, lotImage, floorPlanImage, paramsJson);
+    const totalPayloadSize = calculatePayloadSize(files, lotImage, floorPlanImage, editCompositeFile, paramsJson);
     if (totalPayloadSize > MAX_TOTAL_PAYLOAD_SIZE) {
       return NextResponse.json(
         {
@@ -115,6 +124,8 @@ export async function POST(req: NextRequest) {
     let lotImageMimeType = "";
     let floorPlanImageBase64 = "";
     let floorPlanImageMimeType = "";
+    let editCompositeBase64 = "";
+    let editCompositeMimeType = "";
     const referenceImagesBase64: Array<{ mimeType: string; data: string }> = [];
 
     if (lotImage) {
@@ -137,23 +148,41 @@ export async function POST(req: NextRequest) {
       floorPlanImageMimeType = floorPlanImage.type;
     }
 
-    // --- NEW: Narrative Prompt Building ---
-    const narrativePrompt = params.mode === 'interior' 
-      ? buildInteriorPrompt(params) 
-      : buildExteriorPrompt(params);
+    if (editCompositeFile) {
+      const buffer = await editCompositeFile.arrayBuffer();
+      editCompositeBase64 = Buffer.from(buffer).toString('base64');
+      editCompositeMimeType = editCompositeFile.type;
+    }
 
-    // Construction of the mode-aware architectural mandate
-    const mandate = params.mode === "interior" 
-      ? `INTERNAL SPATIAL MANDATE:
+    // --- NEW: Narrative Prompt Building ---
+    let narrativePrompt = "";
+    if (params.mode === 'interior') {
+      narrativePrompt = buildInteriorPrompt(params);
+    } else if (params.mode === 'exterior') {
+      narrativePrompt = buildExteriorPrompt(params);
+    } else {
+      narrativePrompt = `USER EDIT PROMPT: ${params.editPrompt}`;
+    }
+
+    let mandate = "";
+    if (params.mode === "interior") {
+      mandate = `INTERNAL SPATIAL MANDATE:
 - This image is a professional interior design visualization. Scale, lighting, and texture are critical.
 - Respect the functional logic of the specified room: ${params.roomType}.
 - Ensure the furniture style (${params.furnitureStyle.join(', ')}) and lighting (${params.interiorLighting.join(', ')}) are rendered with high fidelity.
-- Materiality: The floor (${params.flooringMaterial}) and ceiling (${params.ceilingDetail}) must define the vertical boundaries of the space.`
-      : `ARCHITECTURAL EXTERIOR MANDATE:
+- Materiality: The floor (${params.flooringMaterial}) and ceiling (${params.ceilingDetail}) must define the vertical boundaries of the space.`;
+    } else if (params.mode === "exterior") {
+      mandate = `ARCHITECTURAL EXTERIOR MANDATE:
 - This image is part of a professional architectural portfolio. Volumetric hierarchy is absolute.
 - Preserve the geometry of the provided floor plan if applicable.
 - Integrate the building perfectly into the terrain/lot if provided.
 - If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.`;
+    } else {
+      mandate = `IMAGE EDITING MANDATE:
+- Using the provided image (which may include user sketches/notes as a guide), perform the requested edits.
+- The user's sketch/notes drawn on the image are instructions/guides for what to change and where.
+- Seamlessly integrate the changes, matching the original lighting, style, and perspective.`;
+    }
 
     const fullPrompt = `${narrativePrompt}
 
@@ -171,23 +200,30 @@ VERIFICATION STEPS:
     // --- Generate Exterior Image ---
     const imageGenerationParts: Part[] = [{ text: fullPrompt }];
 
-    // Image order: floor plan (geometric reference) → lot (terrain) → style references
-    if (floorPlanImageBase64) {
+    if (params.mode === 'edit' && editCompositeBase64) {
+      // In edit mode, we only use the composite file (original + user sketches)
       imageGenerationParts.push({
-        inlineData: { mimeType: floorPlanImageMimeType, data: floorPlanImageBase64 }
+        inlineData: { mimeType: editCompositeMimeType, data: editCompositeBase64 }
       });
-    }
+    } else {
+      // Image order: floor plan (geometric reference) → lot (terrain) → style references
+      if (floorPlanImageBase64) {
+        imageGenerationParts.push({
+          inlineData: { mimeType: floorPlanImageMimeType, data: floorPlanImageBase64 }
+        });
+      }
 
-    if (lotImageBase64) {
-      imageGenerationParts.push({
-        inlineData: { mimeType: lotImageMimeType, data: lotImageBase64 }
-      });
-    }
+      if (lotImageBase64) {
+        imageGenerationParts.push({
+          inlineData: { mimeType: lotImageMimeType, data: lotImageBase64 }
+        });
+      }
 
-    for (const refImage of referenceImagesBase64) {
-      imageGenerationParts.push({
-        inlineData: { mimeType: refImage.mimeType, data: refImage.data }
-      });
+      for (const refImage of referenceImagesBase64) {
+        imageGenerationParts.push({
+          inlineData: { mimeType: refImage.mimeType, data: refImage.data }
+        });
+      }
     }
 
     const generationResponse = await ai.models.generateContent({
