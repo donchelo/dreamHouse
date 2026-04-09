@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Part } from '@google/genai';
 import { DreamHouseParams } from '@/types';
-import { buildNarrativePrompt } from '@/lib/prompt-builder';
+import { buildExteriorPrompt } from '@/modules/exterior/lib/prompt-builder';
+import { buildInteriorPrompt } from '@/modules/interior/lib/prompt-builder';
 
 // Vercel configuration: maxDuration only works on Pro plan, but it's the correct way to declare it
 // Hobby plan has 10s limit, Pro plan allows up to 300s
@@ -137,17 +138,27 @@ export async function POST(req: NextRequest) {
     }
 
     // --- NEW: Narrative Prompt Building ---
-    const narrativePrompt = buildNarrativePrompt(params);
+    const narrativePrompt = params.mode === 'interior' 
+      ? buildInteriorPrompt(params) 
+      : buildExteriorPrompt(params);
 
-    // Construction of the final prompt with verification meta-instructions
+    // Construction of the mode-aware architectural mandate
+    const mandate = params.mode === "interior" 
+      ? `INTERNAL SPATIAL MANDATE:
+- This image is a professional interior design visualization. Scale, lighting, and texture are critical.
+- Respect the functional logic of the specified room: ${params.roomType}.
+- Ensure the furniture style (${params.furnitureStyle.join(', ')}) and lighting (${params.interiorLighting.join(', ')}) are rendered with high fidelity.
+- Materiality: The floor (${params.flooringMaterial}) and ceiling (${params.ceilingDetail}) must define the vertical boundaries of the space.`
+      : `ARCHITECTURAL EXTERIOR MANDATE:
+- This image is part of a professional architectural portfolio. Volumetric hierarchy is absolute.
+- Preserve the geometry of the provided floor plan if applicable.
+- Integrate the building perfectly into the terrain/lot if provided.
+- If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.`;
+
     const fullPrompt = `${narrativePrompt}
 
-ARCHITECTURAL MANDATE:
-- This image is part of a professional architectural portfolio. Every constraint is absolute.
-- Preserve the geometry of the provided floor plan (~80% fidelity).
-- Integrate the building perfectly into the terrain of the lot image if provided.
-- If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.
-- QUALITY: Award-winning architectural photography style, realistic textures, and cinematic lighting.
+${mandate}
+- QUALITY: Award-winning photography style, realistic textures, and cinematic lighting.
 
 VERIFICATION STEPS:
 1. Review the generated composition against the text description.

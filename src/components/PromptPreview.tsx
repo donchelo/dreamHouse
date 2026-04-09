@@ -2,7 +2,7 @@ import React from 'react';
 import { DreamHouseParams } from '@/types';
 import {
   FileText, Sparkles, MapPin, Layers, LayoutGrid,
-  Hammer, Palette, Camera, Settings2, PenLine
+  Hammer, Palette, Camera, Settings2, PenLine, Maximize2, Armchair
 } from 'lucide-react';
 
 interface PromptPreviewProps {
@@ -38,11 +38,19 @@ function renderValue(val: ParamValue): string[] {
 export default function PromptPreview({ params }: PromptPreviewProps) {
   const groups: ParamGroup[] = [
     {
+      number: '03',
+      title: 'Modo de Trabajo',
+      icon: <Maximize2 className="w-3.5 h-3.5" />,
+      items: [
+        { label: 'MODO', value: params.mode },
+      ],
+    },
+    {
       number: '04',
       title: 'Esencia del Proyecto',
       icon: <Sparkles className="w-3.5 h-3.5" />,
       items: [
-        { label: 'TIPO', value: params.projectType },
+        { label: 'TIPO', value: params.mode === 'exterior' ? params.projectType : params.roomType },
         { label: 'ESTILO', value: params.architecturalStyles },
         { label: 'ARQUITECTO', value: params.architect },
         { label: 'MOOD', value: params.mood },
@@ -73,6 +81,15 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
     },
     {
       number: '07',
+      title: 'Diseño Interior',
+      icon: <Armchair className="w-3.5 h-3.5" />,
+      items: [
+        { label: 'MUEBLES', value: params.furnitureStyle },
+        { label: 'LUZ INT.', value: params.interiorLighting },
+      ],
+    },
+    {
+      number: '08',
       title: 'Programa Arquitectónico',
       icon: <LayoutGrid className="w-3.5 h-3.5" />,
       items: [
@@ -86,18 +103,20 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       ],
     },
     {
-      number: '08',
+      number: '09',
       title: 'Materialidad y Acabados',
       icon: <Hammer className="w-3.5 h-3.5" />,
       items: [
-        { label: 'MATERIALES', value: params.materials },
-        { label: 'ACABADO', value: params.finishLevel },
+        { label: 'SUELO', value: params.flooringMaterial },
+        { label: 'TECHO', value: params.ceilingDetail },
+        { label: 'REVESTIM.', value: params.materials },
+        { label: 'CALIDAD', value: params.finishLevel },
         { label: 'DETALLES', value: params.architecturalDetails },
       ],
     },
     {
-      number: '09',
-      title: 'Estética y Detalles',
+      number: '10',
+      title: 'Estética y Paisaje',
       icon: <Palette className="w-3.5 h-3.5" />,
       items: [
         { label: 'PALETA', value: params.colorPalette },
@@ -106,20 +125,22 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       ],
     },
     {
-      number: '10',
-      title: 'Cámara y Fotografía',
+      number: '11',
+      title: 'Parámetros Fotográficos',
       icon: <Camera className="w-3.5 h-3.5" />,
       items: [
+        { label: 'CÁMARA', value: params.cameraPreset },
+        { label: 'FOCAL', value: params.focalLength },
+        { label: 'APERTURA', value: params.aperture },
+        { label: 'PELÍCULA', value: params.filmSimulation },
         { label: 'ÁNGULO', value: params.cameraAngle },
         { label: 'COMPOSICIÓN', value: params.composition },
         { label: 'HORA', value: params.timeOfDay },
-        { label: 'ESTACIÓN', value: params.season },
         { label: 'LUZ', value: params.lighting },
-        { label: 'PERSONAS', value: params.humanContext },
       ],
     },
     {
-      number: '11',
+      number: '12',
       title: 'Configuración de Salida',
       icon: <Settings2 className="w-3.5 h-3.5" />,
       items: [
@@ -130,8 +151,8 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       ],
     },
     {
-      number: '12',
-      title: 'Dirección Artística',
+      number: '13',
+      title: 'Dirección Creativa',
       icon: <PenLine className="w-3.5 h-3.5" />,
       items: [
         { label: 'TÉCNICAS', value: params.technicalNotes },

@@ -9,9 +9,16 @@ import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-v
 interface FloorPlanUploaderProps {
   file: File | null;
   onFileChange: (file: File | null) => void;
+  title?: string;
+  description?: string;
 }
 
-export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploaderProps) {
+export default function FloorPlanUploader({ 
+  file, 
+  onFileChange,
+  title = "Plano de Planta (Floor Plan)",
+  description = "Sube un plano de planta existente. El diseño se adaptará exactamente a la forma y distribución del plano."
+}: FloorPlanUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -74,11 +81,11 @@ export default function FloorPlanUploader({ file, onFileChange }: FloorPlanUploa
         </div>
         <div>
           <h3 id="floorplan-uploader-title" className="text-lg font-semibold text-foreground flex items-center gap-2">
-            Plano de Planta (Floor Plan)
+            {title}
             <span className="text-xs font-normal text-muted-foreground border border-border px-2 py-0.5 rounded-full">Opcional</span>
           </h3>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Sube un plano de planta existente. El exterior se adaptará exactamente a la forma y distribución del plano.
+            {description}
           </p>
         </div>
       </div>

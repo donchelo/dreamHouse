@@ -9,9 +9,18 @@ import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-v
 interface LotUploaderProps {
   file: File | null;
   onFileChange: (file: File | null) => void;
+  title?: string;
+  description?: string;
+  icon?: React.ReactNode;
 }
 
-export default function LotUploader({ file, onFileChange }: LotUploaderProps) {
+export default function LotUploader({ 
+  file, 
+  onFileChange, 
+  title = "Foto del Lote / Terreno",
+  description = "Sube una foto real del lugar donde se construirá. La IA adaptará el diseño al entorno.",
+  icon = <Map className="w-5 h-5 text-green-500" />
+}: LotUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -69,16 +78,16 @@ export default function LotUploader({ file, onFileChange }: LotUploaderProps) {
       <div className="flex items-center gap-4">
         <div className="relative">
           <div className="p-3 bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-xl border border-green-500/20">
-            <Map className="w-5 h-5 text-green-500" />
+            {icon}
           </div>
         </div>
         <div>
           <h3 id="lot-uploader-title" className="text-lg font-semibold text-foreground flex items-center gap-2">
-            Foto del Lote / Terreno
+            {title}
             <span className="text-xs font-normal text-muted-foreground border border-border px-2 py-0.5 rounded-full">Opcional</span>
           </h3>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Sube una foto real del lugar donde se construirá. La IA adaptará el diseño al entorno.
+            {description}
           </p>
         </div>
       </div>

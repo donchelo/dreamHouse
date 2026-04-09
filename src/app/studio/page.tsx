@@ -5,14 +5,18 @@ import Header from '@/components/Header';
 import ReferenceUploader from '@/components/ReferenceUploader';
 import LotUploader from '@/components/LotUploader';
 import FloorPlanUploader from '@/components/FloorPlanUploader';
-import ParameterForm from '@/components/ParameterForm';
+import ExteriorForm from '@/modules/exterior/components/ExteriorForm';
+import InteriorForm from '@/modules/interior/components/InteriorForm';
 import ResultDisplay from '@/components/ResultDisplay';
 import PromptPreview from '@/components/PromptPreview';
 import { DreamHouseParams, DEFAULT_PARAMS } from '@/types';
-import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2 } from 'lucide-react';
+import { Wand2, AlertCircle, RotateCcw, Dices, CheckCircle2, Home, Armchair, Maximize2, Camera, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
-import * as C from '@/app/constants';
+import * as SC from '@/modules/shared/constants';
+import * as EC from '@/modules/exterior/constants';
+import * as IC from '@/modules/interior/constants';
+import clsx from 'clsx';
 
 export default function StudioPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -24,8 +28,8 @@ export default function StudioPage() {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Accordion state - null means all closed by default
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  // Accordion state - 'mode' open by default to guide new users
+  const [activeSection, setActiveSection] = useState<string | null>('mode');
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -42,7 +46,8 @@ export default function StudioPage() {
       city: "",
       technicalNotes: "",
       artDirection: "",
-      negativePrompt: ""
+      negativePrompt: "",
+      mode: params.mode // Keep current mode on reset
     });
     showToast("Parameters reset to default");
   };
@@ -55,48 +60,56 @@ export default function StudioPage() {
       return shuffled.slice(0, count);
     };
 
+    const isExt = params.mode === 'exterior';
+
     const randomParams: DreamHouseParams = {
       ...params,
-      projectType: pick(C.PROJECT_TYPES),
-      architecturalStyles: pickMulti(C.STYLES, 3),
-      architect: pickMulti(C.ARCHITECTS, 2),
-      mood: pick(C.MOODS),
-      climate: pick(C.CLIMATES),
-      environment: pick(C.ENVIRONMENTS),
-      waterBody: pick(C.WATER_BODIES),
-      weatherCondition: pick(C.WEATHER_CONDITIONS),
-      size: pick(C.SIZES),
-      levels: Math.floor(Math.random() * 3) + 1,
-      bedrooms: Math.floor(Math.random() * 5) + 2,
-      bathrooms: Math.floor(Math.random() * 4) + 1,
-      parkingSpots: Math.floor(Math.random() * 3),
-      parkingType: pick(C.PARKING_TYPES),
-      kitchenType: pick(C.KITCHEN_TYPES),
-      livingAreaType: pick(C.LIVING_AREA_TYPES),
-      layoutType: pick(C.LAYOUT_TYPES),
-      socialAreas: pickMulti(C.SOCIAL_AREAS, 3),
-      roofType: pick(C.ROOF_TYPES),
-      materials: pickMulti(C.MATERIALS, 4),
-      finishLevel: pick(C.FINISH_LEVELS),
-      colorPalette: pickMulti(C.COLORS, 3),
-      exteriorElements: pickMulti(C.EXTERIOR_ELEMENTS, 5),
-      vegetation: pickMulti(C.VEGETATION, 3),
-      cameraAngle: pick(C.ANGLES),
-      composition: pick(C.COMPOSITIONS),
-      timeOfDay: pick(C.TIMES_OF_DAY),
-      season: pick(C.SEASONS),
-      lighting: pick(C.LIGHTING_TYPES),
-      humanContext: pick(C.HUMAN_CONTEXT),
-      renderOutputResolution: pick(C.OUTPUT_RESOLUTIONS),
-      renderAspectRatio: pick(C.ASPECT_RATIOS),
-      renderStyle: pick(C.RENDER_STYLES),
+      // Shared
+      architecturalStyles: pickMulti(SC.STYLES, 3),
+      architect: pickMulti(SC.ARCHITECTS, 2),
+      mood: pick(SC.MOODS),
+      cameraAngle: pick(SC.ANGLES),
+      composition: pick(SC.COMPOSITIONS),
+      timeOfDay: pick(SC.TIMES_OF_DAY),
+      season: pick(SC.SEASONS),
+      lighting: pick(SC.LIGHTING_TYPES),
+      humanContext: pick(SC.HUMAN_CONTEXT),
+      renderOutputResolution: pick(SC.OUTPUT_RESOLUTIONS),
+      renderAspectRatio: pick(SC.ASPECT_RATIOS),
+      renderStyle: pick(SC.RENDER_STYLES),
+
+      // Exterior
+      projectType: isExt ? pick(EC.PROJECT_TYPES) : params.projectType,
       city: params.city,
-      technicalNotes: params.technicalNotes,
-      artDirection: params.artDirection,
+      climate: isExt ? pick(EC.CLIMATES) : params.climate,
+      environment: isExt ? pick(EC.ENVIRONMENTS) : params.environment,
+      waterBody: isExt ? pick(EC.WATER_BODIES) : params.waterBody,
+      weatherCondition: isExt ? pick(EC.WEATHER_CONDITIONS) : params.weatherCondition,
+      size: isExt ? pick(EC.SIZES) : params.size,
+      levels: isExt ? Math.floor(Math.random() * 5) + 1 : params.levels,
+      roofType: isExt ? pick(EC.ROOF_TYPES) : params.roofType,
+      layoutType: isExt ? pick(EC.LAYOUT_TYPES) : params.layoutType,
+      parkingSpots: isExt ? Math.floor(Math.random() * 3) : params.parkingSpots,
+      parkingType: isExt ? pick(EC.PARKING_TYPES) : params.parkingType,
+      socialAreas: isExt ? pickMulti(EC.SOCIAL_AREAS, 2) : params.socialAreas,
+      exteriorElements: isExt ? pickMulti(EC.EXTERIOR_ELEMENTS, 4) : params.exteriorElements,
+      vegetation: isExt ? pickMulti(EC.VEGETATION, 3) : params.vegetation,
+      architecturalDetails: isExt ? pickMulti(EC.ARCHITECTURAL_DETAILS, 2) : params.architecturalDetails,
+
+      // Interior
+      roomType: !isExt ? pick(IC.ROOM_TYPES) : params.roomType,
+      furnitureStyle: !isExt ? pickMulti(IC.FURNITURE_STYLES, 2) : params.furnitureStyle,
+      interiorLighting: !isExt ? pickMulti(IC.INTERIOR_LIGHTING_TYPES, 2) : params.interiorLighting,
+      flooringMaterial: !isExt ? pick(IC.FLOORING_MATERIALS) : params.flooringMaterial,
+      ceilingDetail: !isExt ? pick(IC.CEILING_DETAILS) : params.ceilingDetail,
+      bedrooms: !isExt ? Math.floor(Math.random() * 4) + 1 : params.bedrooms,
+      bathrooms: !isExt ? Math.floor(Math.random() * 3) + 1 : params.bathrooms,
+      kitchenType: !isExt ? pick(IC.KITCHEN_TYPES) : params.kitchenType,
+      livingAreaType: !isExt ? pick(IC.LIVING_AREA_TYPES) : params.livingAreaType,
     };
 
     setParams(randomParams);
-    showToast("Random design generated!");
+    showToast(`Se ha generado un diseño ${params.mode} aleatorio.`);
   };
 
   const handleGenerate = async () => {
@@ -205,44 +218,110 @@ export default function StudioPage() {
             </div>
           )}
 
-          {/* Reference Images */}
+          {/* 01: Módulo de Trabajo (Selector) */}
           <Section
-            title="Referentes Visuales"
+            title="Módulo de Trabajo"
             number="01"
+            icon={<PenLine className="w-5 h-5" />}
+            badge="MODO"
+            isOpen={activeSection === 'mode'}
+            onToggle={() => toggleSection('mode')}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setParams({ ...params, mode: 'exterior' })}
+                className={clsx(
+                  "flex flex-col items-center gap-3 p-6 border transition-all",
+                  params.mode === "exterior" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+                )}
+              >
+                <Home className="w-8 h-8" />
+                <span className="text-xs font-bold uppercase tracking-widest">Arquitectura Exterior</span>
+              </button>
+              <button
+                onClick={() => setParams({ ...params, mode: 'interior' })}
+                className={clsx(
+                  "flex flex-col items-center gap-3 p-6 border transition-all",
+                  params.mode === "interior" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+                )}
+              >
+                <Armchair className="w-8 h-8" />
+                <span className="text-xs font-bold uppercase tracking-widest">Diseño Interior</span>
+              </button>
+            </div>
+          </Section>
+
+          {/* 02: Referencias Visuales (Shared) */}
+          <Section
+            title="Referencias Visuales"
+            number="02"
+            icon={<Maximize2 className="w-5 h-5" />}
+            badge="INSPIRACIÓN"
             isOpen={activeSection === 'references'}
             onToggle={() => toggleSection('references')}
           >
             <ReferenceUploader files={files} onFilesChange={setFiles} />
           </Section>
 
-          {/* Lot */}
+          {/* 03: Contexto (Mode-specific: Lote vs Espacio) */}
           <Section
-            title="Lote"
-            number="02"
-            isOpen={activeSection === 'lot'}
-            onToggle={() => toggleSection('lot')}
-          >
-            <LotUploader file={lotFile} onFileChange={setLotFile} />
-          </Section>
-
-          {/* Floor Plan */}
-          <Section
-            title="Plano de Planta"
+            title={params.mode === 'exterior' ? "Foto del Lote / Terreno" : "Foto del Espacio Actual"}
             number="03"
-            isOpen={activeSection === 'floorplan'}
-            onToggle={() => toggleSection('floorplan')}
+            icon={<Camera className="w-5 h-5" />}
+            badge="BASE"
+            isOpen={activeSection === 'context'}
+            onToggle={() => toggleSection('context')}
           >
-            <FloorPlanUploader file={floorPlanFile} onFileChange={setFloorPlanFile} />
+            <LotUploader 
+              file={lotFile} 
+              onFileChange={setLotFile} 
+              title={params.mode === 'exterior' ? "Lote / Emplazamiento" : "Espacio Principal (Foto Actual)"}
+              description={params.mode === 'exterior' 
+                ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." 
+                : "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño."
+              }
+              icon={params.mode === 'exterior' ? undefined : <Armchair className="w-5 h-5 text-primary" />}
+            />
           </Section>
 
-          {/* Parameters */}
-          <ParameterForm
-            params={params}
-            onChange={setParams}
-            disabled={isLoading}
-            activeSection={activeSection}
-            onSectionChange={toggleSection}
-          />
+          {/* 04: Estructura (Mode-specific: Plano vs Layout) */}
+          <Section
+            title={params.mode === 'exterior' ? "Plano de Planta" : "Distribución / Layout"}
+            number="04"
+            icon={<Maximize2 className="w-5 h-5" />}
+            badge="GUÍA"
+            isOpen={activeSection === 'structure'}
+            onToggle={() => toggleSection('structure')}
+          >
+            <FloorPlanUploader 
+              file={floorPlanFile} 
+              onFileChange={setFloorPlanFile} 
+              title={params.mode === 'exterior' ? "Plano Residencial" : "Layout del Área"}
+              description={params.mode === 'exterior'
+                ? "Sube el plano de planta. El exterior respetará la geometría del plano."
+                : "Sube un croquis o plano de la estancia. La IA respetará la zonificación."
+              }
+            />
+          </Section>
+
+          {/* Dinamically Rendered Module Form */}
+          {params.mode === 'exterior' ? (
+            <ExteriorForm
+              params={params}
+              onChange={setParams}
+              disabled={isLoading}
+              activeSection={activeSection}
+              onSectionChange={toggleSection}
+            />
+          ) : (
+            <InteriorForm
+              params={params}
+              onChange={setParams}
+              disabled={isLoading}
+              activeSection={activeSection}
+              onSectionChange={toggleSection}
+            />
+          )}
 
           {/* Error Message */}
           {error && (
@@ -262,9 +341,9 @@ export default function StudioPage() {
               isLoading={isLoading}
               size="lg"
               className="rounded-full shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all text-base font-bold uppercase tracking-widest px-10 py-8 bg-primary text-primary-foreground border-4 border-background focus:ring-4 focus:ring-primary/30 outline-none"
-              aria-label="Generate exterior render"
+              aria-label={`Generate ${params.mode} render`}
             >
-              {isLoading ? 'Generating...' : 'Generate Exterior'}
+              {isLoading ? 'Generating...' : `Generate ${params.mode}`}
               {!isLoading && <Wand2 className="ml-3 w-5 h-5" />}
             </Button>
           </div>
@@ -285,8 +364,8 @@ export default function StudioPage() {
                   imageUrl={imageUrl}
                   isLoading={isLoading}
                   onRegenerate={handleGenerate}
-                  title="Final Exterior"
-                  subtitle="Photorealistic architectural visualization"
+                  title={`Final ${params.mode}`}
+                  subtitle={`Photorealistic ${params.mode} visualization`}
                 />
               </div>
             </div>

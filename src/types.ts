@@ -1,47 +1,17 @@
-// ============================================
-// DREAMHOUSE PRO - TYPE DEFINITIONS
-// ============================================
+export type GenerationMode = "exterior" | "interior";
 
-export interface DreamHouseParams {
-  // Section 04: Identidad del Proyecto
-  projectType: string;
+export interface SharedParams {
+  mode: GenerationMode;
+  
+  // Identity (Shared)
   architecturalStyles: string[];
   architect: string[];
   mood: string;
-
-  // Section 05: Ubicación y Entorno
-  city: string;
-  climate: string;
-  environment: string;
-  waterBody: string;
-  weatherCondition: string;
-
-  // Section 06: Volumetría y Forma
-  size: string;
-  levels: number;
-  roofType: string;
-  layoutType: string;
-
-  // Section 07: Programa Arquitectónico
-  bedrooms: number;
-  bathrooms: number;
-  parkingSpots: number;
-  parkingType: string;
-  kitchenType: string;
-  livingAreaType: string;
-  socialAreas: string[];
-
-  // Section 08: Materialidad y Textura
   materials: string[];
   finishLevel: string;
-  architecturalDetails: string[];
-
-  // Section 09: Color y Paisaje
   colorPalette: string[];
-  exteriorElements: string[];
-  vegetation: string[];
 
-  // Section 10: Fotografía
+  // Photography (Shared)
   cameraAngle: string;
   composition: string;
   timeOfDay: string;
@@ -54,58 +24,60 @@ export interface DreamHouseParams {
   filmSimulation: string;
   depthOfField: string;
 
-  // Section 11: Configuración de Salida
+  // Output (Shared)
   renderStyle: string;
   renderAspectRatio: string;
   renderOutputResolution: string;
   thinkingLevel: "Minimal" | "High";
 
-  // Section 12: Dirección Creativa
+  // Creative (Shared)
   technicalNotes: string;
   artDirection: string;
   negativePrompt: string;
 }
 
+export interface ExteriorSpecificParams {
+  projectType: string;
+  city: string;
+  climate: string;
+  environment: string;
+  waterBody: string;
+  weatherCondition: string;
+  size: string;
+  levels: number;
+  roofType: string;
+  layoutType: string;
+  parkingSpots: number;
+  parkingType: string;
+  socialAreas: string[];
+  exteriorElements: string[];
+  vegetation: string[];
+  architecturalDetails: string[];
+}
+
+export interface InteriorSpecificParams {
+  roomType: string;
+  furnitureStyle: string[];
+  interiorLighting: string[];
+  flooringMaterial: string;
+  ceilingDetail: string;
+  bedrooms: number;
+  bathrooms: number;
+  kitchenType: string;
+  livingAreaType: string;
+}
+
+export type DreamHouseParams = SharedParams & ExteriorSpecificParams & InteriorSpecificParams;
+
 export const DEFAULT_PARAMS: DreamHouseParams = {
-  // Section 04: Identidad del Proyecto
-  projectType: "",
+  // Shared
+  mode: "exterior",
   architecturalStyles: [],
   architect: [],
   mood: "",
-
-  // Section 05: Ubicación y Entorno
-  city: "",
-  climate: "",
-  environment: "",
-  waterBody: "",
-  weatherCondition: "",
-
-  // Section 06: Volumetría y Forma
-  size: "",
-  levels: 0,
-  roofType: "",
-  layoutType: "",
-
-  // Section 07: Programa Arquitectónico
-  bedrooms: 0,
-  bathrooms: 0,
-  parkingSpots: 0,
-  parkingType: "",
-  kitchenType: "",
-  livingAreaType: "",
-  socialAreas: [],
-
-  // Section 08: Materialidad y Textura
   materials: [],
   finishLevel: "",
-  architecturalDetails: [],
-
-  // Section 09: Color y Paisaje
   colorPalette: [],
-  exteriorElements: [],
-  vegetation: [],
-
-  // Section 10: Fotografía
   cameraAngle: "",
   composition: "",
   timeOfDay: "",
@@ -117,15 +89,40 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   aperture: "f/5.6 (punto dulce arquitectónico)",
   filmSimulation: "Classic Chrome",
   depthOfField: "Total (f/8–f/11, todo nítido)",
-
-  // Section 11: Configuración de Salida
   renderStyle: "",
   renderAspectRatio: "16:9",
   renderOutputResolution: "",
   thinkingLevel: "Minimal",
-
-  // Section 12: Dirección Creativa
   technicalNotes: "",
   artDirection: "",
   negativePrompt: "",
+
+  // Exterior
+  projectType: "",
+  city: "",
+  climate: "",
+  environment: "",
+  waterBody: "",
+  weatherCondition: "",
+  size: "",
+  levels: 0,
+  roofType: "",
+  layoutType: "",
+  parkingSpots: 0,
+  parkingType: "",
+  socialAreas: [],
+  exteriorElements: [],
+  vegetation: [],
+  architecturalDetails: [],
+
+  // Interior
+  roomType: "",
+  furnitureStyle: [],
+  interiorLighting: [],
+  flooringMaterial: "",
+  ceilingDetail: "",
+  bedrooms: 0,
+  bathrooms: 0,
+  kitchenType: "",
+  livingAreaType: "",
 };
