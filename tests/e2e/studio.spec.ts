@@ -28,7 +28,7 @@ test.describe('DreamHouse Studio E2E', () => {
     await expect(page.getByText('Arquitectura Exterior')).toBeVisible();
     
     // Fill some fields
-    await page.getByPlaceholder('Tokyo, Barcelona, Dubai...').fill('Medellin');
+    await page.getByPlaceholder('Ej: Kyoto, Oslo, Atacama...').fill('Medellin');
     
     // Click Surprise Me (Randomize)
     await page.getByRole('button', { name: 'Surprise Me' }).click();
@@ -66,7 +66,7 @@ test.describe('DreamHouse Studio E2E', () => {
     
     // Note: Fully testing sketch involves complex interactions, 
     // but we can verify the prompt behavior.
-    await page.getByPlaceholder('Haz que el cielo sea nublado...').fill('Add some birds');
+    await page.getByPlaceholder('Ej: Make the tree smaller, add a modern pool, change the wall color to white...').fill('Add some birds');
     
     // Generate (it might fail if no image is uploaded, so let's check validation)
     await page.getByRole('button', { name: 'Generate edit' }).click();

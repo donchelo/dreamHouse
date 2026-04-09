@@ -241,7 +241,7 @@ export default function ResultDisplay({
               <>
                 <Image 
                   src={imageUrl} 
-                  alt="DreamHouse Exterior" 
+                  alt={title} 
                   fill
                   className="w-full h-full object-contain bg-black/40 transition-transform duration-700 group-hover:scale-[1.01] cursor-pointer" 
                   onClick={openLightbox}
