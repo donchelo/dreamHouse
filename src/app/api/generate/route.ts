@@ -192,8 +192,8 @@ VERIFICATION STEPS:
                 webSearch: {},
                 imageSearch: {}
               }
-            } as any
-          }
+            }
+          } as any // eslint-disable-line @typescript-eslint/no-explicit-any
         ],
         imageConfig: {
           ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
@@ -203,7 +203,7 @@ VERIFICATION STEPS:
         thinkingConfig: {
           thinkingLevel: params.thinkingLevel === "High" ? "High" : "Minimal",
           includeThoughts: true
-        } as any
+        } as any // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     });
 
