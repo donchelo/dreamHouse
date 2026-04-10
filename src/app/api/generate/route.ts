@@ -258,10 +258,16 @@ VERIFICATION STEPS:
         }
       }
 
-      for (const refImage of referenceImagesBase64) {
-        imageGenerationParts.push({
-          inlineData: { mimeType: refImage.mimeType, data: refImage.data }
-        });
+      if (referenceImagesBase64.length > 0) {
+        const refLabel = params.mode === 'exterior'
+          ? `CONCEPTUAL STYLE REFERENCES (${referenceImagesBase64.length} image${referenceImagesBase64.length > 1 ? 's' : ''}): The following images are provided as conceptual inspiration ONLY — NOT as literal templates to replicate. Extract from them: architectural style vocabulary, material palette, spatial mood, massing proportions, and compositional sensibility. DO NOT copy specific buildings, facades, windows, or compositions shown. Translate their essence and spirit into the current project's own design language.`
+          : `STYLE REFERENCES (${referenceImagesBase64.length} image${referenceImagesBase64.length > 1 ? 's' : ''}): The following images define the desired aesthetic mood, material palette, and spatial atmosphere. Use them as directional inspiration for the overall look and feel.`;
+        imageGenerationParts.push({ text: refLabel });
+        for (const refImage of referenceImagesBase64) {
+          imageGenerationParts.push({
+            inlineData: { mimeType: refImage.mimeType, data: refImage.data }
+          });
+        }
       }
     }
 
