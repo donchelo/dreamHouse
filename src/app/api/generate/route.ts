@@ -10,8 +10,8 @@ import { buildVistasPrompt } from '@/modules/vistas/lib/prompt-builder';
 export const maxDuration = 120; // Increased to 120s to allow for image generation and thinking time
 
 // Constants for validation
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
-const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total (Vercel limit is 4.5MB, we use 4MB for safety)
+const MAX_IMAGE_SIZE = 100 * 1024 * 1024; // 100MB per image
+const MAX_TOTAL_PAYLOAD_SIZE = 100 * 1024 * 1024; // 100MB total payload
 const MAX_REFERENCE_IMAGES = 14; // Nano Banana 2 support up to 14
 
 // Helper function to validate image size

@@ -5,7 +5,9 @@ import { Upload, Plus, Trash2, AlertCircle, Armchair } from 'lucide-react';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { validateImageFiles, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { Loader2 } from 'lucide-react';
 
 const MAX_OBJECTS = 13;
 
@@ -19,6 +21,7 @@ export default function ObjectUploader({ files, onFilesChange, disabled }: Objec
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
 
@@ -38,9 +41,30 @@ export default function ObjectUploader({ files, onFilesChange, disabled }: Objec
     setError(null);
     const droppedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
     if (droppedFiles.length === 0) return;
-    const validation = validateImageFiles(droppedFiles, 'Imagen de objeto');
-    if (!validation.valid) { setError(validation.error || 'Error al validar imágenes'); return; }
-    onFilesChange([...files, ...droppedFiles].slice(0, MAX_OBJECTS));
+    if (droppedFiles.length === 0) return;
+    
+    const processFiles = async () => {
+      setIsProcessing(true);
+      setError(null);
+      try {
+        const compressedFiles = await Promise.all(
+          droppedFiles.map(file => compressImage(file))
+        );
+
+        const validation = validateImageFiles(compressedFiles, 'Imagen de objeto');
+        if (!validation.valid) {
+          setError(validation.error || 'Error al validar imágenes');
+          return;
+        }
+        onFilesChange([...files, ...compressedFiles].slice(0, MAX_OBJECTS));
+      } catch (err) {
+        console.error("Compression error:", err);
+        setError("Error al procesar los objetos.");
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    processFiles();
   }, [files, onFilesChange]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,10 +72,29 @@ export default function ObjectUploader({ files, onFilesChange, disabled }: Objec
     if (!e.target.files) return;
     const selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
     if (selectedFiles.length > 0) {
-      const validation = validateImageFiles(selectedFiles, 'Imagen de objeto');
-      if (!validation.valid) { setError(validation.error || 'Error al validar imágenes'); return; }
+      const processFiles = async () => {
+        setIsProcessing(true);
+        setError(null);
+        try {
+          const compressedFiles = await Promise.all(
+            selectedFiles.map(file => compressImage(file))
+          );
+
+          const validation = validateImageFiles(compressedFiles, 'Imagen de objeto');
+          if (!validation.valid) {
+            setError(validation.error || 'Error al validar imágenes');
+            return;
+          }
+          onFilesChange([...files, ...compressedFiles].slice(0, MAX_OBJECTS));
+        } catch (err) {
+          console.error("Compression error:", err);
+          setError("Error al procesar los objetos.");
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      processFiles();
     }
-    onFilesChange([...files, ...selectedFiles].slice(0, MAX_OBJECTS));
     e.target.value = '';
   }, [files, onFilesChange]);
 
@@ -159,21 +202,24 @@ export default function ObjectUploader({ files, onFilesChange, disabled }: Objec
             />
             <div className={clsx(
               "p-2 transition-all",
-              isDragging ? "scale-110" : "group-hover:scale-105"
+              (isDragging || isProcessing) ? "scale-110" : "group-hover:scale-105"
             )}>
-              {isDragging
-                ? <Plus className="w-4 h-4 text-primary animate-pulse" />
-                : <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              }
+              {isProcessing ? (
+                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+              ) : isDragging ? (
+                <Plus className="w-4 h-4 text-primary animate-pulse" />
+              ) : (
+                <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              )}
             </div>
             <span className={clsx(
               "text-[9px] font-medium mt-0.5 transition-colors",
-              isDragging ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+              (isDragging || isProcessing) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
             )}>
-              {isDragging ? 'Suelta' : 'Agregar'}
+              {isProcessing ? 'Bajando...' : isDragging ? 'Suelta' : 'Agregar'}
             </span>
             <span className="text-[8px] text-muted opacity-0 group-hover:opacity-60 transition-opacity mt-0.5">
-              {formatFileSize(MAX_IMAGE_SIZE)} máx.
+              Optimización automática
             </span>
           </div>
         )}

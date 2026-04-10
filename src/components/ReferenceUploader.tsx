@@ -5,7 +5,9 @@ import { Upload, Image as ImageIcon, Plus, Sparkles, Trash2, AlertCircle } from 
 import clsx from 'clsx';
 import Image from 'next/image';
 import { validateImageFiles, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { Loader2 } from 'lucide-react';
 
 interface ReferenceUploaderProps {
   files: File[];
@@ -16,6 +18,7 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
 
@@ -39,14 +42,32 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
     );
     
     if (droppedFiles.length > 0) {
-      const validation = validateImageFiles(droppedFiles, 'Imagen de referencia');
-      if (!validation.valid) {
-        setError(validation.error || 'Error al validar imágenes');
-        return;
-      }
-      
-      const newFiles = [...files, ...droppedFiles].slice(0, 5);
-      onFilesChange(newFiles);
+      const processFiles = async () => {
+        setIsProcessing(true);
+        setError(null);
+        try {
+          // Compress all dropped images in parallel
+          const compressedFiles = await Promise.all(
+            droppedFiles.map(file => compressImage(file))
+          );
+
+          // Validate the compressed files
+          const validation = validateImageFiles(compressedFiles, 'Imagen de referencia');
+          if (!validation.valid) {
+            setError(validation.error || 'Error al validar imágenes');
+            return;
+          }
+          
+          const newFiles = [...files, ...compressedFiles].slice(0, 5);
+          onFilesChange(newFiles);
+        } catch (err) {
+          console.error("Compression error:", err);
+          setError("Error al procesar las imágenes.");
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      processFiles();
     }
   }, [files, onFilesChange]);
 
@@ -58,15 +79,32 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
       );
       
       if (selectedFiles.length > 0) {
-        const validation = validateImageFiles(selectedFiles, 'Imagen de referencia');
-        if (!validation.valid) {
-          setError(validation.error || 'Error al validar imágenes');
-          return;
-        }
+        const processFiles = async () => {
+          setIsProcessing(true);
+          setError(null);
+          try {
+            // Compress all selected images
+            const compressedFiles = await Promise.all(
+              selectedFiles.map(file => compressImage(file))
+            );
+
+            const validation = validateImageFiles(compressedFiles, 'Imagen de referencia');
+            if (!validation.valid) {
+              setError(validation.error || 'Error al validar imágenes');
+              return;
+            }
+            
+            const newFiles = [...files, ...compressedFiles].slice(0, 5);
+            onFilesChange(newFiles);
+          } catch (err) {
+            console.error("Compression error:", err);
+            setError("Error al procesar las imágenes.");
+          } finally {
+            setIsProcessing(false);
+          }
+        };
+        processFiles();
       }
-      
-      const newFiles = [...files, ...selectedFiles].slice(0, 5);
-      onFilesChange(newFiles);
     }
   }, [files, onFilesChange]);
 
@@ -214,18 +252,20 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
             {/* Icon */}
             <div className={clsx(
               "relative p-4 rounded-2xl mb-3 transition-all duration-300",
-              isDragging 
+              isDragging || isProcessing
                 ? "bg-primary/20 scale-110" 
                 : "bg-card group-hover:bg-primary/10 group-hover:scale-105"
             )}>
-              {isDragging ? (
+              {isProcessing ? (
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              ) : isDragging ? (
                 <Plus className="w-6 h-6 text-primary animate-pulse" />
               ) : (
                 <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
               )}
               
               {/* Glow */}
-              {isDragging && (
+              {(isDragging || isProcessing) && (
                 <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-xl -z-10" />
               )}
             </div>
@@ -233,16 +273,16 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
             {/* Text */}
             <span className={clsx(
               "relative text-sm font-medium transition-colors",
-              isDragging 
+              isDragging || isProcessing
                 ? "text-primary" 
                 : "text-muted-foreground group-hover:text-foreground"
             )}>
-              {isDragging ? 'Suelta aquí' : 'Añadir imagen'}
+              {isProcessing ? 'Procesando...' : isDragging ? 'Suelta aquí' : 'Añadir imagen'}
             </span>
             
             {/* Subtle hint */}
             <span className="text-[10px] text-muted mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              JPG, PNG, WebP · Máx. {formatFileSize(MAX_IMAGE_SIZE)}
+              Optimización automática aplicada
             </span>
           </div>
         )}

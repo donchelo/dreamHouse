@@ -22,8 +22,8 @@ El archivo `src/app/api/generate/route.ts` ya incluye `export const maxDuration 
 
 **Solución:**
 - El código ya incluye validación de tamaño en el cliente y servidor
-- Límite por imagen: **5MB**
-- Límite total del payload: **4MB** (con margen de seguridad)
+- Límite por imagen: **Sin límite (App)** / **4.5MB (Vercel)**
+- Límite total del payload: **Sin límite (App)** / **4.5MB (Vercel)**
 - Máximo de imágenes de referencia: **5**
 
 **Validación Automática:**
@@ -132,7 +132,7 @@ Después del despliegue, verifica:
 
 ### Error: "Payload too large"
 
-**Causa:** El tamaño total de las imágenes excede 4MB.
+**Causa:** El tamaño total de las imágenes excede los 4.5MB permitidos por Vercel (independientemente de que la app permita más).
 
 **Solución:**
 - Reduce el número de imágenes

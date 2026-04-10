@@ -1,8 +1,8 @@
 // Image validation utilities for client-side validation
 // These limits match the server-side validation in route.ts
 
-export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
-export const MAX_TOTAL_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB total
+export const MAX_IMAGE_SIZE = 100 * 1024 * 1024; // 100MB per image
+export const MAX_TOTAL_PAYLOAD_SIZE = 100 * 1024 * 1024; // 100MB total payload
 export const MAX_REFERENCE_IMAGES = 5;
 
 export interface ValidationResult {

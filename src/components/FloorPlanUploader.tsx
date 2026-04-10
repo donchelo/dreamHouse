@@ -5,7 +5,9 @@ import { Upload, Layout, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
 import clsx from 'clsx';
 import Image from 'next/image';
 import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { Loader2 } from 'lucide-react';
 
 interface FloorPlanUploaderProps {
   file: File | null;
@@ -22,6 +24,7 @@ export default function FloorPlanUploader({
 }: FloorPlanUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
 
@@ -45,12 +48,30 @@ export default function FloorPlanUploader({
     );
     
     if (droppedFile) {
-      const validation = validateImageFile(droppedFile, 'Plano de planta');
-      if (!validation.valid) {
-        setError(validation.error || 'Error al validar imagen');
+      if (!droppedFile.type.startsWith('image/')) {
+        setError('El archivo debe ser una imagen');
         return;
       }
-      onFileChange(droppedFile);
+
+      const processFile = async () => {
+        setIsProcessing(true);
+        setError(null);
+        try {
+          const processedFile = await compressImage(droppedFile);
+          const validation = validateImageFile(processedFile, 'Plano de planta');
+          if (!validation.valid) {
+            setError(validation.error || 'Error al validar imagen');
+            return;
+          }
+          onFileChange(processedFile);
+        } catch (err) {
+          console.error("Compression error:", err);
+          setError("Error al procesar el plano.");
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      processFile();
     }
   }, [onFileChange]);
 
@@ -59,12 +80,25 @@ export default function FloorPlanUploader({
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type.startsWith('image/')) {
-        const validation = validateImageFile(selectedFile, 'Plano de planta');
-        if (!validation.valid) {
-          setError(validation.error || 'Error al validar imagen');
-          return;
-        }
-        onFileChange(selectedFile);
+        const processFile = async () => {
+          setIsProcessing(true);
+          setError(null);
+          try {
+            const processedFile = await compressImage(selectedFile);
+            const validation = validateImageFile(processedFile, 'Plano de planta');
+            if (!validation.valid) {
+              setError(validation.error || 'Error al validar imagen');
+              return;
+            }
+            onFileChange(processedFile);
+          } catch (err) {
+            console.error("Compression error:", err);
+            setError("Error al procesar el plano.");
+          } finally {
+            setIsProcessing(false);
+          }
+        };
+        processFile();
       }
     }
   }, [onFileChange]);
@@ -114,19 +148,29 @@ export default function FloorPlanUploader({
               aria-label="Subir plano de planta"
             />
             
-            <div className={clsx(
-              "p-3 rounded-full mb-2 transition-all duration-300",
-              isDragging ? "bg-blue-500/20" : "bg-card group-hover:bg-blue-500/10"
-            )}>
-              <Upload className={clsx("w-6 h-6", isDragging ? "text-blue-500" : "text-muted-foreground group-hover:text-blue-500")} />
-            </div>
-            
-            <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-              <span className="text-blue-500 font-semibold">Haz clic para subir</span> o arrastra el plano aquí
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Máx. {formatFileSize(MAX_IMAGE_SIZE)}
-            </p>
+            {isProcessing ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+                <p className="text-sm font-medium text-foreground">Procesando plano...</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Optimizando geometría para la IA</p>
+              </div>
+            ) : (
+              <>
+                <div className={clsx(
+                  "p-3 rounded-full mb-2 transition-all duration-300",
+                  isDragging ? "bg-blue-500/20" : "bg-card group-hover:bg-blue-500/10"
+                )}>
+                  <Upload className={clsx("w-6 h-6", isDragging ? "text-blue-500" : "text-muted-foreground group-hover:text-blue-500")} />
+                </div>
+                
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  <span className="text-blue-500 font-semibold">Haz clic para subir</span> o arrastra el plano aquí
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Cualquier tamaño · Optimización automática
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div 

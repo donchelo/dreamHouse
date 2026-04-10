@@ -5,7 +5,9 @@ import { Upload, Map, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { validateImageFile, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { Loader2 } from 'lucide-react';
 
 interface LotUploaderProps {
   file: File | null;
@@ -26,6 +28,7 @@ export default function LotUploader({
 }: LotUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
 
@@ -49,12 +52,35 @@ export default function LotUploader({
     );
     
     if (droppedFile) {
-      const validation = validateImageFile(droppedFile, 'Imagen del lote', skipSizeValidation);
-      if (!validation.valid) {
-        setError(validation.error || 'Error al validar imagen');
+      // First validate basic type
+      if (!droppedFile.type.startsWith('image/')) {
+        setError('El archivo debe ser una imagen');
         return;
       }
-      onFileChange(droppedFile);
+
+      const processFile = async () => {
+        setIsProcessing(true);
+        setError(null);
+        try {
+          // Compress image before further validation/upload
+          const processedFile = await compressImage(droppedFile);
+          
+          // Re-validate size just in case (though it should be much smaller now)
+          const validation = validateImageFile(processedFile, 'Imagen del lote', skipSizeValidation);
+          if (!validation.valid) {
+            setError(validation.error || 'Error al validar imagen');
+            return;
+          }
+          onFileChange(processedFile);
+        } catch (err) {
+          console.error("Compression error:", err);
+          setError("Error al procesar la imagen.");
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+
+      processFile();
     }
   }, [onFileChange, skipSizeValidation]);
 
@@ -63,12 +89,27 @@ export default function LotUploader({
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type.startsWith('image/')) {
-        const validation = validateImageFile(selectedFile, 'Imagen del lote', skipSizeValidation);
-        if (!validation.valid) {
-          setError(validation.error || 'Error al validar imagen');
-          return;
-        }
-        onFileChange(selectedFile);
+        const processFile = async () => {
+          setIsProcessing(true);
+          setError(null);
+          try {
+            // Compress image
+            const processedFile = await compressImage(selectedFile);
+            
+            const validation = validateImageFile(processedFile, 'Imagen del lote', skipSizeValidation);
+            if (!validation.valid) {
+              setError(validation.error || 'Error al validar imagen');
+              return;
+            }
+            onFileChange(processedFile);
+          } catch (err) {
+            console.error("Compression error:", err);
+            setError("Error al procesar la imagen.");
+          } finally {
+            setIsProcessing(false);
+          }
+        };
+        processFile();
       }
     }
   }, [onFileChange, skipSizeValidation]);
@@ -118,19 +159,29 @@ export default function LotUploader({
               aria-label="Subir foto del lote"
             />
             
-            <div className={clsx(
-              "p-3 rounded-full mb-2 transition-all duration-300",
-              isDragging ? "bg-green-500/20" : "bg-card group-hover:bg-green-500/10"
-            )}>
-              <Upload className={clsx("w-6 h-6", isDragging ? "text-green-500" : "text-muted-foreground group-hover:text-green-500")} />
-            </div>
-            
-            <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-              <span className="text-green-500 font-semibold">Haz clic para subir</span> o arrastra la foto aquí
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {skipSizeValidation ? "Sin límite de tamaño" : `Máx. ${formatFileSize(MAX_IMAGE_SIZE)}`}
-            </p>
+            {isProcessing ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-8 h-8 text-green-500 animate-spin mb-2" />
+                <p className="text-sm font-medium text-foreground">Procesando imagen...</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Reduciendo tamaño para un envío óptimo</p>
+              </div>
+            ) : (
+              <>
+                <div className={clsx(
+                  "p-3 rounded-full mb-2 transition-all duration-300",
+                  isDragging ? "bg-green-500/20" : "bg-card group-hover:bg-green-500/10"
+                )}>
+                  <Upload className={clsx("w-6 h-6", isDragging ? "text-green-500" : "text-muted-foreground group-hover:text-green-500")} />
+                </div>
+                
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  <span className="text-green-500 font-semibold">Haz clic para subir</span> o arrastra la foto aquí
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Cualquier tamaño · Optimización automática
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div 
