@@ -4,7 +4,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { Upload, Plus, Trash2, AlertCircle, Armchair } from 'lucide-react';
 import clsx from 'clsx';
 import Image from 'next/image';
-import { validateImageFiles, MAX_IMAGE_SIZE, formatFileSize } from '@/lib/image-validation';
+import { validateImageFiles } from '@/lib/image-validation';
 import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
 import { Loader2 } from 'lucide-react';
