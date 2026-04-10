@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db, GenerationRecord } from '../db';
+import { createThumbnail } from '../image-thumbnail';
 
 export function useHistory() {
   const [history, setHistory] = useState<GenerationRecord[]>([]);
@@ -25,7 +26,9 @@ export function useHistory() {
 
   const saveToHistory = async (record: Omit<GenerationRecord, 'id' | 'timestamp'>) => {
     try {
-      await db.saveGeneration(record);
+      // Store a small thumbnail instead of the full base64 image to prevent memory crashes
+      const thumbnailUrl = await createThumbnail(record.imageUrl, 320, 0.6);
+      await db.saveGeneration({ ...record, imageUrl: thumbnailUrl });
       await refreshHistory();
     } catch (err) {
       console.error('Failed to save to history:', err);

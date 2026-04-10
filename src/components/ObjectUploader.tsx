@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { validateImageFiles } from '@/lib/image-validation';
 import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { useObjectUrls } from '@/lib/hooks/useObjectUrl';
 import { Loader2 } from 'lucide-react';
 
 const MAX_OBJECTS = 13;
@@ -24,6 +25,7 @@ export default function ObjectUploader({ files, onFilesChange, disabled }: Objec
   const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
+  const previewUrls = useObjectUrls(files);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -142,12 +144,12 @@ export default function ObjectUploader({ files, onFilesChange, disabled }: Objec
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
             onClick={() => {
-              const imageUrls = files.map(f => ({ url: URL.createObjectURL(f), type: `Objeto ${index + 1}` }));
+              const imageUrls = previewUrls.map((url, i) => ({ url, type: `Objeto ${i + 1}` }));
               openLightbox(imageUrls, index);
             }}
           >
             <Image
-              src={URL.createObjectURL(file)}
+              src={previewUrls[index] ?? ''}
               alt={`Objeto ${index + 1}`}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-110"

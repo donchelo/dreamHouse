@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { validateImageFiles } from '@/lib/image-validation';
 import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { useObjectUrls } from '@/lib/hooks/useObjectUrl';
 import { Loader2 } from 'lucide-react';
 
 interface ReferenceUploaderProps {
@@ -21,6 +22,7 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
   const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
+  const previewUrls = useObjectUrls(files);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -158,7 +160,7 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
       {/* Upload Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         {/* Uploaded Files */}
-        {files.map((file, index) => (
+        {files.map((_, index) => (
           <div 
             key={index} 
             className={clsx(
@@ -173,12 +175,12 @@ export default function ReferenceUploader({ files, onFilesChange }: ReferenceUpl
               animation: 'fade-in-up 0.5s ease-out forwards'
             }}
             onClick={() => {
-              const imageUrls = files.map(f => ({ url: URL.createObjectURL(f), type: 'Referencia' }));
+              const imageUrls = previewUrls.map((url, i) => ({ url, type: `Referencia ${i + 1}` }));
               openLightbox(imageUrls, index);
             }}
           >
             <Image
-              src={URL.createObjectURL(file)}
+              src={previewUrls[index] ?? ''}
               alt={`Referencia ${index + 1}`}
               fill
               className="object-cover transition-all duration-700 group-hover:scale-110"

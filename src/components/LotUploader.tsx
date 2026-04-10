@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { validateImageFile } from '@/lib/image-validation';
 import { compressImage } from '@/lib/image-compression';
 import { useLightbox } from '@/context/LightboxContext';
+import { useObjectUrl } from '@/lib/hooks/useObjectUrl';
 import { Loader2 } from 'lucide-react';
 
 interface LotUploaderProps {
@@ -31,6 +32,7 @@ export default function LotUploader({
   const [isProcessing, setIsProcessing] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { openLightbox } = useLightbox();
+  const previewUrl = useObjectUrl(file);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -187,14 +189,13 @@ export default function LotUploader({
           <div 
             className="relative group rounded-2xl overflow-hidden border border-border bg-card h-64 sm:h-80 transition-all hover:border-green-500/50 hover:shadow-lg cursor-zoom-in"
             onClick={() => {
-              if (file) {
-                const url = URL.createObjectURL(file);
-                openLightbox([{ url, type: title }]);
+              if (previewUrl) {
+                openLightbox([{ url: previewUrl, type: title }]);
               }
             }}
           >
             <Image
-              src={URL.createObjectURL(file)}
+              src={previewUrl ?? ''}
               alt="Vista previa del lote"
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-700"

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('DreamHouse Studio E2E', () => {
+test.describe('DreamHouse Studio E2E MVP', () => {
   test.beforeEach(async ({ page }) => {
     // Mock the API generation response
     await page.route('**/api/generate', async (route) => {
@@ -9,6 +9,7 @@ test.describe('DreamHouse Studio E2E', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           imageUrl: 'https://placehold.co/1280x720?text=Mocked+DreamHouse+Render',
+          houseName: 'Villa Test',
           groundingMetadata: {}
         }),
       });
@@ -23,56 +24,126 @@ test.describe('DreamHouse Studio E2E', () => {
     });
   });
 
-  test('Exterior mode workflow', async ({ page }) => {
-    // Verify default mode
+  test('Global Actions: Surprise Me and Reset', async ({ page }) => {
+    // Initially city should be empty
+    const cityInput = page.getByPlaceholder('Ej: Kyoto, Oslo, Atacama...');
+    await expect(cityInput).toHaveValue('');
+
+    // Click Surprise Me using its aria-label
+    await page.getByLabel('Generar una combinación aleatoria de parámetros para inspiración').click({ force: true });
+    
+    // Toast should appear (Spanish)
+    await expect(page.getByText('Se ha generado un diseño exterior aleatorio.')).toBeVisible();
+
+    // Click Reset using its aria-label
+    await page.getByLabel('Restablecer todos los parámetros a sus valores predeterminados').click({ force: true });
+    
+    // City should be empty again
+    await expect(cityInput).toHaveValue('');
+    await expect(page.getByText('Parameters reset to default')).toBeVisible();
+  });
+
+  test('Exterior Workflow: Advanced Selection', async ({ page }) => {
+    // Ensure we are in Exterior mode
     await expect(page.getByText('Arquitectura Exterior')).toBeVisible();
+
+    // Open Identity section
+    await page.getByText('Identidad del Proyecto', { exact: true }).click({ force: true });
     
-    // Fill some fields
-    await page.getByPlaceholder('Ej: Kyoto, Oslo, Atacama...').fill('Medellin');
+    // Select Architect (this is a Chip, wait for it to be visible first)
+    const architectChip = page.getByText('Zaha Hadid', { exact: true });
+    await architectChip.waitFor({ state: 'visible' });
+    await architectChip.click({ force: true });
     
-    // Click Surprise Me (Randomize)
-    await page.getByText('Surprise Me').click();
-    
+    // Select Style
+    const styleChip = page.getByText('Paramétrico', { exact: true });
+    await styleChip.waitFor({ state: 'visible' });
+    await styleChip.click({ force: true });
+
+    // Fill City
+    await page.getByPlaceholder('Ej: Kyoto, Oslo, Atacama...').fill('Dubai');
+
     // Generate
-    await page.getByRole('button', { name: 'Generate exterior' }).click();
-    
-    // Verify results
+    await page.getByRole('button', { name: 'Generate exterior' }).click({ force: true });
+
+    // Verify Results
     await expect(page.getByText('Render generated successfully!')).toBeVisible();
-    await expect(page.getByAltText('Final exterior')).toBeVisible();
+    
+    // Check if Prompt DNA reflects our choices
+    await expect(page.locator('span:text-is("ARQUITECTO")')).toBeVisible();
+    await expect(page.getByText('Zaha Hadid', { exact: true }).nth(1)).toBeVisible(); 
+    await expect(page.locator('span:text-is("ESTILO")')).toBeVisible();
+    await expect(page.getByText('Paramétrico', { exact: true }).nth(1)).toBeVisible();
   });
 
-  test('Interior mode workflow', async ({ page }) => {
+  test('Interior Workflow: Room Selection', async ({ page }) => {
     // Switch to Interior
-    await page.getByText('Diseño Interior').click();
+    await page.getByText('Diseño Interior', { exact: true }).click({ force: true });
     
-    // Verify interior specific elements (e.g., Room Type)
-    await expect(page.getByText('Espacio / Habitación')).toBeVisible();
+    // Open Identity section (Interior version)
+    await page.getByText('Espacio y Propósito', { exact: true }).click({ force: true });
     
+    // Wait for the select to be visible inside the section
+    const roomSelect = page.getByLabel('Espacio / Habitación');
+    await roomSelect.waitFor({ state: 'visible' });
+    await roomSelect.selectOption('Cocina');
+    
+    // Select Style
+    const styleChip = page.getByText('Minimalista', { exact: true });
+    await styleChip.waitFor({ state: 'visible' });
+    await styleChip.click({ force: true });
+
     // Generate
-    await page.getByRole('button', { name: 'Generate interior' }).click();
-    
-    // Verify results
+    await page.getByRole('button', { name: 'Generate interior' }).click({ force: true });
+
+    // Verify Results
     await expect(page.getByText('Render generated successfully!')).toBeVisible();
-    await expect(page.getByAltText('Final interior')).toBeVisible();
+    
+    // Check Prompt DNA
+    await expect(page.locator('span:text-is("TIPO")')).toBeVisible();
+    await expect(page.getByText('Cocina', { exact: true })).toBeVisible();
   });
 
-  test('Edit mode workflow', async ({ page }) => {
+  test('Vistas Workflow: Multi-generation', async ({ page }) => {
+    // Switch to Vistas (Mode selector)
+    await page.getByText('Portafolio de Vistas').first().click({ force: true });
+    
+    // Click the section header "Portafolio de Vistas" to expand it
+    await page.getByText('Portafolio de Vistas').nth(1).click({ force: true });
+
+    // Select some vistas from constants (wait for them to be visible)
+    const heroShot = page.getByText('Perspectiva Principal (Hero Shot)');
+    await heroShot.waitFor({ state: 'visible' });
+    await heroShot.click({ force: true });
+    
+    const elevation = page.getByText('Fachada Frontal (Elevación)');
+    await elevation.waitFor({ state: 'visible' });
+    await elevation.click({ force: true });
+
+    // Generate
+    await page.getByRole('button', { name: 'Generate vistas' }).click({ force: true });
+
+    // Multi-generation takes more time
+    await expect(page.getByText('Portafolio generado con éxito')).toBeVisible({ timeout: 15000 });
+    
+    // Verify we have the result section
+    await expect(page.getByText('Portafolio de Vistas').last()).toBeVisible();
+  });
+
+  test('Edit Mode: UI check', async ({ page }) => {
     // Switch to Edit
     await page.getByText('Editar Imagen con IA').click();
     
-    // Verify Edit specific elements (Sketch Canvas)
-    // We look for the canvas or the "Upload base image" message
+    // Verify Edit specific elements
     await expect(page.getByText('Sube la imagen a editar')).toBeVisible();
     
-    // Note: Fully testing sketch involves complex interactions, 
-    // but we can verify the prompt behavior.
-    await page.getByPlaceholder('Ej: Make the tree smaller, add a modern pool, change the wall color to white...').fill('Add some birds');
+    // Fill edit prompt
+    await page.getByPlaceholder('Ej: Make the tree smaller, add a modern pool, change the wall color to white...').fill('Change the wall to Blue');
     
-    // Generate (it might fail if no image is uploaded, so let's check validation)
+    // Generate (Mock will handle it)
     await page.getByRole('button', { name: 'Generate edit' }).click();
     
-    // Since we didn't upload an image, it might show an error or just do nothing if guarded.
-    // Based on src/app/studio/page.tsx, if editCompositeFile is null, it still sends the request.
-    // The API might return 400. Let's see how the app handles it.
+    await expect(page.getByText('Render generated successfully!')).toBeVisible();
   });
 });
+

@@ -13,6 +13,7 @@ export interface GenerationRecord {
 const DB_NAME = 'DreamHouseDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'generations';
+const MAX_HISTORY = 20;
 
 export class DreamHouseDB {
   private db: IDBDatabase | null = null;
@@ -49,10 +50,24 @@ export class DreamHouseDB {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.add(fullRecord);
 
-      request.onsuccess = () => resolve(id);
-      request.onerror = () => reject(request.error);
+      // Add the new record
+      const addRequest = store.add(fullRecord);
+      addRequest.onerror = () => reject(addRequest.error);
+
+      // After adding, prune oldest records beyond MAX_HISTORY
+      addRequest.onsuccess = () => {
+        const index = store.index('timestamp');
+        const countRequest = index.getAll();
+        countRequest.onsuccess = () => {
+          const all = (countRequest.result as GenerationRecord[]).sort(
+            (a, b) => a.timestamp - b.timestamp
+          );
+          const toDelete = all.slice(0, Math.max(0, all.length - MAX_HISTORY));
+          toDelete.forEach(r => store.delete(r.id));
+        };
+        resolve(id);
+      };
     });
   }
 

@@ -23,12 +23,14 @@ import { useHistory } from '@/lib/hooks/useHistory';
 import HistoryGallery from '@/components/HistoryGallery';
 import { GenerationRecord } from '@/lib/db';
 import { LightboxProvider } from '@/context/LightboxContext';
+import MemoryGuard from '@/components/MemoryGuard';
 
 
 export default function StudioPage() {
   return (
     <LightboxProvider>
       <StudioContent />
+      <MemoryGuard />
     </LightboxProvider>
   );
 }
