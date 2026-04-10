@@ -96,11 +96,7 @@ export default function SketchCanvas({ baseImage, onCompositeImageUpdate }: Sket
       ctx.lineJoin = 'round';
       ctx.stroke();
     });
-
-    // Generate output file
-    generateCompositeFile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lines, imageObj]); // generate composite whenever lines or image changes
+  }, [lines, imageObj]);
 
   const generateCompositeFile = useCallback(() => {
     const canvas = canvasRef.current;
@@ -113,6 +109,14 @@ export default function SketchCanvas({ baseImage, onCompositeImageUpdate }: Sket
       }
     }, 'image/png', 0.95);
   }, [baseImage, onCompositeImageUpdate]);
+
+  // Export the composite only when the user finishes a stroke or changes lines
+  // while not drawing (undo, clear). Never during active drawing.
+  useEffect(() => {
+    if (!isDrawing) {
+      generateCompositeFile();
+    }
+  }, [lines, isDrawing, generateCompositeFile]);
 
   // Drawing event handlers
   const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): Point | null => {

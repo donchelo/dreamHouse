@@ -2,9 +2,8 @@ import React from 'react';
 import { DreamHouseParams } from '@/types';
 import * as VC from '../constants';
 import clsx from 'clsx';
-import { LayoutGrid } from 'lucide-react';
+import { Check, LayoutGrid } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
-import { Chip } from '@/components/ui/Chip';
 
 interface VistasFormProps {
   params: DreamHouseParams;
@@ -27,40 +26,60 @@ export default function VistasForm({ params, onChange, disabled, activeSection, 
     onChange({ ...params, [key]: value });
   };
 
-  const toggleMultiSelect = (key: keyof DreamHouseParams, value: string) => {
-    const current = Array.isArray(params[key]) ? (params[key] as string[]) : [];
-    const newValues = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
-    handleChange(key, newValues);
-  };
+  const selected = Array.isArray(params.selectedVistas) ? params.selectedVistas : [];
 
-  const renderChipsGroup = (label: string, key: keyof DreamHouseParams, options: string[], helpText: string, scrollable: boolean = false) => {
-    const current = Array.isArray(params[key]) ? (params[key] as string[]) : [];
-    return (
-      <fieldset className="flex flex-col gap-2">
-        <div className="flex flex-col gap-1 px-1">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{label}</label>
-          <p className="text-[11px] text-muted-foreground opacity-60 font-mono tracking-tight">{helpText}</p>
-        </div>
-        <div className={clsx("flex flex-wrap gap-2 p-1", scrollable && "max-h-56 overflow-y-auto custom-scrollbar border border-border/20 bg-card/30")}>
-          {options.map(opt => (
-            <Chip key={opt} selected={current.includes(opt)} disabled={disabled} onToggle={() => toggleMultiSelect(key, opt)}>
-              {opt}
-            </Chip>
-          ))}
-        </div>
-      </fieldset>
-    );
+  const toggleVista = (vista: string) => {
+    const next = selected.includes(vista)
+      ? selected.filter(v => v !== vista)
+      : [...selected, vista];
+    handleChange('selectedVistas', next);
   };
 
   return (
     <div className="space-y-0" role="form" aria-label="Módulo de Generación de Vistas">
-      
+
       {/* ── 01 SELECCIÓN DE VISTAS ────────────────────────────────── */}
       <Section title="Portafolio de Vistas" number="05" icon={<LayoutGrid className="w-5 h-5" />} isOpen={activeSection === 'vistasSelection'} onToggle={() => onSectionChange('vistasSelection')}>
         <SectionDescription>Selecciona las vistas arquitectónicas que deseas generar para tu portafolio basado en la foto subida.</SectionDescription>
-        <div className="grid grid-cols-1 gap-6">
-          {renderChipsGroup("Vistas a Generar", "selectedVistas", VC.ARCHITECTURAL_VISTAS, "Selecciona múltiples para un set completo.", true)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
+          {VC.ARCHITECTURAL_VISTAS.map(vista => {
+            const isSelected = selected.includes(vista);
+            return (
+              <button
+                key={vista}
+                type="button"
+                disabled={disabled}
+                onClick={() => toggleVista(vista)}
+                className={clsx(
+                  'flex items-start gap-3 px-3 py-2.5 border text-left transition-all duration-150',
+                  'disabled:opacity-40 disabled:cursor-not-allowed',
+                  isSelected
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground'
+                )}
+              >
+                <span className={clsx('mt-0.5 w-3.5 h-3.5 shrink-0 flex items-center justify-center border',
+                  isSelected ? 'border-background' : 'border-current'
+                )}>
+                  {isSelected && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
+                </span>
+                <span className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold uppercase tracking-wide leading-tight">{vista}</span>
+                  <span className={clsx('text-[10px] font-mono leading-snug mt-0.5 truncate',
+                    isSelected ? 'opacity-70' : 'opacity-50'
+                  )}>
+                    {VC.VISTA_SHORT_DESC[vista]}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
+        {selected.length > 0 && (
+          <p className="mt-3 text-[11px] text-muted-foreground font-mono opacity-60">
+            {selected.length} vista{selected.length > 1 ? 's' : ''} seleccionada{selected.length > 1 ? 's' : ''}
+          </p>
+        )}
       </Section>
     </div>
   );
