@@ -54,6 +54,7 @@ export interface ExteriorSpecificParams {
   exteriorElements: string[];
   vegetation: string[];
   architecturalDetails: string[];
+  hasExteriorReference?: boolean;
 }
 
 export interface InteriorSpecificParams {
@@ -122,6 +123,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   exteriorElements: [],
   vegetation: [],
   architecturalDetails: [],
+  hasExteriorReference: false,
 
   // Interior
   roomType: "",

@@ -36,6 +36,7 @@ export default function StudioPage() {
 function StudioContent() {
   const [files, setFiles] = useState<File[]>([]);
   const [lotFile, setLotFile] = useState<File | null>(null);
+  const [exteriorReferenceFile, setExteriorReferenceFile] = useState<File | null>(null);
   const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
   const [editCompositeFile, setEditCompositeFile] = useState<File | null>(null);
   const [objectFiles, setObjectFiles] = useState<File[]>([]);
@@ -73,6 +74,12 @@ function StudioContent() {
       editPrompt: "",
       mode: params.mode // Keep current mode on reset
     });
+    setFiles([]);
+    setLotFile(null);
+    setExteriorReferenceFile(null);
+    setFloorPlanFile(null);
+    setEditCompositeFile(null);
+    setObjectFiles([]);
     showToast("Parameters reset to default");
   };
 
@@ -170,10 +177,11 @@ function StudioContent() {
             const formData = new FormData();
             files.forEach((file) => formData.append('files', file));
             if (lotFile) formData.append('lotImage', lotFile);
+            if (exteriorReferenceFile) formData.append('exteriorReferenceImage', exteriorReferenceFile);
             if (floorPlanFile) formData.append('floorPlanImage', floorPlanFile);
             
             // Add viewType to params for the API
-            const currentParams = { ...params, viewType };
+            const currentParams = { ...params, viewType, hasExteriorReference: !!exteriorReferenceFile };
             formData.append('params', JSON.stringify(currentParams));
 
             const apiResponse = await fetch('/api/generate', {
@@ -218,6 +226,9 @@ function StudioContent() {
         if (lotFile) {
           formData.append('lotImage', lotFile);
         }
+        if (exteriorReferenceFile) {
+          formData.append('exteriorReferenceImage', exteriorReferenceFile);
+        }
         if (floorPlanFile) {
           formData.append('floorPlanImage', floorPlanFile);
         }
@@ -227,7 +238,9 @@ function StudioContent() {
         if (params.mode === 'interior') {
           objectFiles.forEach((file) => formData.append('objectImages', file));
         }
-        formData.append('params', JSON.stringify(params));
+        
+        const finalParams = { ...params, hasExteriorReference: !!exteriorReferenceFile };
+        formData.append('params', JSON.stringify(finalParams));
 
         const apiResponse = await fetch('/api/generate', {
           method: 'POST',
@@ -297,6 +310,7 @@ function StudioContent() {
     // Reset files since we don't store them in history (only the params)
     setFiles([]);
     setLotFile(null);
+    setExteriorReferenceFile(null);
     setFloorPlanFile(null);
     setEditCompositeFile(null);
     setObjectFiles([]);
@@ -449,6 +463,7 @@ function StudioContent() {
             isOpen={activeSection === 'context'}
             onToggle={() => toggleSection('context')}
           >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <LotUploader 
               file={lotFile} 
               onFileChange={setLotFile} 
@@ -464,6 +479,19 @@ function StudioContent() {
               }
               icon={params.mode === 'vistas' ? <ImageIcon className="w-5 h-5 text-primary" /> : params.mode === 'interior' ? <Armchair className="w-5 h-5 text-primary" /> : undefined}
             />
+            {params.mode === 'exterior' && (
+              <LotUploader 
+                file={exteriorReferenceFile} 
+                onFileChange={(f) => {
+                  setExteriorReferenceFile(f);
+                  setParams({ ...params, hasExteriorReference: !!f });
+                }} 
+                title="Casa Actual (Estructura Base)"
+                description="Sube una foto de la casa existente. La IA mantendrá la volumetría y cambiará el estilo según el prompt."
+                icon={<Home className="w-5 h-5 text-primary" />}
+              />
+            )}
+          </div>
           </Section>
           )}
 

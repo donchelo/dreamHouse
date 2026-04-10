@@ -32,10 +32,11 @@ function validateImageSize(file: File, fieldName: string, skipSizeLimit: boolean
 }
 
 // Helper function to calculate total payload size
-function calculatePayloadSize(files: File[], lotImage: File | null, floorPlanImage: File | null, editCompositeFile: File | null, paramsJson: string): number {
+function calculatePayloadSize(files: File[], lotImage: File | null, exteriorReferenceImage: File | null, floorPlanImage: File | null, editCompositeFile: File | null, paramsJson: string): number {
   let totalSize = paramsJson.length;
   files.forEach(file => totalSize += file.size);
   if (lotImage) totalSize += lotImage.size;
+  if (exteriorReferenceImage) totalSize += exteriorReferenceImage.size;
   if (floorPlanImage) totalSize += floorPlanImage.size;
   if (editCompositeFile) totalSize += editCompositeFile.size;
   return totalSize;
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest) {
     const paramsJson = formData.get('params') as string;
     const files = formData.getAll('files') as File[];
     const lotImage = formData.get('lotImage') as File | null;
+    const exteriorReferenceImage = formData.get('exteriorReferenceImage') as File | null;
     const floorPlanImage = formData.get('floorPlanImage') as File | null;
     const editCompositeFile = formData.get('editCompositeFile') as File | null;
     const objectImages = formData.getAll('objectImages') as File[];
@@ -98,6 +100,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: validation.error }, { status: 400 });
       }
     }
+    
+    if (exteriorReferenceImage) {
+      const validation = validateImageSize(exteriorReferenceImage, 'Exterior reference image', isEditMode);
+      if (!validation.valid) {
+        return NextResponse.json({ message: validation.error }, { status: 400 });
+      }
+    }
 
     if (floorPlanImage) {
       const validation = validateImageSize(floorPlanImage, 'Floor plan image', isEditMode);
@@ -124,7 +133,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate total payload size
-    const totalPayloadSize = calculatePayloadSize(files, lotImage, floorPlanImage, editCompositeFile, paramsJson);
+    const totalPayloadSize = calculatePayloadSize(files, lotImage, exteriorReferenceImage, floorPlanImage, editCompositeFile, paramsJson);
     if (!isEditMode && totalPayloadSize > MAX_TOTAL_PAYLOAD_SIZE) {
       return NextResponse.json(
         {
@@ -137,6 +146,8 @@ export async function POST(req: NextRequest) {
     // Process images to base64 for multimodal generation
     let lotImageBase64 = "";
     let lotImageMimeType = "";
+    let exteriorRefBase64 = "";
+    let exteriorRefMimeType = "";
     let floorPlanImageBase64 = "";
     let floorPlanImageMimeType = "";
     let editCompositeBase64 = "";
@@ -148,6 +159,12 @@ export async function POST(req: NextRequest) {
       const buffer = await lotImage.arrayBuffer();
       lotImageBase64 = Buffer.from(buffer).toString('base64');
       lotImageMimeType = lotImage.type;
+    }
+    
+    if (exteriorReferenceImage) {
+      const buffer = await exteriorReferenceImage.arrayBuffer();
+      exteriorRefBase64 = Buffer.from(buffer).toString('base64');
+      exteriorRefMimeType = exteriorReferenceImage.type;
     }
 
     if (files.length > 0) {
@@ -182,7 +199,7 @@ export async function POST(req: NextRequest) {
     if (params.mode === 'interior') {
       narrativePrompt = buildInteriorPrompt(params);
     } else if (params.mode === 'exterior') {
-      narrativePrompt = buildExteriorPrompt(params);
+      narrativePrompt = buildExteriorPrompt(params, !!exteriorReferenceImage);
     } else if (params.mode === 'vistas') {
       narrativePrompt = buildVistasPrompt(params, params.viewType || 'Perspectiva Principal (Hero Shot)');
     } else {
@@ -197,9 +214,12 @@ export async function POST(req: NextRequest) {
 - Ensure the furniture style (${params.furnitureStyle.join(', ')}) and lighting (${params.interiorLighting.join(', ')}) are rendered with high fidelity.
 - Materiality: The floor (${params.flooringMaterial}) and ceiling (${params.ceilingDetail}) must define the vertical boundaries of the space.`;
     } else if (params.mode === "exterior") {
+      const structureMandate = exteriorReferenceImage 
+        ? "PRESERVE the fundamental architectural geometry, massing, and volumetric structure of the provided HOUSE REFERENCE IMAGE. Apply the requested styles and materials to this existing structure."
+        : "Preserve the geometry of the provided floor plan if applicable.";
       mandate = `ARCHITECTURAL EXTERIOR MANDATE:
 - This image is part of a professional architectural portfolio. Volumetric hierarchy is absolute.
-- Preserve the geometry of the provided floor plan if applicable.
+- ${structureMandate}
 - Integrate the building perfectly into the terrain/lot if provided.
 - If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.`;
     } else if (params.mode === "vistas") {
@@ -246,6 +266,15 @@ VERIFICATION STEPS:
       if (lotImageBase64) {
         imageGenerationParts.push({
           inlineData: { mimeType: lotImageMimeType, data: lotImageBase64 }
+        });
+      }
+
+      if (exteriorRefBase64) {
+        imageGenerationParts.push({
+          text: "HOUSE REFERENCE IMAGE (STRUCTURAL BASE): The following image is the existing house that must be modified. Maintain its general volume, shape, and architectural structure while applying the new materials, colors, and styles specified in the prompt."
+        });
+        imageGenerationParts.push({
+          inlineData: { mimeType: exteriorRefMimeType, data: exteriorRefBase64 }
         });
       }
 

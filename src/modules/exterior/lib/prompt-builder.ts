@@ -42,12 +42,17 @@ const FORM_ORGANIZATION_MAP: Record<string, string> = {
   "Wing-based": "split into specialized wings for optimized privacy and function"
 };
 
-export function buildExteriorPrompt(params: DreamHouseParams): string {
+export function buildExteriorPrompt(params: DreamHouseParams, hasStructuralReference: boolean = false): string {
   const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
   const scaleDesc = VOLUMETRIC_SCALE_MAP[params.size] || "modern structure";
   const organizationDesc = FORM_ORGANIZATION_MAP[params.layoutType] ? `, ${FORM_ORGANIZATION_MAP[params.layoutType]}` : "";
 
-  let prompt = `A photorealistic ${params.cameraAngle || 'eye-level'} architectural photography of a ${scaleDesc} ${projectType}. `;
+  let prompt = "";
+  if (hasStructuralReference) {
+    prompt = `A photorealistic ${params.cameraAngle || 'eye-level'} architectural photography demonstrating a structural redesign of the existing ${projectType} provided in the reference image. `;
+  } else {
+    prompt = `A photorealistic ${params.cameraAngle || 'eye-level'} architectural photography of a ${scaleDesc} ${projectType}. `;
+  }
   
   if (params.city) {
     prompt += `The structure is masterfully integrated into the urban fabric of ${params.city}. `;
