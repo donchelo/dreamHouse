@@ -7,6 +7,7 @@ export interface GenerationRecord {
   params: DreamHouseParams;
   imageUrl: string; // base64
   prompt?: string;
+  houseName?: string;
 }
 
 const DB_NAME = 'DreamHouseDB';

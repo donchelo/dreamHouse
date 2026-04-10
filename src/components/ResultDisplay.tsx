@@ -37,6 +37,7 @@ interface ResultDisplayProps {
   subtitle?: string;
   vistasImages?: { type: string; url: string | null; loading?: boolean }[];
   activeVistaIndex?: number;
+  houseName?: string | null;
 }
 
 
@@ -48,7 +49,8 @@ export default function ResultDisplay({
   title = "Resultado Final",
   subtitle = "Generado con inteligencia artificial",
   vistasImages,
-  activeVistaIndex = 0
+  activeVistaIndex = 0,
+  houseName
 }: ResultDisplayProps) {
   const [messageIndex, setMessageIndex] = useState(0);
   const { openLightbox } = useLightbox();
@@ -228,7 +230,7 @@ export default function ResultDisplay({
                     </Button>
                     <a
                       href={imageUrl || vistasImages![activeVistaIndex]!.url!}
-                      download="dreamhouse-render.png"
+                      download={houseName ? `${houseName.replace(/\s+/g, '-')}.png` : "dreamhouse-render.png"}
                       className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105"
                     >
                       <Download className="w-4 h-4" />

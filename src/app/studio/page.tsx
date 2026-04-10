@@ -42,6 +42,7 @@ function StudioContent() {
   const [objectFiles, setObjectFiles] = useState<File[]>([]);
   const [params, setParams] = useState<DreamHouseParams>(DEFAULT_PARAMS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [houseName, setHouseName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -80,6 +81,7 @@ function StudioContent() {
     setFloorPlanFile(null);
     setEditCompositeFile(null);
     setObjectFiles([]);
+    setHouseName(null);
     showToast("Parameters reset to default");
   };
 
@@ -150,6 +152,7 @@ function StudioContent() {
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
+    setHouseName(null);
 
     const isVistasMode = params.mode === 'vistas';
 
@@ -201,12 +204,14 @@ function StudioContent() {
             
             // Also set as main image for the preview
             setImageUrl(data.imageUrl);
+            setHouseName(data.houseName);
 
             // Save to history
             await saveToHistory({
               mode: 'vistas',
               params: currentParams,
-              imageUrl: data.imageUrl
+              imageUrl: data.imageUrl,
+              houseName: data.houseName
             });
 
           } catch (err) {
@@ -273,13 +278,15 @@ function StudioContent() {
           throw new Error("Failed to parse generation result. The server returned an invalid format.");
         }
         setImageUrl(data.imageUrl);
+        setHouseName(data.houseName);
         
         // Save to local history
         try {
           await saveToHistory({
             mode: params.mode as 'exterior' | 'interior' | 'edit' | 'vistas',
             params: params,
-            imageUrl: data.imageUrl
+            imageUrl: data.imageUrl,
+            houseName: data.houseName
           });
         } catch (historyErr) {
           console.error("Failed to save to history:", historyErr);
@@ -307,6 +314,7 @@ function StudioContent() {
   const handleLoadHistory = (record: GenerationRecord) => {
     setParams(record.params);
     setImageUrl(record.imageUrl);
+    setHouseName(record.houseName || null);
     // Reset files since we don't store them in history (only the params)
     setFiles([]);
     setLotFile(null);
@@ -598,10 +606,11 @@ function StudioContent() {
                   imageUrl={imageUrl}
                   isLoading={isLoading}
                   onRegenerate={handleGenerate}
-                  title={params.mode === 'vistas' ? "Portafolio de Vistas" : `Final ${params.mode}`}
+                  title={houseName || (params.mode === 'vistas' ? "Portafolio de Vistas" : `Final ${params.mode}`)}
                   subtitle={params.mode === 'vistas' ? "Set de visualizaciones arquitectónicas" : `Photorealistic ${params.mode} visualization`}
                   vistasImages={params.mode === 'vistas' ? vistasResults : undefined}
                   activeVistaIndex={activeVistaIndex}
+                  houseName={houseName}
                 />
               </div>
             </div>

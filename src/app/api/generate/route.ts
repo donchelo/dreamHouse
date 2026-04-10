@@ -346,7 +346,35 @@ VERIFICATION STEPS:
     const imageUrl = `data:${mimeType};base64,${imageBase64}`;
     const groundingMetadata = firstCandidate.groundingMetadata;
 
-    return NextResponse.json({ imageUrl, groundingMetadata });
+    // --- Generate House Name using Economical Model (Gemini 1.5 Flash) ---
+    let houseName = "DreamHouse Project";
+    try {
+      const namePrompt = `Generate an inspirational 3-word name (in Spanish) for an architectural house with these characteristics:
+- Style: ${params.architecturalStyles.join(', ') || 'Modern'}
+- Mode: ${params.mode}
+- Mood: ${params.mood}
+- Materials: ${params.materials.join(', ')}
+- Location: ${params.city || 'Any'}
+- Context: ${params.environment}
+
+Return ONLY the 3-word name, no quotes, no extra text. Focus on what makes it unique.`;
+      
+      const nameResult = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: [{ parts: [{ text: namePrompt }] }]
+      });
+      
+      const nameText = nameResult.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (nameText && nameText.split(/\s+/).length <= 6) { // Sanity check on length
+        houseName = nameText;
+      }
+    } catch (nameError) {
+      console.error("Failed to generate house name:", nameError);
+      // Fallback to project name based on style
+      houseName = `${params.architecturalStyles[0] || 'Modern'} Design House`;
+    }
+
+    return NextResponse.json({ imageUrl, groundingMetadata, houseName });
 
   } catch (error: unknown) {
     console.error("API Error Detailed:", error);
