@@ -163,6 +163,9 @@ export default function InteriorForm({ params, onChange, disabled, activeSection
 
       {/* ── 08 SALIDA ──────────────────────────────────────────── */}
       <Section title="Output Final" number="12" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+          <Select label="Modelo de IA" value={params.aiModel} onChange={(e) => handleChange("aiModel", e.target.value)} options={SC.AI_MODELS} disabled={disabled} />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <Select label="Estilo de Imagen" value={params.renderStyle} onChange={(e) => handleChange("renderStyle", e.target.value)} options={SC.RENDER_STYLES} disabled={disabled} />
           <Select label="Aspect Ratio" value={params.renderAspectRatio} onChange={(e) => handleChange("renderAspectRatio", e.target.value)} options={SC.ASPECT_RATIOS} disabled={disabled} />

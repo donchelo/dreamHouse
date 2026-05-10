@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Part } from '@google/genai';
+import OpenAI from 'openai';
 import { DreamHouseParams } from '@/types';
 import { buildExteriorPrompt } from '@/modules/exterior/lib/prompt-builder';
 import { buildInteriorPrompt } from '@/modules/interior/lib/prompt-builder';
@@ -44,37 +45,59 @@ function calculatePayloadSize(files: File[], lotImage: File | null, exteriorRefe
 
 export async function POST(req: NextRequest) {
   try {
-    // Check for API key in headers (client-side provided) or environment variables
-    const apiKey = req.headers.get('x-api-key') || process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { message: 'API Key is missing. Please configure GEMINI_API_KEY in Vercel environment variables or provide it in the header.' },
-        { status: 401 }
-      );
-    }
-
-    // Initialize Gemini Client with provided key and increased timeout (120s)
-    console.log("Initializing Gemini SDK with API Key (truncated):", apiKey.substring(0, 5) + "...");
-    const ai = new GoogleGenAI({ 
-      apiKey,
-      httpOptions: { timeout: 120000 }
-    });
-
     const formData = await req.formData();
     const paramsJson = formData.get('params') as string;
+    
+    if (!paramsJson) {
+      return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
+    }
+
+    const params: DreamHouseParams = JSON.parse(paramsJson);
+    const useOpenAI = params.aiModel && params.aiModel.includes('OpenAI');
+
+    // API Key validation based on selected model
+    let geminiApiKey = null;
+    let openaiApiKey = null;
+
+    if (useOpenAI) {
+      openaiApiKey = req.headers.get('x-openai-api-key') || process.env.OPENAI_API_KEY;
+      if (!openaiApiKey) {
+        return NextResponse.json(
+          { message: 'OpenAI API Key is missing. Please configure OPENAI_API_KEY in Vercel or provide it.' },
+          { status: 401 }
+        );
+      }
+    } else {
+      geminiApiKey = req.headers.get('x-api-key') || process.env.GEMINI_API_KEY;
+      if (!geminiApiKey) {
+        return NextResponse.json(
+          { message: 'API Key is missing. Please configure GEMINI_API_KEY in Vercel environment variables or provide it in the header.' },
+          { status: 401 }
+        );
+      }
+    }
+
+    let ai: any;
+    if (!useOpenAI && geminiApiKey) {
+      console.log("Initializing Gemini SDK with API Key (truncated):", geminiApiKey.substring(0, 5) + "...");
+      ai = new GoogleGenAI({ 
+        apiKey: geminiApiKey,
+        httpOptions: { timeout: 120000 }
+      });
+    }
+
+    let openaiClient: OpenAI | null = null;
+    if (useOpenAI && openaiApiKey) {
+      console.log("Initializing OpenAI SDK");
+      openaiClient = new OpenAI({ apiKey: openaiApiKey });
+    }
+
     const files = formData.getAll('files') as File[];
     const lotImage = formData.get('lotImage') as File | null;
     const exteriorReferenceImage = formData.get('exteriorReferenceImage') as File | null;
     const floorPlanImage = formData.get('floorPlanImage') as File | null;
     const editCompositeFile = formData.get('editCompositeFile') as File | null;
     const objectImages = formData.getAll('objectImages') as File[];
-
-    if (!paramsJson) {
-      return NextResponse.json({ message: 'Missing parameters' }, { status: 400 });
-    }
-
-    const params: DreamHouseParams = JSON.parse(paramsJson);
 
     // Validate number of reference images
     if (files.length > MAX_REFERENCE_IMAGES) {
@@ -237,13 +260,15 @@ export async function POST(req: NextRequest) {
     const fullPrompt = `${narrativePrompt}
 
 ${mandate}
-- QUALITY: Award-winning photography style, realistic textures, and cinematic lighting.
+- QUALITY: The image must feel photographed, not rendered. Every surface needs physical weight: honest texture, natural color variation, controlled imperfections (grain, wear at edges, subtle tonal shifts) that confirm real material. Lighting must have a single clear direction with soft gradient fall-off into shadow. No CGI smoothness, no plastic sheen, no over-sharpened or uniformly perfect surfaces. Shadows reveal depth. Glass reflects its environment.
 
 VERIFICATION STEPS:
 1. Review the generated composition against the text description.
-2. Verify that all requested materials (${params.materials.join(', ')}) are clearly visible.
+2. Verify that all requested materials (${params.materials.join(', ')}) are clearly visible and rendered with honest texture — not smooth or generic.
 3. Confirm that no forbidden elements appear (Negative Prompt: ${params.negativePrompt || 'None'}).
-4. If the result is incorrect, reasoning should correct the composition before final output.`.trim();
+4. Check that lighting has a clear direction and casts soft-edged shadows that read the three-dimensional form.
+5. Confirm no surface looks digitally smooth, plastic, or uniformly perfect — introduce micro-imperfections if needed.
+6. If the result is incorrect, reasoning should correct the composition before final output.`.trim();
 
     console.log("Generated Narrative Prompt:", fullPrompt);
 
@@ -300,51 +325,70 @@ VERIFICATION STEPS:
       }
     }
 
-    const generationResponse = await ai.models.generateContent({
-      model: "gemini-3.1-flash-image-preview",
-      contents: [{ parts: imageGenerationParts }],
-      config: {
-        responseModalities: ["TEXT", "IMAGE"],
-        // NEW: Enabled both web and image search for superior grounding
-        tools: [
-          { 
-            googleSearch: { 
-              searchTypes: {
-                webSearch: {},
-                imageSearch: {}
-              }
-            }
-          } as any // eslint-disable-line @typescript-eslint/no-explicit-any
-        ],
-        imageConfig: {
-          ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
-          ...(params.renderOutputResolution ? { imageSize: params.renderOutputResolution } : {})
-        },
-        // Enhanced Thinking Configuration
-        thinkingConfig: {
-          thinkingLevel: params.thinkingLevel === "High" ? "HIGH" : "MINIMAL",
-          includeThoughts: true
-        } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    let imageUrl = "";
+    let groundingMetadata = null;
+
+    if (useOpenAI && openaiClient) {
+      console.log("Generating with OpenAI (GPT Image 2)");
+      const result = await openaiClient.images.generate({
+        model: "gpt-image-2",
+        prompt: fullPrompt,
+        response_format: "b64_json"
+        // DALL-E doesn't take reference images in the same way, we rely purely on the narrative prompt
+        // Note: For production edit mode, we would use openaiClient.images.edit with mask, but here we just do generate
+      });
+      
+      const imageBase64 = result?.data?.[0]?.b64_json;
+      if (!imageBase64) {
+         throw new Error("No image data returned from OpenAI");
       }
-    });
+      imageUrl = `data:image/png;base64,${imageBase64}`;
+    } else {
+      console.log("Generating with Gemini");
+      const generationResponse = await ai.models.generateContent({
+        model: "gemini-3.1-flash-image-preview",
+        contents: [{ parts: imageGenerationParts }],
+        config: {
+          responseModalities: ["TEXT", "IMAGE"],
+          tools: [
+            { 
+              googleSearch: { 
+                searchTypes: {
+                  webSearch: {},
+                  imageSearch: {}
+                }
+              }
+            } as any
+          ],
+          imageConfig: {
+            ...(params.renderAspectRatio ? { aspectRatio: params.renderAspectRatio } : {}),
+            ...(params.renderOutputResolution ? { imageSize: params.renderOutputResolution } : {})
+          },
+          thinkingConfig: {
+            thinkingLevel: params.thinkingLevel === "High" ? "HIGH" : "MINIMAL",
+            includeThoughts: true
+          } as any
+        }
+      });
 
-    const candidates = generationResponse.candidates;
-    if (!candidates || candidates.length === 0) {
-      throw new Error("No image candidates returned");
+      const candidates = generationResponse.candidates;
+      if (!candidates || candidates.length === 0) {
+        throw new Error("No image candidates returned");
+      }
+
+      const firstCandidate = candidates[0];
+      const parts = firstCandidate?.content?.parts;
+      const imagePart = parts?.find((part: Part) => part.inlineData);
+
+      if (!imagePart || !imagePart.inlineData) {
+        throw new Error("No image data found in response");
+      }
+
+      const imageBase64 = imagePart.inlineData.data;
+      const mimeType = imagePart.inlineData.mimeType || "image/png";
+      imageUrl = `data:${mimeType};base64,${imageBase64}`;
+      groundingMetadata = firstCandidate.groundingMetadata;
     }
-
-    const firstCandidate = candidates[0];
-    const parts = firstCandidate?.content?.parts;
-    const imagePart = parts?.find((part: Part) => part.inlineData);
-
-    if (!imagePart || !imagePart.inlineData) {
-      throw new Error("No image data found in response");
-    }
-
-    const imageBase64 = imagePart.inlineData.data;
-    const mimeType = imagePart.inlineData.mimeType || "image/png";
-    const imageUrl = `data:${mimeType};base64,${imageBase64}`;
-    const groundingMetadata = firstCandidate.groundingMetadata;
 
     // --- Generate House Name using Economical Model (Gemini 1.5 Flash) ---
     let houseName = "DreamHouse Project";

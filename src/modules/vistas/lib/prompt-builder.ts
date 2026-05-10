@@ -17,6 +17,11 @@ export function buildVistasPrompt(params: DreamHouseParams, viewType: string): s
     ? `as seen through the lens of ${params.architect.join(' and ')}` 
     : "";
 
+  const materialList = params.materials.join(', ') || 'all original facade materials';
+  const lightingCtx = params.lighting
+    ? `${params.lighting} light — with clear shadow direction, soft gradient fall-off, and surface-specific specularity`
+    : "lighting that matches the reference image — preserve its shadow direction, intensity, and color temperature";
+
   const basicPrompt = `
 ARCHITECTURAL PORTFOLIO GENERATION:
 Task: Generate a new ${viewType} of the house provided in the reference image.
@@ -25,15 +30,15 @@ CRITICAL COMPOSITION RULE: The building is the SOLE PROTAGONIST. The background 
 
 VISUAL REQUIREMENTS:
 - View Type: ${vistaDescription}
-- Style Consistency: The building must be IDENTICAL in form, materials, and character to the one in the reference image. It is the same house, just a different camera position.
-- Context: ${params.environment ? `The house is located in a ${params.environment} setting.` : "Maintain the same environmental context as the reference."}
-- Lighting: ${params.lighting || "Match the lighting style of the reference image."}
-- Atmosphere: ${params.mood || "Professional, clean, and high-end."}
+- Style Consistency: The building must be IDENTICAL in form, materials, and character to the reference — same house, different camera position. Every architectural decision (massing, openings, roof geometry, material palette) is fixed.
+- Context: ${params.environment ? `The house sits within a ${params.environment} setting — keep the environmental character consistent.` : "Maintain the same site and environmental context as the reference."}
+- Lighting: ${lightingCtx}.
+- Atmosphere: ${params.mood || "Professional, high-end architectural photography — evocative but not over-processed."}
 
 NARRATIVE:
-An award-quality architectural photograph ${architectCredit}, capturing the ${viewType} of the building ${styles}. 
-The camera is positioned to highlight ${vistaDescription}. 
-All materiality, from the ${params.materials.join(', ') || 'original textures'} to the window treatments and roof geometry, must be preserved with absolute fidelity.
+An architectural photograph ${architectCredit}, capturing the ${viewType} of the building ${styles}.
+The camera is placed to reveal ${vistaDescription}.
+Every material — ${materialList} — must be rendered with honest texture and physical specificity: grain patterns, natural color variation, the micro-imperfections that confirm real construction. Window glass reflects its surroundings. Shadows have soft edges and reveal surface depth. No surface looks digitally smooth or uniformly perfect.
 `.trim();
 
   return basicPrompt;

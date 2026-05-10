@@ -53,37 +53,53 @@ export function buildInteriorPrompt(params: DreamHouseParams): string {
   const roomDesc = ROOM_MAP[params.roomType] || "a beautifully designed interior space";
   const scaleDesc = getRoomScaleDesc(params.roomSizeM2);
 
-  let prompt = `A professional architectural interior photography of ${roomDesc}${scaleDesc ? `, ${scaleDesc}` : ""}. `;
+  // Narrative opening — position the viewer inside the space
+  let prompt = `An architectural interior photograph taken inside ${roomDesc}${scaleDesc ? ` — ${scaleDesc}` : ""}. `;
 
-  prompt += `The space exhibits a ${params.architecturalStyles.join(' and ')} aesthetic, `;
-  
+  prompt += `The space carries a ${params.architecturalStyles.join(' and ')} character`;
   if (params.architect.length > 0) {
-    prompt += `with a design language inspired by ${params.architect.join(' & ')}. `;
+    prompt += `, shaped by the design principles of ${params.architect.join(' & ')}`;
   }
+  prompt += `. `;
 
   if (params.furnitureStyle.length > 0) {
-    prompt += `The room is furnished with ${params.furnitureStyle.map(s => FURNITURE_MAP[s] || s).join(', ')}. `;
+    prompt += `Every object in the room is ${params.furnitureStyle.map(s => FURNITURE_MAP[s] || s).join(' and ')} — `;
+    prompt += `each piece sits with the physical weight of a real object: surfaces show natural material variation, `;
+    prompt += `subtle wear at edges and contact points, and the honest craft marks that separate handmade from digital. `;
   }
 
   if (params.interiorLighting.length > 0) {
-    prompt += `Lighting: ${params.interiorLighting.map(l => INTERIOR_LIGHTING_MAP[l] || l).join(' and ')}. `;
+    prompt += `The room is illuminated by ${params.interiorLighting.map(l => INTERIOR_LIGHTING_MAP[l] || l).join(', complemented by ')}. `;
+    prompt += `Light falls with natural gradient and fall-off — bright at source, dissolving into soft shadow — `;
+    prompt += `revealing surface depth, material texture, and the three-dimensional volume of every form. `;
   }
 
-  prompt += `The floor is finished in ${params.flooringMaterial}, complemented by a ${params.ceilingDetail} ceiling. `;
-  
+  // Materials with physical specificity
+  prompt += `The floor is ${params.flooringMaterial} — its grain, joint lines, and surface sheen are physically convincing. `;
+  prompt += `The ceiling is ${params.ceilingDetail}, its material presence confirmed by subtle shadow and texture. `;
+
   if (params.materials.length > 0) {
-    prompt += `Materials include a mix of ${params.materials.join(', ')}. `;
+    prompt += `Throughout the space: ${params.materials.join(', ')} — each rendered with honest texture, `;
+    prompt += `natural color variation across the surface, and the controlled micro-imperfections `;
+    prompt += `(pore structure, grain direction, slight tonal shifts) that distinguish real material from a smooth CGI simulation. `;
   }
 
-  prompt += `Palette: ${params.colorPalette.join(' and ')}. `;
-  
-  prompt += `Technical: ${params.cameraPreset}, lens ${params.focalLength}, aperture ${params.aperture}, film simulation ${params.filmSimulation}. `;
+  prompt += `Color palette: ${params.colorPalette.join(' and ')}, rendered as pigment and light interact physically — `;
+  prompt += `colors shift subtly across planes as light angle changes. `;
+
+  // Camera integrated naturally into the scene
+  prompt += `Shot with ${params.cameraPreset}, ${params.focalLength} lens at ${params.aperture}, ${params.filmSimulation} — `;
+  prompt += `depth of field separates foreground objects from a naturally softened background. `;
 
   if (params.artDirection) {
     prompt += `\nCreative Direction: ${params.artDirection}. `;
   }
 
-  prompt += `\nQuality goal: Interior design masterpiece, 8k resolution, photorealistic.`;
+  // Quality instruction: specific realism criteria, not generic tags
+  prompt += `\nThe image must feel like a photograph, not a render: imperfect enough to be believed, `;
+  prompt += `lit well enough to be aspirational. No plastic surfaces, no over-sharpened edges, `;
+  prompt += `no uniform smoothness on any material. Shadows have soft gradient fall-off. `;
+  prompt += `Every surface has physical weight and tactile presence.`;
 
   return prompt.trim();
 }

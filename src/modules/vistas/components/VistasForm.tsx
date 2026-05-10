@@ -2,8 +2,10 @@ import React from 'react';
 import { DreamHouseParams } from '@/types';
 import * as VC from '../constants';
 import clsx from 'clsx';
-import { Check, LayoutGrid } from 'lucide-react';
+import { Check, LayoutGrid, ImageIcon } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
+import { Select } from '@/components/ui/Select';
+import * as SC from '../../shared/constants';
 
 interface VistasFormProps {
   params: DreamHouseParams;
@@ -80,6 +82,18 @@ export default function VistasForm({ params, onChange, disabled, activeSection, 
             {selected.length} vista{selected.length > 1 ? 's' : ''} seleccionada{selected.length > 1 ? 's' : ''}
           </p>
         )}
+      </Section>
+
+      {/* ── 02 PROCESO ─────────────────────────────────────────── */}
+      <Section title="Configuración de Salida" number="06" icon={<ImageIcon className="w-5 h-5" />} isOpen={activeSection === 'output'} onToggle={() => onSectionChange('output')}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+          <Select label="Modelo de IA" value={params.aiModel} onChange={(e) => handleChange("aiModel", e.target.value)} options={SC.AI_MODELS} disabled={disabled} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <Select label="Estilo de Imagen" value={params.renderStyle} onChange={(e) => handleChange("renderStyle", e.target.value)} options={SC.RENDER_STYLES} disabled={disabled} />
+          <Select label="Aspect Ratio" value={params.renderAspectRatio} onChange={(e) => handleChange("renderAspectRatio", e.target.value)} options={SC.ASPECT_RATIOS} disabled={disabled} />
+          <Select label="Resolución" value={params.renderOutputResolution} onChange={(e) => handleChange("renderOutputResolution", e.target.value)} options={SC.OUTPUT_RESOLUTIONS} disabled={disabled} />
+        </div>
       </Section>
     </div>
   );

@@ -251,6 +251,11 @@ export const RENDER_STYLES = [
   "Render artístico / Painterly"
 ];
 
+export const AI_MODELS = [
+  "Gemini 3.1 Flash Image Preview",
+  "GPT Image 2 (OpenAI)"
+];
+
 export interface CameraPreset {
   name: string; brand: string; sensor: string; lens: string; character: string; isFujifilm: boolean;
 }

@@ -159,9 +159,10 @@ function StudioContent() {
     const isVistasMode = params.mode === 'vistas';
 
     try {
-      const apiKey = localStorage.getItem('GEMINI_API_KEY');
+      const useOpenAI = params.aiModel && params.aiModel.includes('OpenAI');
+      const apiKey = useOpenAI ? localStorage.getItem('OPENAI_API_KEY') : localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
-        throw new Error('Por favor, configura tu GEMINI_API_KEY en el encabezado.');
+        throw new Error(`Por favor, configura tu ${useOpenAI ? 'OPENAI_API_KEY' : 'GEMINI_API_KEY'} en el encabezado.`);
       }
 
       if (isVistasMode) {
@@ -191,7 +192,7 @@ function StudioContent() {
 
             const apiResponse = await fetch('/api/generate', {
               method: 'POST',
-              headers: { 'x-api-key': apiKey },
+              headers: useOpenAI ? { 'x-openai-api-key': apiKey } : { 'x-api-key': apiKey },
               body: formData,
             });
 
@@ -251,9 +252,7 @@ function StudioContent() {
 
         const apiResponse = await fetch('/api/generate', {
           method: 'POST',
-          headers: {
-            'x-api-key': apiKey,
-          },
+          headers: useOpenAI ? { 'x-openai-api-key': apiKey } : { 'x-api-key': apiKey },
           body: formData,
         });
 

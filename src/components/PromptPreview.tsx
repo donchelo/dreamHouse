@@ -144,6 +144,7 @@ export default function PromptPreview({ params }: PromptPreviewProps) {
       title: 'Configuración de Salida',
       icon: <Settings2 className="w-3.5 h-3.5" />,
       items: [
+        { label: 'MODELO IA', value: params.aiModel },
         { label: 'RENDER', value: params.renderStyle },
         { label: 'RATIO', value: params.renderAspectRatio },
         { label: 'RESOLUCIÓN', value: params.renderOutputResolution },

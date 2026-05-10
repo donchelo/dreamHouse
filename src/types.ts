@@ -35,6 +35,7 @@ export interface SharedParams {
   artDirection: string;
   negativePrompt: string;
   editPrompt: string;
+  aiModel: string;
 }
 
 export interface ExteriorSpecificParams {
@@ -105,6 +106,7 @@ export const DEFAULT_PARAMS: DreamHouseParams = {
   artDirection: "",
   negativePrompt: "",
   editPrompt: "",
+  aiModel: "Gemini 3.1 Flash Image Preview",
 
   // Exterior
   projectType: "",

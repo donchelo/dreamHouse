@@ -42,6 +42,35 @@ const FORM_ORGANIZATION_MAP: Record<string, string> = {
   "Wing-based": "split into specialized wings for optimized privacy and function"
 };
 
+function getLightingPhysics(timeOfDay: string, lightingType: string, season: string): string {
+  const lower = (timeOfDay || '').toLowerCase();
+  const seasonCtx = season ? ` in ${season}` : '';
+
+  if (lower.includes('golden') || lower.includes('hora dorada') || lower.includes('sunset') || lower.includes('atardecer') || lower.includes('sunrise') || lower.includes('amanecer')) {
+    return `Low-angle golden light rakes across the facade${seasonCtx}, dragging long warm shadows from every surface relief, window reveal, and material joint — the ${lightingType} quality at its most dramatic. Facade textures are amplified by raking illumination; every grain and cast shadow is visible.`;
+  }
+  if (lower.includes('blue hour') || lower.includes('hora azul') || lower.includes('twilight') || lower.includes('crepúsculo')) {
+    return `Deep blue twilight sky${seasonCtx} provides a cool luminous field against which warm interior light bleeds softly through glazing — the ${lightingType} liminal quality where artificial and natural light balance. The building glows from within while its silhouette reads against a gradient sky.`;
+  }
+  if (lower.includes('night') || lower.includes('noche')) {
+    return `Night scene${seasonCtx}: artificial sources sculpt the building from darkness, interior warmth escapes through glass, facade materials absorb and reflect ${lightingType} light with honest surface behavior — matte planes go dark, specular surfaces catch highlights.`;
+  }
+  if (lower.includes('overcast') || lower.includes('nublado') || lower.includes('cloudy') || lower.includes('cubierto')) {
+    return `Soft, directionless overcast sky${seasonCtx} wraps the building in even diffuse light — the ${lightingType} quality that reveals true material color without the distraction of harsh shadows. Surface texture reads through subtle tonal variation rather than cast shadow.`;
+  }
+  if (lower.includes('morning') || lower.includes('mañana')) {
+    return `Early morning light arrives low from the east${seasonCtx}, laying cool-warm gradients across the facade and throwing long directional shadows that emphasize the building's three-dimensional relief — ${lightingType} quality with atmospheric haze softening the background.`;
+  }
+  if (lower.includes('midday') || lower.includes('mediodía') || lower.includes('noon')) {
+    return `High midday sun${seasonCtx} creates stark, vertical contrast: flat horizontal surfaces bleach bright while vertical recesses drop into deep shadow — ${lightingType} conditions that emphasize the building's massing and relief with maximum tonal separation.`;
+  }
+  if (lower.includes('afternoon') || lower.includes('tarde')) {
+    return `Warm afternoon light tracks from the west${seasonCtx}, wrapping the facade in directional warmth with elongating shadows that read the building's depth — ${lightingType} conditions where every surface plane has a distinct luminosity.`;
+  }
+
+  return `The scene is captured during ${timeOfDay}${seasonCtx}, with ${lightingType} lighting that defines shadow direction, sculpts the building's volumes, and confirms the physical depth of every surface plane.`;
+}
+
 export function buildExteriorPrompt(params: DreamHouseParams, hasStructuralReference: boolean = false): string {
   const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
   const scaleDesc = VOLUMETRIC_SCALE_MAP[params.size] || "modern structure";
@@ -49,40 +78,48 @@ export function buildExteriorPrompt(params: DreamHouseParams, hasStructuralRefer
 
   let prompt = "";
   if (hasStructuralReference) {
-    prompt = `A photorealistic ${params.cameraAngle || 'eye-level'} architectural photography demonstrating a structural redesign of the existing ${projectType} provided in the reference image. `;
+    prompt = `An architectural photograph — ${params.cameraAngle || 'eye-level'} view — documenting a reimagined version of the ${projectType} shown in the reference image. `;
   } else {
-    prompt = `A photorealistic ${params.cameraAngle || 'eye-level'} architectural photography of a ${scaleDesc} ${projectType}. `;
-  }
-  
-  if (params.city) {
-    prompt += `The structure is masterfully integrated into the urban fabric of ${params.city}. `;
-  } else {
-    prompt += `The project is set within a ${params.environment || 'carefully curated'} environment. `;
+    prompt = `An architectural photograph — ${params.cameraAngle || 'eye-level'} view — of a ${scaleDesc} ${projectType}. `;
   }
 
-  prompt += `The building${organizationDesc}, exhibits a ${params.architecturalStyles.join(' and ')} aesthetic. `;
-  
+  if (params.city) {
+    prompt += `The building occupies its site in ${params.city} with confident presence, reading clearly against its urban context. `;
+  } else {
+    prompt += `The project is rooted in a ${params.environment || 'carefully considered'} environment — the setting is specific enough to feel real, not generic. `;
+  }
+
+  prompt += `The building${organizationDesc} carries a ${params.architecturalStyles.join(' and ')} character. `;
+
   if (params.levels > 0) {
-    prompt += `The massing is articulated across ${params.levels} levels. `;
+    prompt += `Its massing is distributed across ${params.levels} floors, each level reading clearly as a distinct horizontal band in the composition. `;
   }
 
   if (params.architect.length > 0) {
-    prompt += `The composition is inspired by the works of ${params.architect.join(' & ')}. `;
+    prompt += `The design sensibility — proportions, material honesty, spatial hierarchy — draws from the language of ${params.architect.join(' & ')}. `;
   }
 
   if (params.materials.length > 0) {
-    prompt += `The facade is characterized by ${params.materials.join(', ')}, finished to a ${params.finishLevel} standard. `;
+    prompt += `The facade is built from ${params.materials.join(' and ')}, finished to a ${params.finishLevel} standard. `;
+    prompt += `Render each material with honest surface behavior: grain patterns, natural color variation across panels, `;
+    prompt += `the subtle imperfections and micro-texture that make a facade feel constructed rather than modeled — `;
+    prompt += `weathering at base, joint shadow lines, material edges with physical thickness. `;
   }
 
-  prompt += `The scene is captured during ${params.timeOfDay} in ${params.season}, with ${params.lighting} lighting. `;
-  
-  prompt += `Technical: ${params.cameraPreset}, lens ${params.focalLength}, aperture ${params.aperture}, film simulation ${params.filmSimulation}. `;
+  // Physics-based lighting description derived from time of day
+  prompt += `${getLightingPhysics(params.timeOfDay, params.lighting, params.season)} `;
+
+  prompt += `Shot on ${params.cameraPreset}, ${params.focalLength} lens at ${params.aperture}, ${params.filmSimulation}. `;
 
   if (params.artDirection) {
     prompt += `\nCreative Direction: ${params.artDirection}. `;
   }
 
-  prompt += `\nQuality goal: Architectural masterpiece, 8k resolution, photorealistic, sharp focus.`;
+  // Quality: specific photographic criteria, not generic tags
+  prompt += `\nThe image must feel like a working architectural photographer's best frame — `;
+  prompt += `shadows have a single clear direction and soft-edged fall-off, surfaces have tactile texture and physical weight, `;
+  prompt += `atmosphere adds depth between foreground and background. `;
+  prompt += `No CGI smoothness, no plastic surfaces, no artificially sharpened or uniform-textured materials.`;
 
   prompt += `\nCRITICAL COMPOSITION RULE: The building is the SOLE PROTAGONIST of this image. The background must be neutral — open sky, landscape, vegetation, or abstract environment. NEVER include neighboring buildings, adjacent houses, other structures, or visible neighbors in the background. No urban density, no party walls, no competing architecture. The subject must stand alone.`;
 
