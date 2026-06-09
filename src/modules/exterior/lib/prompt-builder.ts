@@ -71,11 +71,52 @@ function getLightingPhysics(timeOfDay: string, lightingType: string, season: str
   return `The scene is captured during ${timeOfDay}${seasonCtx}, with ${lightingType} lighting that defines shadow direction, sculpts the building's volumes, and confirms the physical depth of every surface plane.`;
 }
 
-export function buildExteriorPrompt(params: DreamHouseParams, hasStructuralReference: boolean = false): string {
+export function buildExteriorPrompt(params: DreamHouseParams, hasStructuralReference: boolean = false, targetModel?: string): string {
   const projectType = PROJECT_TYPE_MAP[params.projectType] || params.projectType;
-  const scaleDesc = VOLUMETRIC_SCALE_MAP[params.size] || "modern structure";
+  let scaleDesc = "modern structure";
+  if (params.size) {
+    const numericMeters = parseFloat(params.size);
+    if (!isNaN(numericMeters) && numericMeters > 0) {
+      scaleDesc = `${numericMeters}m² architectural structure`;
+    } else {
+      scaleDesc = VOLUMETRIC_SCALE_MAP[params.size] || params.size || "modern structure";
+    }
+  }
   const organizationDesc = FORM_ORGANIZATION_MAP[params.layoutType] ? `, ${FORM_ORGANIZATION_MAP[params.layoutType]}` : "";
+  const isOpenAI = targetModel?.includes('OpenAI') || false;
 
+  if (isOpenAI) {
+    const styleDesc = params.architecturalStyles.join(' and ') || "modern style";
+    const architectDesc = params.architect.length > 0 ? params.architect.join(' & ') : "";
+    const materialDesc = params.materials.length > 0 ? `${params.materials.join(' and ')}, finished to a ${params.finishLevel} standard` : "";
+    const lightingPhys = getLightingPhysics(params.timeOfDay, params.lighting, params.season);
+    
+    const prompt = `
+[INTENDED USE: Professional Architectural Portfolio Image]
+
+SCENE & CONTEXT:
+- Subject: ${hasStructuralReference ? `reimagined version of the ${projectType} from reference image` : `${scaleDesc} ${projectType}`}
+- Camera Angle: ${params.cameraAngle || 'eye-level'} view
+- Location/Setting: ${params.city ? `Located in the urban context of ${params.city}` : `Rooted in a ${params.environment || 'carefully considered'} environment`}
+
+ARCHITECTURAL SPECIFICATION:
+- Style: ${styleDesc} character${architectDesc ? `, drawing from the language of ${architectDesc}` : ""}
+${params.layoutType ? `- Layout: Organized with a ${FORM_ORGANIZATION_MAP[params.layoutType] || params.layoutType} configuration\n` : ""}${params.levels > 0 ? `- Levels: Distributed across exactly ${params.levels} floors\n` : ""}- Materials: ${materialDesc || "traditional architectural facade materials"}
+- Material Detail: Honest textures with physical thickness, weathering at base, and clear joint shadow lines. No digital smoothness or plastic sheen.
+
+PHOTOGRAPHY & LIGHTING:
+- Camera Config: Shot on ${params.cameraPreset}, ${params.focalLength} lens at ${params.aperture}, ${params.filmSimulation}
+- Lighting: ${lightingPhys}
+${params.artDirection ? `- Art Direction: ${params.artDirection}\n` : ""}
+CONSTRAINTS & QUALITY:
+- Look: Photorealistic architectural photography.
+- Composition: The building is the SOLE PROTAGONIST. Neutral background (open sky, landscape, or vegetation).
+- Exclude: No neighboring buildings, no adjacent houses, no other structures, no party walls, no visible neighbors in the background. No watermarks, no logos.
+`.trim();
+    return prompt;
+  }
+
+  // Classic Gemini flow
   let prompt = "";
   if (hasStructuralReference) {
     prompt = `An architectural photograph — ${params.cameraAngle || 'eye-level'} view — documenting a reimagined version of the ${projectType} shown in the reference image. `;

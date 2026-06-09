@@ -1,8 +1,10 @@
 import React from 'react';
 import Image from 'next/image';
-import { Trash2, Download, RotateCcw, Clock, Layout, Home, Armchair, Wand } from 'lucide-react';
+import { Trash2, Download, RotateCcw, Clock, Layout, Home, Armchair, Wand, ZoomIn } from 'lucide-react';
 import { Button } from './ui/Button';
 import { GenerationRecord } from '../lib/db';
+import { useLightbox } from '../context/LightboxContext';
+
 
 interface HistoryGalleryProps {
   history: GenerationRecord[];
@@ -19,7 +21,8 @@ export default function HistoryGallery({
   onClear,
   isLoading
 }: HistoryGalleryProps) {
-  
+  const { openLightbox } = useLightbox();
+
   const formatDate = (timestamp: number) => {
     try {
       // Fallback to native if date-fns is not available
@@ -79,13 +82,22 @@ export default function HistoryGallery({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {history.map((item) => (
+        {history.map((item, index) => (
           <div 
             key={item.id} 
             className="group relative bg-card border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 flex flex-col"
           >
             {/* Image Preview */}
-            <div className="relative aspect-video overflow-hidden bg-black/20">
+            <div 
+              className="relative aspect-video overflow-hidden bg-black/20 cursor-pointer"
+              onClick={() => {
+                const images = history.map(h => ({
+                  url: h.imageUrl,
+                  type: getModeLabel(h.mode)
+                }));
+                openLightbox(images, index);
+              }}
+            >
               <Image
                 src={item.imageUrl}
                 alt={`Generación ${item.mode}`}
@@ -95,6 +107,10 @@ export default function HistoryGallery({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <ZoomIn className="w-8 h-8 text-white scale-90 group-hover:scale-100 transition-transform duration-300" />
+              </div>
+
               {/* Mode Badge */}
               <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 bg-black/60 backdrop-blur-md rounded text-[10px] font-bold uppercase tracking-tighter text-white border border-white/10">
                 {getModeIcon(item.mode)}
@@ -102,17 +118,21 @@ export default function HistoryGallery({
               </div>
 
               {/* Quick Actions Overlay */}
-              <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <a
                   href={item.imageUrl}
                   download={`dreamhouse-${item.mode}-${item.id.slice(0, 8)}.png`}
+                  onClick={(e) => e.stopPropagation()}
                   className="p-1.5 bg-primary text-primary-foreground rounded hover:scale-110 transition-transform"
                   title="Descargar"
                 >
                   <Download className="w-3.5 h-3.5" />
                 </a>
                 <button
-                  onClick={() => onDelete(item.id)}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    onDelete(item.id); 
+                  }}
                   className="p-1.5 bg-destructive text-destructive-foreground rounded hover:scale-110 transition-transform"
                   title="Eliminar"
                 >
@@ -120,6 +140,7 @@ export default function HistoryGallery({
                 </button>
               </div>
             </div>
+
 
             {/* Metadata */}
             <div className="p-4 flex-1 flex flex-col justify-between gap-4">

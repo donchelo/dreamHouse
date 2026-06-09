@@ -35,7 +35,6 @@ export function useObjectUrls(files: File[]): string[] {
     return () => {
       objectUrls.forEach(u => URL.revokeObjectURL(u));
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
 
   return urls;

@@ -15,6 +15,7 @@ interface SectionProps {
   badge?: string;
   className?: string;
   accentColor?: 'primary' | 'secondary';
+  summary?: React.ReactNode;
 }
 
 export function Section({
@@ -27,6 +28,7 @@ export function Section({
   onToggle: controlledOnToggle,
   badge,
   className,
+  summary,
 }: SectionProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
 
@@ -78,6 +80,11 @@ export function Section({
                     {title}
                   </h3>
                 </div>
+                {!isOpen && summary && (
+                  <p className="text-[11px] text-muted-foreground font-mono tracking-wider uppercase mt-1 pl-1 opacity-70">
+                    {summary}
+                  </p>
+                )}
             </div>
         </div>
 

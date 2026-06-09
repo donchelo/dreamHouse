@@ -55,6 +55,8 @@ function StudioContent() {
   const { history, saveToHistory, deleteFromHistory, clearHistory, isLoading: isHistoryLoading } = useHistory();
 
 
+
+
   // Accordion state - 'mode' open by default to guide new users
   const [activeSection, setActiveSection] = useState<string | null>('mode');
 
@@ -343,6 +345,23 @@ function StudioContent() {
                 <h2 className="text-sm font-mono text-primary uppercase tracking-[0.4em] font-bold">El Estudio</h2>
                 <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Diseña tu <span className="text-outline">Propia</span> Obra Maestra.</h3>
             </div>
+
+            {/* Asistente IA NLP Panel */}
+            {params.mode !== 'edit' && params.mode !== 'vistas' && (
+              <AIAssistantPanel
+                mode={params.mode}
+                onParseSuccess={(parsedData) => {
+                  setParams(prev => ({ ...prev, ...parsedData }));
+                  if (params.mode === 'exterior') {
+                    setActiveSection('concept');
+                  } else if (params.mode === 'interior') {
+                    setActiveSection('identity');
+                  }
+                }}
+                onError={setError}
+                onToast={showToast}
+              />
+            )}
            {/* Global Actions - Reset & Randomize */}
            <div className="flex justify-end gap-3 sticky top-20 z-20 pointer-events-none mb-8">
             <div className="pointer-events-auto flex gap-0 border border-border bg-background shadow-lg">
@@ -390,12 +409,18 @@ function StudioContent() {
             badge="MODO"
             isOpen={activeSection === 'mode'}
             onToggle={() => toggleSection('mode')}
+            summary={
+              params.mode === 'exterior' ? "Arquitectura Exterior" :
+              params.mode === 'interior' ? "Diseño Interior" :
+              params.mode === 'edit' ? "Editar Imagen con IA" :
+              "Portafolio de Vistas"
+            }
           >
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => {
                   setParams({ ...params, mode: 'exterior' });
-                  setActiveSection('context');
+                  setActiveSection('concept');
                 }}
                 className={clsx(
                   "flex flex-col items-center gap-3 p-6 border transition-all",
@@ -445,7 +470,7 @@ function StudioContent() {
           </Section>
 
           {/* 02: Referencias Visuales (Shared) */}
-          {params.mode !== 'edit' && params.mode !== 'vistas' && (
+          {params.mode !== 'edit' && params.mode !== 'vistas' && params.mode !== 'exterior' && (
           <Section
             title="Referencias Visuales"
             number="02"
@@ -459,10 +484,9 @@ function StudioContent() {
           )}
 
           {/* 03: Contexto (Mode-specific: Lote vs Espacio vs Base) */}
-          {params.mode !== 'edit' && (
+          {params.mode !== 'edit' && params.mode !== 'exterior' && (
           <Section
             title={
-                params.mode === 'exterior' ? "Foto del Lote / Terreno" : 
                 params.mode === 'interior' ? "Foto del Espacio Actual" : 
                 "Imagen Base de la Casa"
             }
@@ -477,37 +501,23 @@ function StudioContent() {
               file={lotFile} 
               onFileChange={setLotFile} 
               title={
-                  params.mode === 'exterior' ? "Lote / Emplazamiento" : 
                   params.mode === 'interior' ? "Espacio Principal (Foto Actual)" :
                   "Cargar Foto de la Casa"
               }
               description={
-                  params.mode === 'exterior' ? "Sube una foto real del terreno. La IA integrará el volumen en el sitio." : 
                   params.mode === 'interior' ? "Sube una foto de tu espacio actual. La IA lo usará como base para el rediseño." :
                   "Sube la foto principal de la casa. Generaremos el portafolio de vistas basado en este diseño."
               }
               icon={params.mode === 'vistas' ? <ImageIcon className="w-5 h-5 text-primary" /> : params.mode === 'interior' ? <Armchair className="w-5 h-5 text-primary" /> : undefined}
             />
-            {params.mode === 'exterior' && (
-              <LotUploader 
-                file={exteriorReferenceFile} 
-                onFileChange={(f) => {
-                  setExteriorReferenceFile(f);
-                  setParams({ ...params, hasExteriorReference: !!f });
-                }} 
-                title="Casa Actual (Estructura Base)"
-                description="Sube una foto de la casa existente. La IA mantendrá la volumetría y cambiará el estilo según el prompt."
-                icon={<Home className="w-5 h-5 text-primary" />}
-              />
-            )}
           </div>
           </Section>
           )}
 
           {/* 04: Estructura (Mode-specific: Plano vs Layout) */}
-          {params.mode !== 'edit' && params.mode !== 'vistas' && (
+          {params.mode !== 'edit' && params.mode !== 'vistas' && params.mode !== 'exterior' && (
           <Section
-            title={params.mode === 'exterior' ? "Plano de Planta" : "Distribución / Layout"}
+            title="Distribución / Layout"
             number="04"
             icon={<Maximize2 className="w-5 h-5" />}
             badge="GUÍA"
@@ -517,11 +527,8 @@ function StudioContent() {
             <FloorPlanUploader 
               file={floorPlanFile} 
               onFileChange={setFloorPlanFile} 
-              title={params.mode === 'exterior' ? "Plano Residencial" : "Layout del Área"}
-              description={params.mode === 'exterior'
-                ? "Sube el plano de planta. El exterior respetará la geometría del plano."
-                : "Sube un croquis o plano de la estancia. La IA respetará la zonificación."
-              }
+              title="Layout del Área"
+              description="Sube un croquis o plano de la estancia. La IA respetará la zonificación."
             />
           </Section>
           )}
@@ -534,6 +541,14 @@ function StudioContent() {
               disabled={isLoading}
               activeSection={activeSection}
               onSectionChange={toggleSection}
+              files={files}
+              onFilesChange={setFiles}
+              lotFile={lotFile}
+              onLotFileChange={setLotFile}
+              exteriorReferenceFile={exteriorReferenceFile}
+              onExteriorReferenceFileChange={setExteriorReferenceFile}
+              floorPlanFile={floorPlanFile}
+              onFloorPlanFileChange={setFloorPlanFile}
             />
           ) : params.mode === 'interior' ? (
             <InteriorForm
@@ -649,6 +664,101 @@ function StudioContent() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+interface AIAssistantPanelProps {
+  mode: string;
+  onParseSuccess: (data: Partial<DreamHouseParams>) => void;
+  onError: (msg: string) => void;
+  onToast: (msg: string) => void;
+}
+
+function AIAssistantPanel({ mode, onParseSuccess, onError, onToast }: AIAssistantPanelProps) {
+  const [nlpText, setNlpText] = useState("");
+  const [isParsingNlp, setIsParsingNlp] = useState(false);
+
+  const handleParseNlp = async () => {
+    if (!nlpText.trim()) return;
+    setIsParsingNlp(true);
+    onError("");
+    try {
+      const apiKey = localStorage.getItem('OPENAI_API_KEY');
+      if (!apiKey) {
+        throw new Error('Por favor, configura tu OPENAI_API_KEY en el encabezado para usar el Asistente IA.');
+      }
+
+      const res = await fetch('/api/parse-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-openai-api-key': apiKey
+        },
+        body: JSON.stringify({
+          textPrompt: nlpText,
+          mode: mode
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Error interpretando el prompt.');
+      }
+
+      const parsedData = await res.json();
+      onParseSuccess(parsedData);
+      onToast("¡Parámetros configurados por IA!");
+      setNlpText("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Ocurrió un error al procesar tu idea.';
+      onError(msg);
+    } finally {
+      setIsParsingNlp(false);
+    }
+  };
+
+  return (
+    <div className="border border-border bg-card p-6 md:p-8 space-y-4">
+      <div className="flex items-center gap-2">
+        <Wand className="text-primary w-5 h-5 animate-pulse" />
+        <h4 className="text-xs font-mono font-bold uppercase tracking-widest text-foreground">Asistente IA: Generar desde una Idea</h4>
+      </div>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Escribe tu idea de diseño en lenguaje natural (español o inglés) y la IA configurará automáticamente todas las secciones del Studio.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch">
+        <input
+          type="text"
+          value={nlpText}
+          onChange={(e) => setNlpText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleParseNlp();
+            }
+          }}
+          placeholder={
+            mode === 'exterior' 
+              ? "Ej: Una villa de lujo minimalista frente al mar de Tadao Ando con concreto y madera, piscina infinity en atardecer..."
+              : "Ej: Una cocina gourmet con isla central y vigas de madera expuestas en el techo, madera clara y mármol..."
+          }
+          disabled={isParsingNlp}
+          className="flex-grow bg-background border border-border px-4 py-3 text-sm focus:ring-1 focus:ring-primary outline-none transition-all"
+        />
+        <Button
+          onClick={handleParseNlp}
+          isLoading={isParsingNlp}
+          disabled={isParsingNlp}
+          className="bg-primary text-primary-foreground font-bold px-6 py-3 text-sm uppercase tracking-wider shrink-0"
+        >
+          {isParsingNlp ? 'Interpretando...' : 'Interpretar Idea'}
+        </Button>
+      </div>
+      {isParsingNlp && (
+        <div className="h-0.5 w-full bg-border overflow-hidden">
+          <div className="h-full bg-primary animate-[pulse_1.5s_infinite_ease-in-out]" style={{ width: '100%' }} />
+        </div>
+      )}
     </div>
   );
 }

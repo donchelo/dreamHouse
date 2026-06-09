@@ -32,6 +32,55 @@ function validateImageSize(file: File, fieldName: string, skipSizeLimit: boolean
   return { valid: true };
 }
 
+// Helper function to calculate a valid size parameter for gpt-image-2
+function getGptImage2Size(aspectRatio: string, resolutionPreset: string): string {
+  let widthRatio = 16;
+  let heightRatio = 9;
+
+  if (aspectRatio && aspectRatio.includes(':')) {
+    const parts = aspectRatio.split(':');
+    widthRatio = parseInt(parts[0], 10) || 16;
+    heightRatio = parseInt(parts[1], 10) || 9;
+  }
+
+  // Target total pixels based on preset
+  let targetPixels = 1024 * 1024; // Default "1K" (~1MP)
+  if (resolutionPreset === "2K") {
+    targetPixels = 2560 * 1440; // ~3.7MP
+  } else if (resolutionPreset === "4K") {
+    targetPixels = 3824 * 2144; // ~8.2MP (safe limit below 3840 edge size)
+  } else if (resolutionPreset === "512") {
+    targetPixels = 655360; // Minimum limit for gpt-image-2
+  }
+
+  const ratio = widthRatio / heightRatio;
+  let h = Math.sqrt(targetPixels / ratio);
+  let w = h * ratio;
+
+  // Round dimensions to nearest multiple of 16
+  w = Math.round(w / 16) * 16;
+  h = Math.round(h / 16) * 16;
+
+  // Enforce constraints:
+  // 1. Max edge length must be less than 3840px (3824 is the highest multiple of 16 below 3840)
+  if (w >= 3840) w = 3824;
+  if (h >= 3840) h = 3824;
+
+  // 2. Total pixels must not be less than 655,360
+  while (w * h < 655360) {
+    w += 16;
+    h = Math.round((w / ratio) / 16) * 16;
+  }
+
+  // 3. Total pixels must not exceed 8,294,400
+  while (w * h > 8294400) {
+    w -= 16;
+    h = Math.round((w / ratio) / 16) * 16;
+  }
+
+  return `${w}x${h}`;
+}
+
 // Helper function to calculate total payload size
 function calculatePayloadSize(files: File[], lotImage: File | null, exteriorReferenceImage: File | null, floorPlanImage: File | null, editCompositeFile: File | null, paramsJson: string): number {
   let totalSize = paramsJson.length;
@@ -77,7 +126,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let ai: any;
+    let ai: GoogleGenAI | null = null;
     if (!useOpenAI && geminiApiKey) {
       console.log("Initializing Gemini SDK with API Key (truncated):", geminiApiKey.substring(0, 5) + "...");
       ai = new GoogleGenAI({ 
@@ -220,44 +269,76 @@ export async function POST(req: NextRequest) {
     // --- NEW: Narrative Prompt Building ---
     let narrativePrompt = "";
     if (params.mode === 'interior') {
-      narrativePrompt = buildInteriorPrompt(params);
+      narrativePrompt = buildInteriorPrompt(params, params.aiModel);
     } else if (params.mode === 'exterior') {
-      narrativePrompt = buildExteriorPrompt(params, !!exteriorReferenceImage);
+      narrativePrompt = buildExteriorPrompt(params, !!exteriorReferenceImage, params.aiModel);
     } else if (params.mode === 'vistas') {
-      narrativePrompt = buildVistasPrompt(params, params.viewType || 'Perspectiva Principal (Hero Shot)');
+      narrativePrompt = buildVistasPrompt(params, params.viewType || 'Perspectiva Principal (Hero Shot)', params.aiModel);
     } else {
       narrativePrompt = `USER EDIT PROMPT: ${params.editPrompt}`;
     }
 
     let mandate = "";
-    if (params.mode === "interior") {
-      mandate = `INTERNAL SPATIAL MANDATE:
+    if (useOpenAI) {
+      if (params.mode === "interior") {
+        mandate = `INTERNAL SPATIAL MANDATE:
+- Respect room functionality: ${params.roomType}.
+- Render furniture: ${params.furnitureStyle.join(', ')}.
+- Flooring: ${params.flooringMaterial}, Ceiling: ${params.ceilingDetail}.`;
+      } else if (params.mode === "exterior") {
+        const structureMandate = exteriorReferenceImage 
+          ? "PRESERVE general architectural volumes and facade structure from reference image."
+          : "Adhere to the provided layout/floor plan geometry.";
+        mandate = `ARCHITECTURAL EXTERIOR MANDATE:
+- ${structureMandate}
+- Show exactly ${params.levels} floors.`;
+      } else if (params.mode === "vistas") {
+        mandate = `ARCHITECTURAL PORTFOLIO MANDATE:
+- Maintain design style, materials, and geometry identical to the reference image.`;
+      } else {
+        mandate = `IMAGE EDITING MANDATE (SURGICAL EDIT):
+- Modify only the areas marked/indicated in the user's sketch.
+- Keep everything else identical. Do not alter surrounding design, camera angle, colors, or resolution.`;
+      }
+    } else {
+      if (params.mode === "interior") {
+        mandate = `INTERNAL SPATIAL MANDATE:
 - This image is a professional interior design visualization. Scale, lighting, and texture are critical.
 - Respect the functional logic of the specified room: ${params.roomType}.
 - Ensure the furniture style (${params.furnitureStyle.join(', ')}) and lighting (${params.interiorLighting.join(', ')}) are rendered with high fidelity.
 - Materiality: The floor (${params.flooringMaterial}) and ceiling (${params.ceilingDetail}) must define the vertical boundaries of the space.`;
-    } else if (params.mode === "exterior") {
-      const structureMandate = exteriorReferenceImage 
-        ? "PRESERVE the fundamental architectural geometry, massing, and volumetric structure of the provided HOUSE REFERENCE IMAGE. Apply the requested styles and materials to this existing structure."
-        : "Preserve the geometry of the provided floor plan if applicable.";
-      mandate = `ARCHITECTURAL EXTERIOR MANDATE:
+      } else if (params.mode === "exterior") {
+        const structureMandate = exteriorReferenceImage 
+          ? "PRESERVE the fundamental architectural geometry, massing, and volumetric structure of the provided HOUSE REFERENCE IMAGE. Apply the requested styles and materials to this existing structure."
+          : "Preserve the geometry of the provided floor plan if applicable.";
+        mandate = `ARCHITECTURAL EXTERIOR MANDATE:
 - This image is part of a professional architectural portfolio. Volumetric hierarchy is absolute.
 - ${structureMandate}
 - Integrate the building perfectly into the terrain/lot if provided.
 - If LEVELS are specified as ${params.levels}, ensure exactly ${params.levels} floors are visible.`;
-    } else if (params.mode === "vistas") {
-      mandate = `ARCHITECTURAL PORTFOLIO MANDATE:
+      } else if (params.mode === "vistas") {
+        mandate = `ARCHITECTURAL PORTFOLIO MANDATE:
 - This is a consistent architectural portfolio generation.
 - The reference image is the ABSOLUTE TRUTH for materials, geometry, and style.
 - Change the camera angle and perspective according to the request, but DO NOT change the house design.`;
-    } else {
-      mandate = `IMAGE EDITING MANDATE:
+      } else {
+        mandate = `IMAGE EDITING MANDATE:
 - Using the provided image (which may include user sketches/notes as a guide), perform the requested edits.
 - The user's sketch/notes drawn on the image are instructions/guides for what to change and where.
 - Seamlessly integrate the changes, matching the original lighting, style, and perspective.`;
+      }
     }
 
-    const fullPrompt = `${narrativePrompt}
+    let fullPrompt = "";
+    if (useOpenAI) {
+      fullPrompt = `${narrativePrompt}
+
+[MANDATES & CONSTRAINTS]
+${mandate}
+- Look & Quality: The output must be a clean, photorealistic photograph with honest material textures (wood grain, concrete formwork texture, glass specularity, etc.) and physical depth. Soft shadows. No plastic or overly smooth surfaces.
+- Exclusions: No neighboring buildings, no adjacent houses, no party walls. No watermarks, logos, or text inside the image.`.trim();
+    } else {
+      fullPrompt = `${narrativePrompt}
 
 ${mandate}
 - QUALITY: The image must feel photographed, not rendered. Every surface needs physical weight: honest texture, natural color variation, controlled imperfections (grain, wear at edges, subtle tonal shifts) that confirm real material. Lighting must have a single clear direction with soft gradient fall-off into shadow. No CGI smoothness, no plastic sheen, no over-sharpened or uniformly perfect surfaces. Shadows reveal depth. Glass reflects its environment.
@@ -269,6 +350,7 @@ VERIFICATION STEPS:
 4. Check that lighting has a clear direction and casts soft-edged shadows that read the three-dimensional form.
 5. Confirm no surface looks digitally smooth, plastic, or uniformly perfect — introduce micro-imperfections if needed.
 6. If the result is incorrect, reasoning should correct the composition before final output.`.trim();
+    }
 
     console.log("Generated Narrative Prompt:", fullPrompt);
 
@@ -329,21 +411,53 @@ VERIFICATION STEPS:
     let groundingMetadata = null;
 
     if (useOpenAI && openaiClient) {
-      console.log("Generating with OpenAI (GPT Image 2)");
-      const result = await openaiClient.images.generate({
-        model: "gpt-image-2",
-        prompt: fullPrompt,
-        response_format: "b64_json"
-        // DALL-E doesn't take reference images in the same way, we rely purely on the narrative prompt
-        // Note: For production edit mode, we would use openaiClient.images.edit with mask, but here we just do generate
-      });
+      // Collect image references for multi-image input support in gpt-image-2
+      const imageFiles: File[] = [];
+      if (params.mode === 'edit' && editCompositeFile) {
+        imageFiles.push(editCompositeFile);
+      } else {
+        if (floorPlanImage) imageFiles.push(floorPlanImage);
+        if (lotImage) imageFiles.push(lotImage);
+        if (exteriorReferenceImage) imageFiles.push(exteriorReferenceImage);
+        files.forEach(file => imageFiles.push(file));
+      }
+
+      const sizeStr = getGptImage2Size(params.renderAspectRatio, params.renderOutputResolution);
+      const qualityVal = params.thinkingLevel === "High" ? "high" : "medium";
+
+      let result;
+      if (imageFiles.length > 0) {
+        console.log(`Editing/Compositing with OpenAI (GPT Image 2) using ${imageFiles.length} image files. Size: ${sizeStr}, Quality: ${qualityVal}`);
+        result = await openaiClient.images.edit({
+          model: "gpt-image-2",
+          image: imageFiles as unknown as File,
+          prompt: fullPrompt,
+          size: sizeStr as unknown as "1024x1024",
+          quality: qualityVal as unknown as "standard"
+        });
+      } else {
+        console.log(`Generating text-to-image with OpenAI (GPT Image 2). Size: ${sizeStr}, Quality: ${qualityVal}`);
+        result = await openaiClient.images.generate({
+          model: "gpt-image-2",
+          prompt: fullPrompt,
+          size: sizeStr as unknown as "1024x1024",
+          quality: qualityVal as unknown as "standard"
+        });
+      }
       
       const imageBase64 = result?.data?.[0]?.b64_json;
-      if (!imageBase64) {
-         throw new Error("No image data returned from OpenAI");
+      const imageUrlResult = result?.data?.[0]?.url;
+      if (imageBase64) {
+        imageUrl = `data:image/png;base64,${imageBase64}`;
+      } else if (imageUrlResult) {
+        imageUrl = imageUrlResult;
+      } else {
+         throw new Error("No image data or URL returned from OpenAI");
       }
-      imageUrl = `data:image/png;base64,${imageBase64}`;
     } else {
+      if (!ai) {
+        throw new Error("GoogleGenAI client is not initialized.");
+      }
       console.log("Generating with Gemini");
       const generationResponse = await ai.models.generateContent({
         model: "gemini-3.1-flash-image-preview",
@@ -358,6 +472,7 @@ VERIFICATION STEPS:
                   imageSearch: {}
                 }
               }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any
           ],
           imageConfig: {
@@ -367,6 +482,7 @@ VERIFICATION STEPS:
           thinkingConfig: {
             thinkingLevel: params.thinkingLevel === "High" ? "HIGH" : "MINIMAL",
             includeThoughts: true
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any
         }
       });
@@ -403,12 +519,15 @@ VERIFICATION STEPS:
 
 Return ONLY the 3-word name, no quotes, no extra text. Focus on what makes it unique.`;
       
-      const nameResult = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: [{ parts: [{ text: namePrompt }] }]
-      });
+      let nameText = "";
+      if (ai) {
+        const nameResult = await ai.models.generateContent({
+          model: "gemini-1.5-flash",
+          contents: [{ parts: [{ text: namePrompt }] }]
+        });
+        nameText = nameResult.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      }
       
-      const nameText = nameResult.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (nameText && nameText.split(/\s+/).length <= 6) { // Sanity check on length
         houseName = nameText;
       }

@@ -20,7 +20,9 @@ export const PROJECT_TYPES = [
   "Sauna",
   "Spa/Wellness",
   "Teatro/Auditorio",
-  "Villa de lujo"
+  "Turco",
+  "Villa de lujo",
+  "Zona húmeda"
 ];
 
 export const CLIMATES = [

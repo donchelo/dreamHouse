@@ -49,10 +49,43 @@ function getRoomScaleDesc(m2: number): string {
   return `a grand ${m2}m² expansive space`;
 }
 
-export function buildInteriorPrompt(params: DreamHouseParams): string {
+export function buildInteriorPrompt(params: DreamHouseParams, targetModel?: string): string {
   const roomDesc = ROOM_MAP[params.roomType] || "a beautifully designed interior space";
   const scaleDesc = getRoomScaleDesc(params.roomSizeM2);
+  const isOpenAI = targetModel?.includes('OpenAI') || false;
 
+  if (isOpenAI) {
+    const styleDesc = params.architecturalStyles.join(' and ') || "modern style";
+    const architectDesc = params.architect.length > 0 ? params.architect.join(' & ') : "";
+    const furnitureDesc = params.furnitureStyle.length > 0 ? params.furnitureStyle.map(s => FURNITURE_MAP[s] || s).join(' and ') : "";
+    const lightingDesc = params.interiorLighting.length > 0 ? params.interiorLighting.map(l => INTERIOR_LIGHTING_MAP[l] || l).join(', complemented by ') : "";
+    const materialList = params.materials.length > 0 ? params.materials.join(', ') : "";
+    const colorDesc = params.colorPalette.length > 0 ? params.colorPalette.join(' and ') : "";
+
+    const prompt = `
+[INTENDED USE: Professional Architectural Interior Design Visualization]
+
+SCENE & CONTEXT:
+- Subject: ${roomDesc}${scaleDesc ? ` (${scaleDesc})` : ""}
+- Perspective: Inside the space, looking at the layout and key features
+
+ARCHITECTURAL & DESIGN SPECIFICATION:
+- Style: ${styleDesc} character${architectDesc ? `, shaped by the design principles of ${architectDesc}` : ""}
+${furnitureDesc ? `- Furniture: Curated pieces of ${furnitureDesc}. Each piece sits with physical weight, showing natural material texture and subtle wear at contact points.\n` : ""}- Flooring: ${params.flooringMaterial || "traditional flooring material"}, rendered with convincing grain and joint lines
+- Ceiling: ${params.ceilingDetail || "clean architectural ceiling"}, confirmed by subtle shadow and texture
+${materialList ? `- Materials: ${materialList} elements throughout the space. Each material must show honest texture, grain direction, and micro-imperfections.\n` : ""}${colorDesc ? `- Color Palette: ${colorDesc}, colors shifting naturally across surfaces based on light angle\n` : ""}
+PHOTOGRAPHY & LIGHTING:
+- Camera Config: Shot on ${params.cameraPreset}, ${params.focalLength} lens at ${params.aperture}, ${params.filmSimulation}
+- Depth of Field: ${params.depthOfField || "Natural depth of field separating foreground from background"}
+${lightingDesc ? `- Lighting: Illuminated by ${lightingDesc}. Light falls with natural gradient and fall-off from bright source to soft shadow.\n` : ""}${params.artDirection ? `- Art Direction: ${params.artDirection}\n` : ""}
+CONSTRAINTS & QUALITY:
+- Look: Photorealistic interior photography. High tactile presence and physical weight.
+- Exclude: No digital/CGI smoothness, no plastic surfaces, no over-sharpened edges. No watermarks, no logos.
+`.trim();
+    return prompt;
+  }
+
+  // Classic Gemini flow
   // Narrative opening — position the viewer inside the space
   let prompt = `An architectural interior photograph taken inside ${roomDesc}${scaleDesc ? ` — ${scaleDesc}` : ""}. `;
 
