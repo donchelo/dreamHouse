@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select';
 import { PenLine, ImageIcon, Trash2 } from 'lucide-react';
 import SketchCanvas from '@/components/SketchCanvas';
 import LotUploader from '@/components/LotUploader';
+import { DebouncedInput } from '@/components/ui/DebouncedInput';
 
 interface EditFormProps {
   params: DreamHouseParams;
@@ -50,12 +51,13 @@ export default function EditForm({
         <div className="space-y-8">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest pl-1">Instrucción Principal (Prompt de Edición)</label>
-            <textarea 
-              value={params.editPrompt} 
-              onChange={(e) => handleChange("editPrompt", e.target.value)} 
+            <DebouncedInput 
+              type="textarea"
+              value={params.editPrompt || ""} 
+              onChange={(val) => handleChange("editPrompt", val)} 
               placeholder="Ej: Make the tree smaller, add a modern pool, change the wall color to white..." 
-              className="w-full h-24 bg-card border border-border p-4 text-sm focus:ring-1 focus:ring-primary outline-none transition-all"
               disabled={disabled}
+              className="h-24"
             />
           </div>
 
