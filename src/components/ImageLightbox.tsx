@@ -1,24 +1,51 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import { db } from '@/lib/db';
 
 interface ImageLightboxProps {
-  images: { url: string; type?: string }[];
+  images: { url: string; type?: string; id?: string }[];
   currentIndex: number;
   onClose: () => void;
   onIndexChange: (index: number) => void;
 }
 
-export default function ImageLightbox({ 
-  images, 
-  currentIndex, 
+export default function ImageLightbox({
+  images,
+  currentIndex,
   onClose,
   onIndexChange
 }: ImageLightboxProps) {
   const [zoom, setZoom] = useState(1);
   const currentImage = images[currentIndex];
+
+  // Renders full-res cargados on-demand (object URLs), cacheados por id de generación.
+  // Solo se mantiene en memoria la imagen visible y las ya visitadas; no las 20 a la vez.
+  const [fullUrls, setFullUrls] = useState<Record<string, string>>({});
+  const objectUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const id = currentImage?.id;
+    if (!id || fullUrls[id]) return;
+    let cancelled = false;
+    db.getFullImage(id).then((blob) => {
+      if (cancelled || !blob) return;
+      const url = URL.createObjectURL(blob);
+      objectUrlsRef.current.push(url);
+      setFullUrls((prev) => ({ ...prev, [id]: url }));
+    }).catch(() => {/* fallback al thumbnail */});
+    return () => { cancelled = true; };
+  }, [currentImage?.id, fullUrls]);
+
+  // Liberar los object URLs al desmontar.
+  useEffect(() => {
+    const urls = objectUrlsRef.current;
+    return () => { urls.forEach((u) => URL.revokeObjectURL(u)); };
+  }, []);
+
+  const displayUrl = (currentImage?.id && fullUrls[currentImage.id]) || currentImage?.url;
 
   const handleNext = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -128,7 +155,7 @@ export default function ImageLightbox({
         onClick={(e) => e.stopPropagation()}
       >
         <Image
-          src={currentImage.url}
+          src={displayUrl}
           alt={currentImage.type || "Full screen view"}
           width={2560}
           height={1440}

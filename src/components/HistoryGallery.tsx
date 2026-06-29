@@ -2,8 +2,27 @@ import React from 'react';
 import Image from 'next/image';
 import { Trash2, Download, RotateCcw, Clock, Layout, Home, Armchair, Wand, ZoomIn } from 'lucide-react';
 import { Button } from './ui/Button';
-import { GenerationRecord } from '../lib/db';
+import { GenerationRecord, db } from '../lib/db';
 import { useLightbox } from '../context/LightboxContext';
+
+// Descarga el render full-res (Blob) on-demand. Si no existe (registro previo a v2),
+// cae al thumbnail para no dejar al usuario sin descarga.
+async function downloadGeneration(item: GenerationRecord) {
+  try {
+    const blob = await db.getFullImage(item.id);
+    const ext = blob?.type === 'image/jpeg' ? 'jpg' : 'png';
+    const url = blob ? URL.createObjectURL(blob) : item.imageUrl;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dreamhouse-${item.mode}-${item.id.slice(0, 8)}.${blob ? ext : 'jpg'}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    if (blob) setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (err) {
+    console.error('Failed to download generation:', err);
+  }
+}
 
 
 interface HistoryGalleryProps {
@@ -93,7 +112,8 @@ export default function HistoryGallery({
               onClick={() => {
                 const images = history.map(h => ({
                   url: h.imageUrl,
-                  type: getModeLabel(h.mode)
+                  type: getModeLabel(h.mode),
+                  id: h.id
                 }));
                 openLightbox(images, index);
               }}
@@ -119,15 +139,13 @@ export default function HistoryGallery({
 
               {/* Quick Actions Overlay */}
               <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <a
-                  href={item.imageUrl}
-                  download={`dreamhouse-${item.mode}-${item.id.slice(0, 8)}.png`}
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  onClick={(e) => { e.stopPropagation(); downloadGeneration(item); }}
                   className="p-1.5 bg-primary text-primary-foreground rounded hover:scale-110 transition-transform"
-                  title="Descargar"
+                  title="Descargar en alta resolución"
                 >
                   <Download className="w-3.5 h-3.5" />
-                </a>
+                </button>
                 <button
                   onClick={(e) => { 
                     e.stopPropagation(); 

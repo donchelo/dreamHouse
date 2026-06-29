@@ -6,6 +6,8 @@ import ImageLightbox from '@/components/ImageLightbox';
 export interface LightboxImage {
   url: string;
   type?: string;
+  /** id de la generación en IndexedDB; si está presente, el lightbox carga el render full-res on-demand. */
+  id?: string;
 }
 
 interface LightboxContextType {

@@ -26,13 +26,31 @@ export function useHistory() {
 
   const saveToHistory = async (record: Omit<GenerationRecord, 'id' | 'timestamp'>) => {
     try {
-      // Store a small thumbnail instead of the full base64 image to prevent memory crashes
+      // La grilla del historial usa un thumbnail de 320px (ligero, evita memory crashes
+      // al listar). El render full-res se persiste aparte como Blob para el lightbox y la descarga.
       const thumbnailUrl = await createThumbnail(record.imageUrl, 320, 0.6);
-      await db.saveGeneration({ ...record, imageUrl: thumbnailUrl });
+      let fullImage: Blob | undefined;
+      try {
+        fullImage = await (await fetch(record.imageUrl)).blob();
+      } catch (e) {
+        console.warn('No se pudo convertir el render a Blob; se guardará solo el thumbnail.', e);
+      }
+      await db.saveGeneration({ ...record, imageUrl: thumbnailUrl }, fullImage);
       await refreshHistory();
     } catch (err) {
       console.error('Failed to save to history:', err);
       throw err;
+    }
+  };
+
+  /** Devuelve un object URL del render full-res (on-demand), o null si no existe (registros antiguos). */
+  const getFullImageUrl = async (id: string): Promise<string | null> => {
+    try {
+      const blob = await db.getFullImage(id);
+      return blob ? URL.createObjectURL(blob) : null;
+    } catch (err) {
+      console.error('Failed to load full image:', err);
+      return null;
     }
   };
 
@@ -63,6 +81,7 @@ export function useHistory() {
     saveToHistory,
     deleteFromHistory,
     clearHistory,
-    refreshHistory
+    refreshHistory,
+    getFullImageUrl
   };
 }
